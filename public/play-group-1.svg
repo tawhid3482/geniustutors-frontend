@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <style>
+    .skin { fill: #ffdbac; }
+    .hair { fill: #8b572a; }
+    .dress { fill: #9c59b6; }
+    .chair { fill: #e67e22; }
+    .table { fill: #d35400; }
+    .plant { fill: #27ae60; }
+    .window { fill: #3498db; }
+    .book { fill: #e74c3c; }
+  </style>
+  
+  <!-- Background with window -->
+  <rect width="300" height="300" fill="#f5f5f5"/>
+  <rect x="200" y="50" width="80" height="100" fill="#3498db" opacity="0.3"/>
+  <line x1="240" y1="50" x2="240" y2="150" stroke="#fff" stroke-width="2"/>
+  <line x1="200" y1="100" x2="280" y2="100" stroke="#fff" stroke-width="2"/>
+  
+  <!-- Plant -->
+  <rect x="220" y="170" width="30" height="40" fill="#d35400" rx="2"/>
+  <circle cx="235" cy="150" r="20" class="plant"/>
+  <circle cx="245" cy="160" r="15" class="plant"/>
+  <circle cx="225" cy="160" r="15" class="plant"/>
+  
+  <!-- Table -->
+  <rect x="80" y="180" width="120" height="10" class="table" rx="2"/>
+  <rect x="90" y="190" width="10" height="60" class="table"/>
+  <rect x="180" y="190" width="10" height="60" class="table"/>
+  
+  <!-- Book on table -->
+  <rect x="100" y="170" width="40" height="10" class="book"/>
+  <rect x="100" y="165" width="40" height="5" fill="#c0392b"/>
+  
+  <!-- Chair -->
+  <rect x="70" y="190" width="60" height="10" class="chair" rx="2"/>
+  <rect x="75" y="200" width="50" height="50" class="chair" rx="5"/>
+  <rect x="70" y="250" width="10" height="30" class="chair"/>
+  <rect x="120" y="250" width="10" height="30" class="chair"/>
+  
+  <!-- Child sitting on chair -->
+  <!-- Body -->
+  <rect x="85" y="160" width="30" height="50" class="dress" rx="10"/>
+  
+  <!-- Head -->
+  <circle cx="100" cy="140" r="20" class="skin"/>
+  
+  <!-- Hair -->
+  <path d="M80,140 Q100,110 120,140" class="hair" stroke="none"/>
+  <circle cx="90" cy="135" r="10" class="hair"/>
+  <circle cx="110" cy="135" r="10" class="hair"/>
+  
+  <!-- Face -->
+  <circle cx="90" cy="135" r="3" fill="#000"/> <!-- Left eye -->
+  <circle cx="110" cy="135" r="3" fill="#000"/> <!-- Right eye -->
+  <path d="M95,145 Q100,150 105,145" stroke="#000" stroke-width="2" fill="none"/> <!-- Smile -->
+  
+  <!-- Arms -->
+  <rect x="75" y="170" width="10" height="30" class="skin" rx="5"/>
+  <rect x="115" y="170" width="10" height="30" class="skin" rx="5"/>
+  
+  <!-- Legs -->
+  <rect x="85" y="210" width="10" height="30" class="skin" rx="5"/>
+  <rect x="105" y="210" width="10" height="30" class="skin" rx="5"/>
+</svg>

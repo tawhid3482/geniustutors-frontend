@@ -1,0 +1,35 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="80" fill="#F3E8FF" />
+  
+  <!-- Desk -->
+  <rect x="60" y="130" width="80" height="10" fill="#DDD6FE" stroke="#7E22CE" stroke-width="2" />
+  <rect x="65" y="140" width="5" height="20" fill="#7E22CE" />
+  <rect x="130" y="140" width="5" height="20" fill="#7E22CE" />
+  
+  <!-- Computer/Laptop -->
+  <rect x="75" y="100" width="50" height="30" rx="2" fill="#DDD6FE" stroke="#7E22CE" stroke-width="2" />
+  <path d="M70 130H130" stroke="#7E22CE" stroke-width="2" />
+  <rect x="85" y="110" width="30" height="15" fill="#A855F7" />
+  
+  <!-- Person sitting at desk -->
+  <circle cx="100" cy="80" r="10" fill="#7E22CE" /> <!-- Head -->
+  <path d="M100 90V110" stroke="#7E22CE" stroke-width="3" /> <!-- Body -->
+  <path d="M100 95H85" stroke="#7E22CE" stroke-width="2" /> <!-- Left arm -->
+  <path d="M100 95H115" stroke="#7E22CE" stroke-width="2" /> <!-- Right arm -->
+  
+  <!-- Chair -->
+  <path d="M90 110V125H110V110" stroke="#9333EA" stroke-width="2" fill="#DDD6FE" />
+  
+  <!-- Online elements -->
+  <circle cx="140" cy="70" r="15" fill="#DDD6FE" stroke="#7E22CE" stroke-width="2" />
+  <circle cx="140" cy="70" r="8" fill="#7E22CE" /> <!-- Face -->
+  
+  <!-- Connection lines -->
+  <path d="M115 80L125 70" stroke="#7E22CE" stroke-width="1" stroke-dasharray="2 2" />
+  
+  <!-- Decorative elements -->
+  <rect x="60" y="70" width="15" height="20" rx="2" fill="#DDD6FE" stroke="#7E22CE" stroke-width="1" /> <!-- Book/notes -->
+  <path d="M150 120C150 120 155 110 150 105C145 110 150 120 150 120Z" fill="#A855F7" /> <!-- Plant -->
+  <path d="M150 120V130" stroke="#7E22CE" stroke-width="1" />
+</svg>

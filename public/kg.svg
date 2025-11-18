@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <style>
+    .skin { fill: #ffdbac; }
+    .hair { fill: #8b572a; }
+    .dress { fill: #9c59b6; }
+    .grass { fill: #27ae60; }
+    .sky { fill: #3498db; }
+    .tree { fill: #2ecc71; }
+    .trunk { fill: #8b4513; }
+    .child-dress { fill: #3498db; }
+    .child-dress-2 { fill: #f1c40f; }
+  </style>
+  
+  <!-- Background with sky and grass -->
+  <rect width="300" height="200" class="sky" opacity="0.3"/>
+  <rect y="200" width="300" height="100" class="grass" opacity="0.5"/>
+  
+  <!-- Sun -->
+  <circle cx="250" cy="50" r="30" fill="#f1c40f" opacity="0.8"/>
+  
+  <!-- Tree -->
+  <rect x="40" y="150" width="20" height="80" class="trunk"/>
+  <circle cx="50" cy="120" r="40" class="tree"/>
+  
+  <!-- Teacher -->
+  <!-- Body -->
+  <rect x="120" y="120" width="60" height="100" class="dress" rx="10"/>
+  
+  <!-- Head -->
+  <circle cx="150" cy="100" r="25" class="skin"/>
+  
+  <!-- Hair -->
+  <path d="M125,100 Q150,60 175,100" class="hair" stroke="none"/>
+  <circle cx="135" cy="90" r="15" class="hair"/>
+  <circle cx="165" cy="90" r="15" class="hair"/>
+  
+  <!-- Face -->
+  <circle cx="140" cy="95" r="3" fill="#000"/> <!-- Left eye -->
+  <circle cx="160" cy="95" r="3" fill="#000"/> <!-- Right eye -->
+  <path d="M145,110 Q150,115 155,110" stroke="#000" stroke-width="2" fill="none"/> <!-- Smile -->
+  
+  <!-- Arms -->
+  <rect x="100" y="140" width="20" height="50" class="skin" rx="10"/>
+  <rect x="180" y="140" width="20" height="50" class="skin" rx="10"/>
+  
+  <!-- Child 1 (Boy) -->
+  <!-- Body -->
+  <rect x="70" y="220" width="30" height="50" class="child-dress" rx="5"/>
+  
+  <!-- Head -->
+  <circle cx="85" cy="205" r="15" class="skin"/>
+  
+  <!-- Hair -->
+  <path d="M75,200 Q85,190 95,200" class="hair" stroke="none"/>
+  <circle cx="85" cy="195" r="10" class="hair"/>
+  
+  <!-- Face -->
+  <circle cx="80" cy="202" r="2" fill="#000"/> <!-- Left eye -->
+  <circle cx="90" cy="202" r="2" fill="#000"/> <!-- Right eye -->
+  <path d="M82,210 Q85,213 88,210" stroke="#000" stroke-width="1.5" fill="none"/> <!-- Smile -->
+  
+  <!-- Arms -->
+  <rect x="60" y="225" width="10" height="25" class="skin" rx="5"/>
+  <rect x="100" y="225" width="10" height="25" class="skin" rx="5"/>
+  
+  <!-- Child 2 (Girl) -->
+  <!-- Body -->
+  <rect x="200" y="220" width="30" height="50" class="child-dress-2" rx="5"/>
+  
+  <!-- Head -->
+  <circle cx="215" cy="205" r="15" class="skin"/>
+  
+  <!-- Hair -->
+  <path d="M200,205 Q215,185 230,205" class="hair" stroke="none"/>
+  <circle cx="208" cy="200" r="8" class="hair"/>
+  <circle cx="222" cy="200" r="8" class="hair"/>
+  
+  <!-- Face -->
+  <circle cx="210" cy="202" r="2" fill="#000"/> <!-- Left eye -->
+  <circle cx="220" cy="202" r="2" fill="#000"/> <!-- Right eye -->
+  <path d="M212,210 Q215,213 218,210" stroke="#000" stroke-width="1.5" fill="none"/> <!-- Smile -->
+  
+  <!-- Arms -->
+  <rect x="190" y="225" width="10" height="25" class="skin" rx="5"/>
+  <rect x="230" y="225" width="10" height="25" class="skin" rx="5"/>
+  
+  <!-- Playground elements -->
+  <circle cx="150" cy="250" r="10" fill="#e74c3c"/>
+  <rect x="250" y="220" width="30" height="30" fill="#9b59b6" rx="5"/>
+</svg>

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <style>
+    .skin { fill: #ffdbac; }
+    .hair { fill: #8b572a; }
+    .uniform { fill: #3498db; }
+    .desk { fill: #d35400; }
+    .book { fill: #e74c3c; }
+    .board { fill: #2c3e50; }
+    .chalk { fill: #ecf0f1; }
+  </style>
+  
+  <!-- Background with whiteboard -->
+  <rect width="300" height="300" fill="#f5f5f5"/>
+  <rect x="50" y="30" width="200" height="100" fill="#fff" stroke="#ddd" stroke-width="2"/>
+  
+  <!-- Math equations on board -->
+  <text x="150" y="60" font-family="Arial" font-size="16" text-anchor="middle" fill="#2c3e50">Advanced Mathematics</text>
+  <text x="150" y="90" font-family="Arial" font-size="14" text-anchor="middle" fill="#2c3e50">∫(x²+2x+1)dx = x³/3+x²+x+C</text>
+  <text x="150" y="110" font-family="Arial" font-size="14" text-anchor="middle" fill="#2c3e50">E = mc²</text>
+  
+  <!-- Study table -->
+  <rect x="50" y="180" width="200" height="20" class="desk" rx="2"/>
+  <rect x="60" y="200" width="15" height="60" class="desk"/>
+  <rect x="225" y="200" width="15" height="60" class="desk"/>
+  
+  <!-- Books and laptop -->
+  <rect x="70" y="160" width="40" height="20" class="book"/>
+  <rect x="120" y="165" width="60" height="15" fill="#95a5a6"/>
+  <rect x="120" y="150" width="60" height="15" fill="#7f8c8d"/>
+  
+  <!-- Calculator -->
+  <rect x="190" y="165" width="30" height="15" fill="#34495e" rx="2"/>
+  <rect x="195" y="170" width="5" height="5" fill="#ecf0f1"/>
+  <rect x="205" y="170" width="5" height="5" fill="#ecf0f1"/>
+  <rect x="215" y="170" width="5" height="5" fill="#ecf0f1"/>
+  
+  <!-- Student -->
+  <!-- Body -->
+  <rect x="130" y="210" width="40" height="60" class="uniform" rx="5"/>
+  
+  <!-- Head -->
+  <circle cx="150" cy="190" r="20" class="skin"/>
+  
+  <!-- Hair -->
+  <path d="M130,190 Q150,160 170,190" class="hair" stroke="none"/>
+  <circle cx="140" cy="180" r="10" class="hair"/>
+  <circle cx="160" cy="180" r="10" class="hair"/>
+  
+  <!-- Face -->
+  <circle cx="140" cy="185" r="3" fill="#000"/> <!-- Left eye -->
+  <circle cx="160" cy="185" r="3" fill="#000"/> <!-- Right eye -->
+  <path d="M145,200 Q150,205 155,200" stroke="#000" stroke-width="2" fill="none"/> <!-- Smile -->
+  
+  <!-- Arms -->
+  <rect x="110" y="220" width="20" height="30" class="skin" rx="5"/>
+  <rect x="170" y="220" width="20" height="30" class="skin" rx="5"/>
+</svg>

@@ -1,0 +1,56 @@
+{
+  "mediums": [
+    {
+      "value": "Bangla Medium",
+      "label": "Bangla Medium"
+    },
+    {
+      "value": "English Version",
+      "label": "English Version"
+    },
+    {
+      "value": "English Medium",
+      "label": "English Medium"
+    },
+    {
+      "value": "Religious Studies",
+      "label": "Religious Studies"
+    },
+    {
+      "value": "Admission Test",
+      "label": "Admission Test"
+    },
+    {
+      "value": "Professional Skill Development",
+      "label": "Professional Skill Development"
+    },
+    {
+      "value": "Arts",
+      "label": "Arts"
+    },
+    {
+      "value": "Special Skill Development",
+      "label": "Special Skill Development"
+    },
+    {
+      "value": "Uni Help",
+      "label": "Uni Help"
+    },
+    {
+      "value": "Language Learning",
+      "label": "Language Learning"
+    },
+    {
+      "value": "Test Preparation",
+      "label": "Test Preparation"
+    },
+    {
+      "value": "Madrasa Medium",
+      "label": "Madrasa Medium"
+    },
+    {
+      "value": "Special Child Education",
+      "label": "Special Child Education"
+    }
+  ]
+}

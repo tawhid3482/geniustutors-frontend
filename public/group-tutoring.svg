@@ -1,0 +1,41 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="80" fill="#F3E8FF" />
+  
+  <!-- Classroom outline -->
+  <rect x="50" y="70" width="100" height="80" rx="2" fill="#DDD6FE" stroke="#7E22CE" stroke-width="2" />
+  
+  <!-- Whiteboard -->
+  <rect x="60" y="80" width="80" height="40" fill="white" stroke="#7E22CE" stroke-width="2" />
+  <path d="M70 95L80 105M80 95L70 105" stroke="#7E22CE" stroke-width="1" /> <!-- Math symbol -->
+  <path d="M90 95H110" stroke="#7E22CE" stroke-width="1" /> <!-- Math symbol -->
+  <path d="M100 85V105" stroke="#7E22CE" stroke-width="1" /> <!-- Math symbol -->
+  <path d="M120 95L130 95M125 90L125 100" stroke="#7E22CE" stroke-width="1" /> <!-- Math symbol -->
+  
+  <!-- Teacher -->
+  <circle cx="100" cy="70" r="10" fill="#7E22CE" /> <!-- Head -->
+  <path d="M100 80V100" stroke="#7E22CE" stroke-width="3" /> <!-- Body -->
+  <path d="M100 85H85" stroke="#7E22CE" stroke-width="2" /> <!-- Left arm -->
+  <path d="M100 85H115" stroke="#7E22CE" stroke-width="2" /> <!-- Right arm -->
+  <path d="M95 100L90 120" stroke="#7E22CE" stroke-width="2" /> <!-- Left leg -->
+  <path d="M105 100L110 120" stroke="#7E22CE" stroke-width="2" /> <!-- Right leg -->
+  
+  <!-- Students (simplified) -->
+  <circle cx="70" cy="130" r="7" fill="#9333EA" /> <!-- Student 1 head -->
+  <path d="M70 137V150" stroke="#9333EA" stroke-width="2" /> <!-- Student 1 body -->
+  
+  <circle cx="90" cy="130" r="7" fill="#9333EA" /> <!-- Student 2 head -->
+  <path d="M90 137V150" stroke="#9333EA" stroke-width="2" /> <!-- Student 2 body -->
+  
+  <circle cx="110" cy="130" r="7" fill="#9333EA" /> <!-- Student 3 head -->
+  <path d="M110 137V150" stroke="#9333EA" stroke-width="2" /> <!-- Student 3 body -->
+  
+  <circle cx="130" cy="130" r="7" fill="#9333EA" /> <!-- Student 4 head -->
+  <path d="M130 137V150" stroke="#9333EA" stroke-width="2" /> <!-- Student 4 body -->
+  
+  <!-- Desks (simplified) -->
+  <rect x="65" y="145" width="10" height="5" fill="#DDD6FE" stroke="#7E22CE" stroke-width="1" />
+  <rect x="85" y="145" width="10" height="5" fill="#DDD6FE" stroke="#7E22CE" stroke-width="1" />
+  <rect x="105" y="145" width="10" height="5" fill="#DDD6FE" stroke="#7E22CE" stroke-width="1" />
+  <rect x="125" y="145" width="10" height="5" fill="#DDD6FE" stroke="#7E22CE" stroke-width="1" />
+</svg>

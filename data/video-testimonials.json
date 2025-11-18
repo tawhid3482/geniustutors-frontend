@@ -1,0 +1,46 @@
+{
+  "videoTestimonials": [
+    {
+      "id": 1,
+      "name": "Sarah Rahman",
+      "role": "HSC Student",
+      "location": "Dhanmondi, Dhaka",
+      "avatar": "/placeholder.svg",
+      "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "duration": "2:45",
+      "testimonial": "Tutor Today helped me find the perfect math tutor. My grades improved from 60% to 95% in just 3 months.",
+      "isActive": true,
+      "rating": 5,
+      "createdAt": "2024-01-15T10:30:00Z",
+      "updatedAt": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": 2,
+      "name": "Ahmed Hassan",
+      "role": "University Student",
+      "location": "Gulshan, Dhaka",
+      "avatar": "/placeholder.svg",
+      "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "duration": "3:12",
+      "testimonial": "Thanks to my tutor from Tutor Today, I successfully got admitted to BUET. The personalized attention made all the difference.",
+      "isActive": false,
+      "rating": 5,
+      "createdAt": "2024-01-16T14:20:00Z",
+      "updatedAt": "2025-09-27T19:43:59.441Z"
+    },
+    {
+      "id": 3,
+      "name": "Fatima Khan",
+      "role": "Class 10 Student",
+      "location": "Uttara, Dhaka",
+      "avatar": "/placeholder.svg",
+      "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+      "duration": "2:18",
+      "testimonial": "My English speaking improved dramatically. The tutor used innovative methods that made learning fun and engaging.",
+      "isActive": true,
+      "rating": 5,
+      "createdAt": "2024-01-17T09:15:00Z",
+      "updatedAt": "2024-01-17T09:15:00Z"
+    }
+  ]
+}

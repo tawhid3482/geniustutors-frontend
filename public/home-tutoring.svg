@@ -1,0 +1,33 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="80" fill="#F3E8FF" />
+  
+  <!-- Home outline -->
+  <path d="M60 110V150H140V110" stroke="#7E22CE" stroke-width="3" stroke-linecap="round" />
+  <path d="M50 100L100 60L150 100" stroke="#7E22CE" stroke-width="3" stroke-linecap="round" />
+  
+  <!-- Door -->
+  <rect x="90" y="120" width="20" height="30" fill="#DDD6FE" stroke="#7E22CE" stroke-width="2" />
+  
+  <!-- Window -->
+  <rect x="70" y="90" width="20" height="20" fill="#DDD6FE" stroke="#7E22CE" stroke-width="2" />
+  <rect x="110" y="90" width="20" height="20" fill="#DDD6FE" stroke="#7E22CE" stroke-width="2" />
+  
+  <!-- Teacher and student -->
+  <circle cx="75" cy="130" r="8" fill="#7E22CE" /> <!-- Teacher head -->
+  <path d="M75 138V150" stroke="#7E22CE" stroke-width="2" /> <!-- Teacher body -->
+  <path d="M75 142H65" stroke="#7E22CE" stroke-width="2" /> <!-- Teacher arm -->
+  <path d="M75 142H85" stroke="#7E22CE" stroke-width="2" /> <!-- Teacher arm -->
+  
+  <circle cx="125" cy="135" r="6" fill="#9333EA" /> <!-- Student head -->
+  <path d="M125 141V150" stroke="#9333EA" stroke-width="2" /> <!-- Student body -->
+  <path d="M125 144H118" stroke="#9333EA" stroke-width="2" /> <!-- Student arm -->
+  <path d="M125 144H132" stroke="#9333EA" stroke-width="2" /> <!-- Student arm -->
+  
+  <!-- Book/desk -->
+  <rect x="95" y="140" width="20" height="10" fill="#DDD6FE" stroke="#7E22CE" stroke-width="1" />
+  
+  <!-- Plant decoration -->
+  <path d="M150 150C150 150 155 140 150 135C145 140 150 150 150 150Z" fill="#A855F7" />
+  <path d="M150 150V160" stroke="#7E22CE" stroke-width="1" />
+</svg>

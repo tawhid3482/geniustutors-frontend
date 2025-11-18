@@ -1,0 +1,78 @@
+{
+  "chats": {
+    "support": {
+      "id": "support",
+      "name": "Support Team",
+      "role": "Customer Support",
+      "avatar": "🛠️",
+      "participants": [
+        "support",
+        "tutor"
+      ],
+      "messages": [
+        {
+          "id": "msg_1",
+          "senderId": "support",
+          "senderName": "Support Team",
+          "message": "Hello! How can we help you today?",
+          "timestamp": "2025-08-20T04:39:56.525Z",
+          "isRead": true
+        }
+      ],
+      "lastMessage": "Hello! How can we help you today?",
+      "unreadCount": 0,
+      "updatedAt": "2025-08-20T05:41:36.558Z"
+    },
+    "admin": {
+      "id": "admin",
+      "name": "Admin Team",
+      "role": "Administrator",
+      "avatar": "👨‍💼",
+      "participants": [
+        "admin",
+        "tutor"
+      ],
+      "messages": [
+        {
+          "id": "msg_1",
+          "senderId": "admin",
+          "senderName": "Admin Team",
+          "message": "Welcome to Tutor Connect! Your profile has been verified.",
+          "timestamp": "2025-08-20T03:39:56.525Z",
+          "isRead": true
+        }
+      ],
+      "lastMessage": "Welcome to Tutor Connect! Your profile has been verified.",
+      "unreadCount": 0,
+      "updatedAt": "2025-08-20T05:41:35.709Z"
+    },
+    "manager": {
+      "id": "manager",
+      "name": "Mamun Manager",
+      "role": "Regional Manager",
+      "avatar": "👨‍💻",
+      "participants": [
+        "manager",
+        "tutor"
+      ],
+      "messages": [
+        {
+          "id": "msg_1",
+          "senderId": "manager",
+          "senderName": "Mamun Manager",
+          "message": "Hi! There's a new job assignment available in your area.",
+          "timestamp": "2025-08-20T04:09:56.525Z",
+          "isRead": true
+        }
+      ],
+      "lastMessage": "Hi! There's a new job assignment available in your area.",
+      "unreadCount": 0,
+      "updatedAt": "2025-08-20T05:41:37.455Z"
+    }
+  },
+  "metadata": {
+    "lastUpdated": "2025-08-20T05:39:56.525Z",
+    "totalMessages": 3,
+    "totalChats": 3
+  }
+}

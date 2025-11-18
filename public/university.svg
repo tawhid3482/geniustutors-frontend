@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <style>
+    .building { fill: #e67e22; }
+    .pillar { fill: #d35400; }
+    .roof { fill: #c0392b; }
+    .window { fill: #3498db; }
+    .steps { fill: #95a5a6; }
+    .graduate { fill: #2c3e50; }
+    .skin { fill: #ffdbac; }
+    .hair { fill: #8b572a; }
+  </style>
+  
+  <!-- Sky background -->
+  <rect width="300" height="300" fill="#f5f5f5"/>
+  
+  <!-- University building -->
+  <rect x="50" y="80" width="200" height="150" class="building"/>
+  
+  <!-- Roof -->
+  <polygon points="30,80 150,30 270,80" class="roof"/>
+  
+  <!-- Pillars -->
+  <rect x="70" y="80" width="20" height="150" class="pillar"/>
+  <rect x="140" y="80" width="20" height="150" class="pillar"/>
+  <rect x="210" y="80" width="20" height="150" class="pillar"/>
+  
+  <!-- Windows -->
+  <rect x="100" y="100" width="30" height="40" class="window" rx="2"/>
+  <rect x="170" y="100" width="30" height="40" class="window" rx="2"/>
+  <rect x="100" y="160" width="30" height="40" class="window" rx="2"/>
+  <rect x="170" y="160" width="30" height="40" class="window" rx="2"/>
+  
+  <!-- Steps -->
+  <rect x="70" y="230" width="160" height="10" class="steps"/>
+  <rect x="80" y="240" width="140" height="10" class="steps"/>
+  <rect x="90" y="250" width="120" height="10" class="steps"/>
+  
+  <!-- Graduate 1 -->
+  <circle cx="120" cy="270" r="15" class="skin"/> <!-- Head -->
+  <rect x="110" y="285" width="20" height="30" class="graduate"/> <!-- Body -->
+  <path d="M105,270 Q120,255 135,270" class="hair"/> <!-- Hair -->
+  
+  <!-- Graduation cap -->
+  <rect x="110" y="260" width="20" height="5" fill="#000"/>
+  <polygon points="120,255 110,260 130,260" fill="#000"/>
+  <line x1="120" y1="255" x2="130" y2="265" stroke="#000" stroke-width="1"/>
+  
+  <!-- Graduate 2 -->
+  <circle cx="180" cy="270" r="15" class="skin"/> <!-- Head -->
+  <rect x="170" y="285" width="20" height="30" class="graduate"/> <!-- Body -->
+  <path d="M165,270 Q180,255 195,270" class="hair"/> <!-- Hair -->
+  
+  <!-- Graduation cap -->
+  <rect x="170" y="260" width="20" height="5" fill="#000"/>
+  <polygon points="180,255 170,260 190,260" fill="#000"/>
+  <line x1="180" y1="255" x2="190" y2="265" stroke="#000" stroke-width="1"/>
+  
+  <!-- University emblem -->
+  <circle cx="150" cy="60" r="15" fill="#f1c40f"/>
+  <text x="150" y="65" font-family="Arial" font-size="12" text-anchor="middle" fill="#fff">U</text>
+</svg>

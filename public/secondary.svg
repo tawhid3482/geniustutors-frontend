@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <style>
+    .skin { fill: #ffdbac; }
+    .hair { fill: #8b572a; }
+    .uniform { fill: #3498db; }
+    .desk { fill: #d35400; }
+    .book { fill: #e74c3c; }
+    .board { fill: #2c3e50; }
+    .chalk { fill: #ecf0f1; }
+    .lab { fill: #9b59b6; }
+  </style>
+  
+  <!-- Background with science lab -->
+  <rect width="300" height="300" fill="#f5f5f5"/>
+  
+  <!-- Lab table -->
+  <rect x="50" y="180" width="200" height="20" class="desk" rx="2"/>
+  <rect x="60" y="200" width="15" height="60" class="desk"/>
+  <rect x="225" y="200" width="15" height="60" class="desk"/>
+  
+  <!-- Lab equipment -->
+  <rect x="80" y="150" width="20" height="30" class="lab" rx="2"/>
+  <path d="M85,150 L95,150 L90,130 Z" class="lab"/>
+  
+  <rect x="120" y="160" width="30" height="20" fill="#3498db" rx="2"/>
+  
+  <!-- Flask -->
+  <path d="M200,180 L190,150 L210,150 Z" fill="#2ecc71" opacity="0.7"/>
+  <rect x="195" y="140" width="10" height="10" fill="#2ecc71"/>
+  
+  <!-- Student 1 -->
+  <!-- Body -->
+  <rect x="70" y="210" width="40" height="60" class="uniform" rx="5"/>
+  
+  <!-- Head -->
+  <circle cx="90" cy="190" r="20" class="skin"/>
+  
+  <!-- Hair -->
+  <path d="M70,190 Q90,160 110,190" class="hair" stroke="none"/>
+  <circle cx="80" cy="180" r="10" class="hair"/>
+  <circle cx="100" cy="180" r="10" class="hair"/>
+  
+  <!-- Face -->
+  <circle cx="80" cy="185" r="3" fill="#000"/> <!-- Left eye -->
+  <circle cx="100" cy="185" r="3" fill="#000"/> <!-- Right eye -->
+  <path d="M85,200 Q90,205 95,200" stroke="#000" stroke-width="2" fill="none"/> <!-- Smile -->
+  
+  <!-- Student 2 -->
+  <!-- Body -->
+  <rect x="190" y="210" width="40" height="60" class="uniform" rx="5"/>
+  
+  <!-- Head -->
+  <circle cx="210" cy="190" r="20" class="skin"/>
+  
+  <!-- Hair -->
+  <path d="M190,190 Q210,160 230,190" class="hair" stroke="none"/>
+  <circle cx="200" cy="180" r="10" class="hair"/>
+  <circle cx="220" cy="180" r="10" class="hair"/>
+  
+  <!-- Face -->
+  <circle cx="200" cy="185" r="3" fill="#000"/> <!-- Left eye -->
+  <circle cx="220" cy="185" r="3" fill="#000"/> <!-- Right eye -->
+  <path d="M205,200 Q210,205 215,200" stroke="#000" stroke-width="2" fill="none"/> <!-- Smile -->
+  
+  <!-- Periodic table -->
+  <rect x="50" y="30" width="200" height="100" class="board"/>
+  <text x="150" y="60" font-family="Arial" font-size="16" text-anchor="middle" class="chalk">Periodic Table</text>
+  
+  <!-- Elements -->
+  <rect x="70" y="70" width="20" height="20" fill="#e74c3c" stroke="#fff"/>
+  <text x="80" y="85" font-family="Arial" font-size="10" text-anchor="middle" fill="#fff">H</text>
+  
+  <rect x="100" y="70" width="20" height="20" fill="#e67e22" stroke="#fff"/>
+  <text x="110" y="85" font-family="Arial" font-size="10" text-anchor="middle" fill="#fff">He</text>
+  
+  <rect x="70" y="100" width="20" height="20" fill="#f1c40f" stroke="#fff"/>
+  <text x="80" y="115" font-family="Arial" font-size="10" text-anchor="middle" fill="#fff">Li</text>
+  
+  <rect x="100" y="100" width="20" height="20" fill="#2ecc71" stroke="#fff"/>
+  <text x="110" y="115" font-family="Arial" font-size="10" text-anchor="middle" fill="#fff">Be</text>
+</svg>
