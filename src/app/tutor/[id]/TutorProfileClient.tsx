@@ -53,12 +53,10 @@ export default function TutorProfileClient({ tutorId }: TutorProfileClientProps)
     district: '',
     area: '',
     detailedLocation: '',
-    category: '',
     selectedCategories: [],
     selectedSubjects: [],
     selectedClasses: [],
     tutorGenderPreference: '' as any,
-    salary: '',
     isSalaryNegotiable: true,
     salaryRange: {
       min: '' as any,
@@ -140,7 +138,7 @@ export default function TutorProfileClient({ tutorId }: TutorProfileClientProps)
     setIsLoadingTaxonomy(true);
     try {
       const taxonomy = await taxonomyService.getTaxonomyData();
-      setCategories(taxonomy.categories || []);
+      // setCategories(taxonomy.categories);
     } catch (error) {
       console.error('Error fetching taxonomy:', error);
       toast({

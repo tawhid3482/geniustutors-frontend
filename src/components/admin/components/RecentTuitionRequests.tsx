@@ -98,7 +98,7 @@ export function RecentTuitionRequests() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium truncate">
-                    {request.category && <span className="text-blue-600 font-semibold mr-2">{request.category}</span>}
+                    {/* {request.category && <span className="text-blue-600 font-semibold mr-2">{request.category}</span>} */}
                     {request.selectedSubjects?.join(', ') || 'No subjects'} - {request.selectedClasses?.join(', ') || 'No classes'}
                   </div>
                   <div className="text-sm text-muted-foreground flex items-center gap-1">
