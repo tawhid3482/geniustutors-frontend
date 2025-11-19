@@ -7,17 +7,17 @@ export interface TuitionJob {
   studentFullName?: string;
   studentEmail?: string;
   numberOfStudents: number;
-  studentGender: 'Male' | 'Female' | 'Mixed';
+  studentGender: any;
   district: string;
   area: string;
   postOffice?: string;
   locationDetails: string;
-  medium: 'English' | 'Bangla' | 'Both';
+  medium: any;
   studentClass: string;
   subject: string;
   category?: string;
-  tutoringType: 'Home Tutoring' | 'Online Tutoring' | 'Both';
-  preferredTeacherGender: 'Male' | 'Female' | 'Any';
+  tutoringType: any;
+  preferredTeacherGender: any;
   daysPerWeek: number;
   tutoringTime: string;
   salaryRangeMin: number;
@@ -26,12 +26,13 @@ export interface TuitionJob {
   experienceRequired?: string;
   availability?: string;
   extraInformation: string;
-  adminNote?: string;
+  adminNote?: any;
   updateNotice?: string;
-  status: 'active' | 'inactive' | 'completed' | 'assign';
+  status: any;
   urgent?: boolean;
   createdAt: string;
   updatedAt: string;
+  tutorExperience:any;
 }
 
 export interface TuitionJobsResponse {
@@ -189,6 +190,7 @@ class TuitionJobsService {
         updateNotice: job.update_notice || job.updateNotice || '',
         status: job.status || 'active',
         urgent: job.urgent || false,
+        tutorExperience: job.tutorExperience ,
         createdAt: job.created_at || job.createdAt,
         updatedAt: job.updated_at || job.updatedAt
       };

@@ -24,7 +24,7 @@ export interface TestimonialsResponse {
 // Fetch all active testimonials (public)
 export const getTestimonials = async (): Promise<Testimonial[]> => {
   try {
-    const response = await axios.get('/api/testimonials');
+    const response = await axios.get(`/api/testimonials`);
     if (response.data.success) {
       return response.data.data.filter((testimonial: Testimonial) => testimonial.isActive);
     }

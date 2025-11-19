@@ -21,7 +21,13 @@ const tutorRequestsApi = baseApi.injectEndpoints({
       }),
       providesTags: [tagTypes.tutorRequests],
     }),
-    
+    getSingleTutorRequest: builder.query({
+      query: (id: string) => ({
+        url: `/tutor-requests/${id}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.tutorRequests],
+    }),
     updateTutorRequests: builder.mutation({
       query: ({ id, data }) => {
         return {
@@ -44,8 +50,9 @@ const tutorRequestsApi = baseApi.injectEndpoints({
 });
 
 export const {
-useCreateTutorRequestsMutation,
-useDeleteTutorRequestsMutation,
-useGetAllTutorRequestsQuery,
-useUpdateTutorRequestsMutation
+  useCreateTutorRequestsMutation,
+  useDeleteTutorRequestsMutation,
+  useGetAllTutorRequestsQuery,
+  useUpdateTutorRequestsMutation,
+  useGetSingleTutorRequestQuery
 } = tutorRequestsApi;
