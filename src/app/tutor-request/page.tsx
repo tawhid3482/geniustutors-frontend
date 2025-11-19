@@ -144,12 +144,12 @@ export default function TutorRequestPage() {
 
   // Process ALL districts from districtData - FIXED VERSION
   useEffect(() => {
-    if (districtData && Array.isArray(districtData)) {
+    if (districtData?.data && Array.isArray(districtData?.data)) {
       // console.log("Processing ALL district data:", districtData);
       
       const processedDistricts: {value: string, label: string}[] = [];
       
-      districtData.forEach((district: District) => {
+      districtData?.data.forEach((district: District) => {
         if (district.name && Array.isArray(district.name)) {
           // Create separate options for EACH district name in the array
           district.name.forEach((districtName: string) => {
@@ -170,12 +170,12 @@ export default function TutorRequestPage() {
 
   // Process ALL areas from areaData - FIXED VERSION
   useEffect(() => {
-    if (areaData && Array.isArray(areaData)) {
+    if (areaData?.data && Array.isArray(areaData?.data)) {
       // console.log("Processing ALL area data:", areaData);
       
       const processedAreas: {value: string, label: string}[] = [];
       
-      areaData.forEach((area: Area) => {
+      areaData?.data.forEach((area: Area) => {
         if (area.name && Array.isArray(area.name)) {
           // Create separate options for EACH area name in the array
           area.name.forEach((areaName: string) => {
@@ -196,12 +196,13 @@ export default function TutorRequestPage() {
 
   // Process categories from categoryData
   useEffect(() => {
-    if (categoryData && Array.isArray(categoryData)) {
+    if (categoryData?.data && Array.isArray(categoryData?.data)) {
       // Transform category data to match your Category type
-      const processedCategories = categoryData.map((category: any) => ({
+      const processedCategories = categoryData?.data.map((category: any) => ({
         id: category.id,
         name: category.name,
         // Add other properties as needed
+        // description:category.description,
         subjects: category.subjects || [],
         classLevels: category.classLevels || [],
       }));

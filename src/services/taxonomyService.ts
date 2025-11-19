@@ -17,7 +17,7 @@ export interface ClassLevel {
 export interface Category {
   id: number;
   name: string;
-  description: string;
+  // description: string;
   icon_url?: string; // Add icon_url to the Category interface
   subjects: Subject[];
   classLevels: ClassLevel[];

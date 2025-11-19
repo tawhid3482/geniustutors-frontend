@@ -61,8 +61,8 @@ export default function TuitionJobs() {
 
   // Debug logs
   useEffect(() => {
-    if (jobsData) {
-      console.log("Sample job tutoring types:", jobsData.map((job: any) => ({
+    if (jobsData?.data) {
+      console.log("Sample job tutoring types:", jobsData?.data?.map((job: any) => ({
         id: job.id,
         tutoringType: job.tutoringType,
         studentName: job.studentName
@@ -72,17 +72,17 @@ export default function TuitionJobs() {
 
   // Process jobs data from Redux
   useEffect(() => {
-    if (jobsData) {
-      setJobs(jobsData);
+    if (jobsData?.data) {
+      setJobs(jobsData?.data);
       setIsLoading(false);
       
       // Set pagination if available
-      if (jobsData.pagination) {
-        setTotalPages(jobsData.pagination.pages || 1);
-        setTotalCount(jobsData.pagination.total || jobsData.data.length);
+      if (jobsData?.data?.pagination) {
+        setTotalPages(jobsData?.data?.pagination.pages || 1);
+        setTotalCount(jobsData?.data?.pagination.total || jobsData?.data?.data?.length);
       } else {
         setTotalPages(1);
-        setTotalCount(jobsData.length);
+        setTotalCount(jobsData?.data?.length);
       }
     } else if (jobsLoading) {
       setIsLoading(true);
@@ -109,13 +109,13 @@ export default function TuitionJobs() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (areaData) {
-      const allAreaNames = areaData.flatMap((area:any) => area.name);
+    if (areaData?.data) {
+      const allAreaNames = areaData?.data?.flatMap((area:any) => area.name);
       setAvailableAreas(Array.from(new Set(allAreaNames)));
       setSelectedArea('all');
     } else {
-      if (areaData?.data) {
-        const allAreaNames = areaData.flatMap((area:any) => area.name);
+      if (areaData?.data?.data) {
+        const allAreaNames = areaData?.data.flatMap((area:any) => area.name);
         setAvailableAreas(Array.from(new Set(allAreaNames)));
       } else {
         setAvailableAreas([]);
@@ -126,8 +126,8 @@ export default function TuitionJobs() {
 
   // Initialize available areas when area data loads
   useEffect(() => {
-    if (areaData?.data) {
-      const allAreaNames = areaData.flatMap((area:any) => area.name);
+    if (areaData?.data?.data) {
+      const allAreaNames = areaData?.data.flatMap((area:any) => area.name);
       setAvailableAreas(Array.from(new Set(allAreaNames)));
     }
   }, [areaData]);
@@ -185,10 +185,10 @@ export default function TuitionJobs() {
   };
 
   // Extract districts from district data
-  const districts = districtData?.[0]?.name || [];
+  const districts = districtData?.data?.[0]?.name || [];
 
   // Extract categories from category data
-  const categories = categoryData || [];
+  const categories = categoryData?.data || [];
 
   // Filter jobs based on search query and selected filters
   const filteredJobs = jobs.filter((job:any) => {

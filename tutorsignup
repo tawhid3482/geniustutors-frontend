@@ -23,27 +23,49 @@ import {
   MapPin,
   Building2,
 } from "lucide-react";
+import { phoneVerificationService } from "@/services/phoneVerificationService";
+import { BANGLADESH_DISTRICTS_WITH_POST_OFFICES } from "@/data/bangladeshDistricts";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
 import { useGetAllAreaQuery } from "@/redux/features/area/areaApi";
-import { useCreateAuthMutation } from "@/redux/features/auth/authApi";
+import { useCheckPhoneExistsMutation, useCreateAuthMutation } from "@/redux/features/auth/authApi";
 
 interface TutorSignupFormProps {
+  onPhoneVerification: (
+    phoneNumber: string,
+    fullName: string,
+    userData?: any
+  ) => void;
   onSuccess?: () => void;
 }
 
 export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
+  onPhoneVerification,
   onSuccess,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // RTK Queries
   const { data: categoryData } = useGetAllCategoryQuery(undefined);
   const { data: areaData } = useGetAllAreaQuery(undefined);
   const [createAuth, { isLoading: creating }] = useCreateAuthMutation();
+  const [checkPhoneNumber, { isLoading: checking }] = useCheckPhoneExistsMutation();
 
-  // Form data state
+
+  // Extract all thanas from the districts data
+  const getAllThanas = () => {
+    const allThanas: string[] = [];
+    BANGLADESH_DISTRICTS_WITH_POST_OFFICES.forEach((district) => {
+      district.areas.forEach((area) => {
+        if (!allThanas.includes(area.name)) {
+          allThanas.push(area.name);
+        }
+      });
+    });
+    return allThanas.sort();
+  };
+
+  // Simplified tutor registration form data
   const [tutorFormData, setTutorFormData] = useState({
     fullName: "",
     email: "",
@@ -61,7 +83,7 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
     confirmPassword: "",
   });
 
-  // Handle input changes
+  // Helper functions for tutor registration
   const handleTutorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setTutorFormData((prev) => ({ ...prev, [name]: value }));
@@ -79,24 +101,62 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
     setTutorFormData((prev) => ({ ...prev, background: backgrounds }));
   };
 
-  // Prepare categories for MultiSelect
-  const categoryOptions =
-    categoryData?.data?.map((category: any) => ({
-      value: category.name,
-      label: category.name,
-    })) || [];
+  // State for categories from database
+  const [categories, setCategories] = useState<
+    { id: number; name: string; description: string }[]
+  >([]);
+  console.log(categories);
+  const [loadingCategories, setLoadingCategories] = useState(false);
 
-  // Prepare areas for MultiSelect - flatten all area names
-  const areaOptions =
-    areaData?.data?.flatMap(
-      (area: any) =>
-        area.name?.map((areaName: string) => ({
-          value: areaName,
-          label: areaName,
-        })) || []
-    ) || [];
+  // Fetch categories from database
+  const fetchCategories = async () => {
+    setLoadingCategories(true);
+    try {
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api"
+        }/categories`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.data);
+      } else {
+        console.error("Failed to fetch categories");
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
 
-  // Simplified registration without OTP and phone verification
+  // Fetch categories on component mount
+  React.useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  // Check if email already exists
+  const checkPhoneExists = async (phone: string) => {
+    try {
+      const res = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
+        }/api/auth/check-phone`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone }),
+        }
+      );
+
+      const data = await res.json();
+      return data.exists || false;
+    } catch (error) {
+      console.error("Error checking phone:", error);
+      return false;
+    }
+  };
+
   const handleTutorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -107,7 +167,6 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
       !tutorFormData.universityName ||
       !tutorFormData.departmentName ||
       tutorFormData.preferredAreas.length === 0 ||
-      tutorFormData.background.length === 0 ||
       !tutorFormData.gender ||
       !tutorFormData.password ||
       !tutorFormData.confirmPassword
@@ -134,92 +193,65 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
     }
 
     setLoading(true);
-
     try {
-      // Normalize phone number
-      let normalizedPhone = tutorFormData.phone;
-      if (tutorFormData.phone.startsWith("+880")) {
-        normalizedPhone = "0" + tutorFormData.phone.slice(4);
-      } else if (tutorFormData.phone.startsWith("880")) {
-        normalizedPhone = "0" + tutorFormData.phone.slice(3);
+      // Check if phone number already exists
+      const phoneExists = await checkPhoneExists(tutorFormData.phone);
+      if (phoneExists) {
+        throw new Error(
+          "An account with this phone number already exists. Please use a different phone number or try logging in."
+        );
       }
 
-      // Build registration payload
+      // Send OTP for phone verification first
+      console.log("Sending OTP for tutor phone verification...");
+      await phoneVerificationService.sendOTP(
+        tutorFormData.phone,
+        tutorFormData.fullName
+      );
+
+      // Build registration payload expected by backend and include tutor extra details
       const registrationPayload = {
-        fullName: tutorFormData.fullName,
+        // Required for account creation
         email: tutorFormData.email || null,
-        phone: normalizedPhone,
         password: tutorFormData.password,
-        role: "TUTOR" as const,
+        full_name: tutorFormData.fullName,
+        role: "tutor" as const,
+        phone: tutorFormData.phone,
         gender: tutorFormData.gender,
-        alternative_number: tutorFormData.alternativePhone || null,
-        Institute_name: tutorFormData.universityName,
-        department_name: tutorFormData.departmentName,
-        year: tutorFormData.universityYear || null,
-        preferred_areas: tutorFormData.preferredAreas,
-        religion: tutorFormData.religion || null,
+
+        // Tutor extra details to submit after account creation
+        alternativePhone: tutorFormData.alternativePhone,
+        universityName: tutorFormData.universityName,
+        departmentName: tutorFormData.departmentName,
+        universityYear: tutorFormData.universityYear,
+        preferredAreas: tutorFormData.preferredAreas,
+        religion: tutorFormData.religion,
         nationality: tutorFormData.nationality,
         background: tutorFormData.background,
       };
 
-      // console.log("Registration payload:", registrationPayload);
+      console.log(
+        "🔍 TutorSignupForm - Registration payload prepared:",
+        registrationPayload
+      );
 
-      // Direct registration without OTP - use unwrap() for proper error handling
-      const result = await createAuth(registrationPayload).unwrap();
-      
-      // console.log("Registration successful:", result);
-
-      if (result.success) {
-        toast.success("Registration successful! Please login.");
-        if (onSuccess) {
-          onSuccess();
-        }
-
-        // Reset form
-        setTutorFormData({
-          fullName: "",
-          email: "",
-          phone: "",
-          alternativePhone: "",
-          universityName: "",
-          departmentName: "",
-          universityYear: "",
-          preferredAreas: [],
-          background: [],
-          gender: "",
-          religion: "",
-          nationality: "Bangladeshi",
-          password: "",
-          confirmPassword: "",
-        });
-      }
+      // Show phone verification dialog with registration payload
+      console.log(
+        "🔄 TutorSignupForm - Calling onPhoneVerification with registrationPayload..."
+      );
+      onPhoneVerification(
+        tutorFormData.phone,
+        tutorFormData.fullName,
+        registrationPayload
+      );
+      console.log(
+        "✅ TutorSignupForm - Phone verification dialog should now be visible for tutor"
+      );
+      setLoading(false);
+      return; // Don't proceed until phone is verified
     } catch (error: any) {
-      // console.error("Registration error:", error);
-      
-      // RTK Query error structure - check different possible error formats
-      if (error?.data) {
-        // Case 1: Backend returned error with data property
-        const errorMessage = error.data.message || "Registration failed";
-        toast.error(errorMessage);
-      } else if (error?.error) {
-        // Case 2: Backend returned error with error property
-        const errorMessage = error.error || "Registration failed";
-        toast.error(errorMessage);
-      } else if (error?.message) {
-        // Case 3: JavaScript error or backend message directly
-        const errorMessage = error.message;
-        
-        // Check for specific backend error messages
-        if (errorMessage.includes("phone already registered") || 
-            errorMessage.includes("already exists")) {
-          toast.error("Phone number already registered. Please use a different number.");
-        } else {
-          toast.error(errorMessage);
-        }
-      } else {
-        // Case 4: Unknown error format
-        toast.error("Registration failed. Please try again.");
-      }
+      console.error("Error in tutor registration:", error);
+      toast.error(error.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -287,19 +319,16 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
               id="tutorPhone"
               name="phone"
               type="tel"
-              placeholder="01XXXXXXXXX"
+              placeholder="Enter your mobile number"
               className="pl-10 h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
               value={tutorFormData.phone}
               onChange={handleTutorChange}
               required
             />
           </div>
-          <p className="text-xs text-gray-500">
-            Enter your 11-digit Bangladeshi phone number
-          </p>
         </div>
 
-        {/* Alternative Number */}
+        {/* Alternative Number (Hidden by default) */}
         <div className="space-y-2">
           <Label
             htmlFor="alternativePhone"
@@ -377,7 +406,7 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
           />
         </div>
 
-        {/* Preferred Areas - From Database */}
+        {/* Preferred Areas */}
         <div className="space-y-2">
           <Label
             htmlFor="preferredAreas"
@@ -389,7 +418,10 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
             value={tutorFormData.preferredAreas}
             onValueChange={handlePreferredAreasChange}
             placeholder="Select preferred areas"
-            options={areaOptions}
+            options={getAllThanas().map((thana) => ({
+              value: thana,
+              label: thana,
+            }))}
             maxSelections={5}
             className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
           />
@@ -411,9 +443,8 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
               <SelectValue placeholder="Select your gender" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Male">Male</SelectItem>
-              <SelectItem value="Female">Female</SelectItem>
-              <SelectItem value="Other">Other</SelectItem>
+              <SelectItem value="male">Male</SelectItem>
+              <SelectItem value="female">Female</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -456,20 +487,23 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
           />
         </div>
 
-        {/* Background - Categories From Database */}
+        {/* Background */}
         <div className="space-y-2">
           <Label
             htmlFor="background"
             className="text-sm font-semibold text-green-800"
           >
-            Teaching Categories *
+            Background
           </Label>
           <MultiSelect
             value={tutorFormData.background}
             onValueChange={handleBackgroundChange}
-            placeholder="Select teaching categories"
-            options={categoryOptions}
-            maxSelections={5}
+            placeholder="Select Categories"
+            options={categories.map((category) => ({
+              value: category.name,
+              label: category.name,
+            }))}
+            maxSelections={3}
             className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
           />
         </div>
@@ -535,9 +569,9 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
       <Button
         type="submit"
         className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300"
-        disabled={loading || creating}
+        disabled={loading}
       >
-        {loading || creating ? "Creating Account..." : "Complete Registration"}
+        {loading ? "Creating Account..." : "Complete Registration"}
       </Button>
     </form>
   );

@@ -2,70 +2,76 @@
 import type { BaseQueryFn } from "@reduxjs/toolkit/query";
 import type { AxiosRequestConfig, AxiosError } from "axios";
 import { instance as axiosInstance } from "./axiosInstance";
-import { IMeta } from "@/types/common";
 
 export const axiosBaseQuery =
-  (
-    { baseUrl }: { baseUrl: string } = { baseUrl: "" }
-  ): BaseQueryFn<
+  ({ baseUrl }: { baseUrl: string } = { baseUrl: "" }): BaseQueryFn<
     {
       url: string;
       method?: AxiosRequestConfig["method"];
       data?: AxiosRequestConfig["data"];
       params?: AxiosRequestConfig["params"];
       headers?: AxiosRequestConfig["headers"];
-      meta?: IMeta;
       contentType?: string;
     },
     unknown,
     unknown
   > =>
-  async ({ url, method, data, params, headers, contentType }) => {
+  async ({ url, method = "GET", data, params, headers, contentType }) => {
     try {
-      // ✅ FormData হলে Content-Type set করবেন না
-      const requestHeaders: AxiosRequestConfig["headers"] = {};
-      
-      // Only set Content-Type if it's NOT FormData
-      if (contentType) {
-        requestHeaders["Content-Type"] = contentType;
-      } else if (!(data instanceof FormData)) {
-        // Default to JSON only if not FormData
-        requestHeaders["Content-Type"] = "application/json";
-      }
-
-      // ✅ Token থাকলে set করুন
-      const token = localStorage.getItem("token");
-      if (token) {
-        requestHeaders["Authorization"] = `Bearer ${token}`;
-      }
-
-      // ✅ Custom headers যোগ করুন
-      if (headers) {
-        Object.assign(requestHeaders, headers);
-      }
-
-      console.log("🔍 Axios Request:", {
-        url: baseUrl + url,
-        method,
-        dataType: data instanceof FormData ? "FormData" : typeof data,
-        headers: requestHeaders,
-      });
-
-      const result = await axiosInstance({
+      const requestConfig: AxiosRequestConfig = {
         url: baseUrl + url,
         method,
         data,
         params,
-        headers: requestHeaders,
+        headers: {
+          ...(contentType && { "Content-Type": contentType }),
+          ...(!contentType && !(data instanceof FormData) && { "Content-Type": "application/json" }),
+          ...headers,
+        },
+      };
+
+      console.log("🔍 Making API Request:", requestConfig);
+
+      const response = await axiosInstance(requestConfig);
+
+      // Return the data directly since your interceptor already handles it
+      return { data: response.data };
+
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      
+      console.log("❌ API Call Failed:", {
+        status: axiosError.response?.status,
+        data: axiosError.response?.data,
+        message: axiosError.message,
       });
 
-      return { data: result.data };
-    } catch (axiosError) {
-      const err = axiosError as AxiosError;
+      // Handle different error formats from your backend
+      const backendError = axiosError.response?.data as any;
+      
+      let errorMessage = "Something went wrong";
+      
+      if (backendError) {
+        // Your backend format: {success: false, message: "phone already registered"}
+        if (backendError.message) {
+          errorMessage = backendError.message;
+        } else if (backendError.error) {
+          errorMessage = backendError.error;
+        } else if (typeof backendError === 'string') {
+          errorMessage = backendError;
+        }
+      } else if (axiosError.message) {
+        errorMessage = axiosError.message;
+      }
+
       return {
         error: {
-          status: err.response?.status,
-          data: err.response?.data || err.message,
+          status: axiosError.response?.status,
+          data: {
+            message: errorMessage,
+            success: false,
+            ...backendError
+          },
         },
       };
     }

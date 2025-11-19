@@ -100,7 +100,6 @@ export default function TuitionJobDetailsClient({
   } = useGetSingleTutorRequestQuery(jobId);
 
 
-  console.log(singleJobResponse)
 
   // Rest of your existing state
   const [job, setJob] = useState<TuitionJob | null>(null);
@@ -114,8 +113,8 @@ export default function TuitionJobDetailsClient({
 
   // Transform RTK Query data to match your existing TuitionJob interface
   useEffect(() => {
-    if (singleJobResponse) {
-      const apiData: TutorRequestData = singleJobResponse;
+    if (singleJobResponse?.data) {
+      const apiData: TutorRequestData = singleJobResponse?.data;
 
       // Transform the API data to match your TuitionJob interface
       const transformedJob: TuitionJob = {
