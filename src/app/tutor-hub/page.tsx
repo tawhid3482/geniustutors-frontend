@@ -12,6 +12,8 @@ import { TutorCategorySection } from "../../components/tutor-hub/TutorCategorySe
 export default function TutorHubPage() {
   const { user, signOut } = useAuth();
 
+
+
   const handleLogout = async () => {
     try {
       await signOut();
@@ -67,3 +69,5 @@ export default function TutorHubPage() {
     </div>
   );
 }
+
+

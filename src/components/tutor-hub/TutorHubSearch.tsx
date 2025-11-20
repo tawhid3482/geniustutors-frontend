@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TutorCard } from './TutorCard';
+import { useGetAllTutorHubSearchQuery } from "@/redux/features/tutorHub/tutorHubApi";
+import { TutorCard } from '@/components/tutor-hub/TutorCard';
 
 interface Tutor {
   id: string;
@@ -21,40 +22,25 @@ interface Tutor {
 
 export const TutorHubSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Tutor[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = async () => {
+  // Use the query only when we have a search query and user has clicked search
+  const { 
+    data: searchData, 
+    isLoading: isSearching, 
+    error: searchError,
+    refetch 
+  } = useGetAllTutorHubSearchQuery(searchQuery, {
+    skip: !hasSearched || !searchQuery.trim(),
+  });
+
+  const handleSearch = () => {
     if (!searchQuery.trim()) {
-      setSearchResults([]);
       setHasSearched(false);
-      setError(null);
       return;
     }
-
-    setIsSearching(true);
-    setError(null);
     setHasSearched(true);
-
-    try {
-      const response = await fetch(`/api/tutor-hub/search?q=${encodeURIComponent(searchQuery.trim())}&limit=10`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data.tutors || []);
-      } else {
-        setError('Failed to search tutors. Please try again.');
-        setSearchResults([]);
-      }
-    } catch (err) {
-      console.error('Search error:', err);
-      setError('Failed to search tutors. Please try again.');
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
+    refetch();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -65,10 +51,25 @@ export const TutorHubSearch = () => {
 
   const clearSearch = () => {
     setSearchQuery('');
-    setSearchResults([]);
     setHasSearched(false);
-    setError(null);
   };
+
+  // Transform backend data to frontend format
+  const searchResults = searchData?.data?.tutors?.map((tutor:any) => ({
+    id: tutor.id,
+    tutor_id: tutor.tutor_id?.toString(),
+    full_name: tutor.fullName, // Map fullName to full_name
+    avatar_url: tutor.avatar,
+    gender: tutor.gender,
+    verified: tutor.verified,
+    premium: tutor.premium ? "premium" : "standard",
+    location: tutor.district,
+    created_at: tutor.createdAt,
+    university_name: tutor.Institute_name,
+    district: tutor.district
+  })) || [];
+
+  const error = searchError ? 'Failed to search tutors. Please try again.' : null;
 
   return (
     <div className="mb-6 sm:mb-8">
@@ -141,7 +142,7 @@ export const TutorHubSearch = () => {
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                {searchResults.map((tutor) => (
+                {searchResults.map((tutor:any) => (
                   <TutorCard key={tutor.id} tutor={tutor} />
                 ))}
               </div>

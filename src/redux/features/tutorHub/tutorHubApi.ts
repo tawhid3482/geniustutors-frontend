@@ -3,16 +3,6 @@ import { tagTypes } from "@/redux/tag-types";
 
 const TutorHubApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // createTutorHub: builder.mutation({
-    //   query: (formData) => {
-    //     return {
-    //       url: "/tutor-hub/create",
-    //       method: "POST",
-    //       data: formData,
-    //     };
-    //   },
-    //   invalidatesTags: [tagTypes.TutorHub],
-    // }),
 
     getAllTutorHubStats: builder.query({
       query: () => ({
@@ -21,6 +11,30 @@ const TutorHubApi = baseApi.injectEndpoints({
       }),
       providesTags: [tagTypes.TutorHub],
     }),
+
+  getAllTutorHubSearch: builder.query({
+  query: (searchQuery: string) => ({
+    url: `/tutor-hub/search${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`,
+    method: "GET",
+  }),
+  providesTags: [tagTypes.TutorHub],
+}),
+
+  getAllTutorHubByCategory: builder.query({
+  query: (searchQuery: string) => ({
+    url: `/tutor-hub/category${searchQuery ? `?category=${encodeURIComponent(searchQuery)}` : ''}`,
+    method: "GET",
+  }),
+  providesTags: [tagTypes.TutorHub],
+}),
+
+  getSingleTutorHub: builder.query({
+  query: (tutorId: string) => ({
+    url: `/tutor-hub/${tutorId}`,
+    method: "GET",
+  }),
+  providesTags: [tagTypes.TutorHub],
+}),
     
     // updateTutorHub: builder.mutation({
     //   query: ({ id, data }) => {
@@ -44,5 +58,8 @@ const TutorHubApi = baseApi.injectEndpoints({
 });
 
 export const {
-useGetAllTutorHubStatsQuery
+useGetAllTutorHubSearchQuery,
+useGetAllTutorHubStatsQuery,
+useGetAllTutorHubByCategoryQuery,
+useGetSingleTutorHubQuery
 } = TutorHubApi;

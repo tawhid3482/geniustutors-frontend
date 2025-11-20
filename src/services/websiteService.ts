@@ -37,7 +37,7 @@ export const getWebsiteInfo = async (): Promise<WebsiteInfo> => {
     // Return default values if API call fails
     return {
       siteName: 'Tutor Connect',
-      siteLogo: '/logo.png',
+      siteLogo: '/Genius-Tutor-Logo.png',
       contactEmail: 'contact@tutorconnect.com',
       contactPhone: '+880-1234-567890',
       address: 'Dhaka, Bangladesh',

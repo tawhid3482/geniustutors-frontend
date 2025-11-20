@@ -109,12 +109,12 @@ export const TutorHubHeader = () => {
         <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">
           Hire the best qualified tutors with few clicks!
         </h1>
-        
+{/*         
         <div className="flex items-center justify-center gap-2 sm:gap-4 mb-6 sm:mb-8">
           <div className="text-red-500 text-xs sm:text-sm">
             {error}
           </div>
-        </div>
+        </div> */}
       </div>
     );
   }
@@ -125,7 +125,7 @@ export const TutorHubHeader = () => {
         Hire the best qualified tutors with few clicks!
       </h1>
       
-      <div className="flex items-center justify-between gap-1 sm:gap-2 md:gap-4 mb-6 sm:mb-8">
+      {/* <div className="flex items-center justify-between gap-1 sm:gap-2 md:gap-4 mb-6 sm:mb-8">
         <button
           onClick={prevLocation}
           disabled={currentLocationIndex === 0}
@@ -162,7 +162,7 @@ export const TutorHubHeader = () => {
         >
           <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6 text-gray-600" />
         </button>
-      </div>
+      </div> */}
     </div>
   );
 };

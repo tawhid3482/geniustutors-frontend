@@ -18,6 +18,7 @@ export interface Review {
 
 export interface TutorReview {
   id: string;
+  tutor_id:number;
   reviewer_id: string;
   rating: number;
   comment: string;

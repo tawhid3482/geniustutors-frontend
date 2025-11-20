@@ -10,6 +10,9 @@ import ReduxProvider from "@/lib/ReduxProvider";
 export const metadata = {
   title: "Tutor Connect - Find the Perfect Tutor",
   description: "Connect with qualified tutors for personalized learning experiences.",
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 export const viewport = {

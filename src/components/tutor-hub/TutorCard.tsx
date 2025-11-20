@@ -16,6 +16,7 @@ interface TutorCardProps {
     gender?: string;
     verified?: number | string | boolean;
     premium?: string;
+    tutor_id:number;
     created_at?: string;
   };
 }
@@ -49,7 +50,7 @@ export const TutorCard = ({ tutor }: TutorCardProps) => {
   };
 
   const handleViewProfile = () => {
-    router.push(`/tutor/${tutor.id}`);
+    router.push(`/tutor/${tutor.tutor_id}`);
   };
 
   return (
@@ -81,7 +82,7 @@ export const TutorCard = ({ tutor }: TutorCardProps) => {
         ) : (
           <Badge variant="outline" className="text-gray-500 border-gray-300 text-xs">Unverified</Badge>
         )}
-        {tutor.premium === 'yes' && (
+        {tutor.premium === 'premium' && (
           <div 
             className="bg-blue-500 hover:bg-blue-600 rounded-full p-1.5 sm:p-2 flex items-center justify-center cursor-pointer group relative"
             title="Genius Tutor"

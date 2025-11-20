@@ -462,7 +462,7 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
             htmlFor="background"
             className="text-sm font-semibold text-green-800"
           >
-            Teaching Categories *
+           Background
           </Label>
           <MultiSelect
             value={tutorFormData.background}
