@@ -6,35 +6,39 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Play, ArrowRight, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { getVideoTestimonials, VideoTestimonial } from "@/services/videoTestimonialService";
+import { useGetAllVideoTestimonialQuery } from "@/redux/features/videoTestimonail/videoTestimonailApi";
+
+interface VideoTestimonial {
+  id: string;
+  name: string;
+  role: string;
+  location: string;
+  avatar: string;
+  videoUrl: string;
+  thumbnail: string;
+  duration: string;
+  testimonial: string;
+  rating: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export const VideoTestimonialsSection = () => {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [videoTestimonials, setVideoTestimonials] = useState<VideoTestimonial[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedVideo, setSelectedVideo] = useState<VideoTestimonial | null>(null);
   const slideInterval = useRef<NodeJS.Timeout | null>(null);
   
-  const totalSlides = videoTestimonials.length;
+  // Use RTK Query to fetch video testimonials
+  const { data: videoData, isLoading, error } = useGetAllVideoTestimonialQuery(undefined);
   
-  // Fetch video testimonials on component mount
-  useEffect(() => {
-    const fetchVideoTestimonials = async () => {
-      try {
-        setLoading(true);
-        const data = await getVideoTestimonials();
-        setVideoTestimonials(data);
-      } catch (error) {
-        console.error('Error fetching video testimonials:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Extract video testimonials from API response
+  const videoTestimonials = videoData?.data || [];
+  const totalSlides = videoTestimonials.length;
 
-    fetchVideoTestimonials();
-  }, []);
+  console.log('Video Testimonials:', videoTestimonials);
   
   // Auto-slide functionality
   useEffect(() => {
@@ -81,7 +85,9 @@ export const VideoTestimonialsSection = () => {
 
   // Helper function to extract YouTube video ID from URL
   const getYouTubeVideoId = (url: string): string => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    if (!url) return '';
+    
+    const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : '';
   };
@@ -90,13 +96,13 @@ export const VideoTestimonialsSection = () => {
   const getYouTubeEmbedUrl = (url: string): string => {
     const videoId = getYouTubeVideoId(url);
     if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}`;
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
     }
     return url; // Return original URL if it's already an embed URL
   };
 
   // Show loading state
-  if (loading) {
+  if (isLoading) {
     return (
       <section className="py-16 bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 text-center">
@@ -106,6 +112,30 @@ export const VideoTestimonialsSection = () => {
             <div className="h-12 bg-gray-200 rounded mb-16"></div>
             <div className="h-64 bg-gray-200 rounded"></div>
           </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">
+            Watch Our Students Share Their Success Stories
+          </h2>
+          <p className="text-lg text-gray-600 mb-8">
+            Hear directly from our students about their learning journey
+          </p>
+          <Button 
+            onClick={handleHireTutor}
+            className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg text-lg font-medium mb-16"
+          >
+            Hire a Tutor
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+          <p className="text-red-500">Failed to load video testimonials. Please try again.</p>
         </div>
       </section>
     );
@@ -160,40 +190,42 @@ export const VideoTestimonialsSection = () => {
           
           {/* Video Testimonials Carousel */}
           <div className="relative">
-            {/* Navigation Controls */}
-            <div className="flex justify-center items-center mb-6 gap-4">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="h-10 w-10 rounded-full bg-green-50 hover:bg-green-100 border-green-200"
-                onClick={handlePrev}
-              >
-                <ChevronLeft className="h-5 w-5 text-green-600" />
-              </Button>
-              
-              <div className="hidden sm:flex gap-2">
-                {videoTestimonials.map((_, idx) => (
-                  <button
-                    key={idx}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      currentSlide === idx 
-                        ? 'bg-green-600 w-6' 
-                        : 'bg-green-300 w-2'
-                    }`}
-                    onClick={() => setCurrentSlide(idx)}
-                  />
-                ))}
+            {/* Navigation Controls - Only show if multiple videos */}
+            {videoTestimonials.length > 1 && (
+              <div className="flex justify-center items-center mb-6 gap-4">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="h-10 w-10 rounded-full bg-green-50 hover:bg-green-100 border-green-200"
+                  onClick={handlePrev}
+                >
+                  <ChevronLeft className="h-5 w-5 text-green-600" />
+                </Button>
+                
+                <div className="hidden sm:flex gap-2">
+                  {videoTestimonials.map((_:any, idx:any) => (
+                    <button
+                      key={idx}
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        currentSlide === idx 
+                          ? 'bg-green-600 w-6' 
+                          : 'bg-green-300 w-2'
+                      }`}
+                      onClick={() => setCurrentSlide(idx)}
+                    />
+                  ))}
+                </div>
+                
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="h-10 w-10 rounded-full bg-green-50 hover:bg-green-100 border-green-200"
+                  onClick={handleNext}
+                >
+                  <ChevronRight className="h-5 w-5 text-green-600" />
+                </Button>
               </div>
-              
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="h-10 w-10 rounded-full bg-green-50 hover:bg-green-100 border-green-200"
-                onClick={handleNext}
-              >
-                <ChevronRight className="h-5 w-5 text-green-600" />
-              </Button>
-            </div>
+            )}
             
             {/* Video Testimonials Container */}
             <div 
@@ -205,7 +237,7 @@ export const VideoTestimonialsSection = () => {
                 className="flex transition-transform duration-500 ease-in-out"
                 style={{ transform: `translateX(-${currentSlide * 100}%)` }}
               >
-                {videoTestimonials.map((testimonial, index) => (
+                {videoTestimonials.map((testimonial:any, index:any) => (
                   <div key={testimonial.id} className="w-full flex-shrink-0">
                     <div className="max-w-4xl mx-auto">
                       {/* Video Card */}
@@ -246,7 +278,7 @@ export const VideoTestimonialsSection = () => {
                               <Avatar className="h-12 w-12">
                                 <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
                                 <AvatarFallback className="bg-green-600 text-white">
-                                  {testimonial.name.split(' ').map(n => n[0]).join('')}
+                                  {testimonial.name.split(' ').map((n:any) => n[0]).join('')}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="text-left">
@@ -255,6 +287,23 @@ export const VideoTestimonialsSection = () => {
                                 </h4>
                                 <p className="text-sm text-gray-600">{testimonial.role}</p>
                                 <p className="text-xs text-gray-500">{testimonial.location}</p>
+                                {/* Rating Stars */}
+                                <div className="flex items-center mt-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <svg
+                                      key={i}
+                                      className={`w-3 h-3 ${
+                                        i < testimonial.rating 
+                                          ? 'text-yellow-400 fill-current' 
+                                          : 'text-gray-300'
+                                      }`}
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                  ))}
+                                </div>
                               </div>
                             </div>
                             
@@ -297,6 +346,23 @@ export const VideoTestimonialsSection = () => {
             <div className="mt-4 text-white text-center">
               <h3 className="text-xl font-bold">{selectedVideo.name}</h3>
               <p className="text-gray-300">{selectedVideo.role} • {selectedVideo.location}</p>
+              {/* Rating in modal */}
+              <div className="flex justify-center items-center mt-2">
+                {[...Array(5)].map((_, i) => (
+                  <svg
+                    key={i}
+                    className={`w-4 h-4 ${
+                      i < selectedVideo.rating 
+                        ? 'text-yellow-400 fill-current' 
+                        : 'text-gray-300'
+                    }`}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
             </div>
           </div>
         </div>
