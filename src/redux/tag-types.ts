@@ -10,6 +10,7 @@ export enum tagTypes {
   TutorHub = "TutorHub",
   testimonial = "testimonial",
   VideoTestimonial = "VideoTestimonial",
+  FeatureMedia = "FeatureMedia",
 }
 
 export const tagTypesList = [
@@ -24,4 +25,5 @@ export const tagTypesList = [
   tagTypes.TutorHub,
   tagTypes.testimonial,
   tagTypes.VideoTestimonial,
+  tagTypes.FeatureMedia,
 ];

@@ -38,7 +38,6 @@ export const VideoTestimonialsSection = () => {
   const videoTestimonials = videoData?.data || [];
   const totalSlides = videoTestimonials.length;
 
-  console.log('Video Testimonials:', videoTestimonials);
   
   // Auto-slide functionality
   useEffect(() => {
