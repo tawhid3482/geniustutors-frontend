@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext.next'
 import { useRouter } from 'next/navigation'
-import { ManagerDashboard } from '@/components/manager/ManagerDashboard'
+// import { ManagerDashboard } from '@/components/manager/ManagerDashboard'
 import { Loader2 } from 'lucide-react'
 
 export default function ManagerDashboardPage() {
@@ -49,5 +49,5 @@ export default function ManagerDashboardPage() {
     return null; // Return null as we're redirecting in useEffect
   }
 
-  return <ManagerDashboard user={user} />;
+  // return <ManagerDashboard user={user} />;
 }

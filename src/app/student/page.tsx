@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext.next';
 import { RefreshCw } from 'lucide-react';
-import { StudentDashboardMain } from '@/components/student/dashboard/StudentDashboardMain';
+// import { StudentDashboardMain } from '@/components/student/dashboard/StudentDashboardMain';
 
 export default function StudentDashboardPage() {
   const { user, loading } = useAuth();
@@ -63,5 +63,5 @@ export default function StudentDashboardPage() {
     );
   }
 
-  return <StudentDashboardMain />;
+  // return <StudentDashboardMain />;
 }

@@ -3,7 +3,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { LoginDialog } from "@/components/auth/LoginDialog";
+import { LoginDialog } from "../auth/LoginDialog";
+// import { LoginDialog } from "@/components/auth/LoginDialog";
 
 export const TuitionTypesSection = () => {
   const tuitionTypes = [

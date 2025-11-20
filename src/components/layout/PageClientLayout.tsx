@@ -2,7 +2,7 @@
 
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { LoginDialog } from "@/components/auth/LoginDialog";
+// import { LoginDialog } from "@/components/auth/LoginDialog";
 import { useAuth } from "@/contexts/AuthContext.next";
 
 interface PageClientLayoutProps {
@@ -37,8 +37,8 @@ export function PageClientLayout({
             avatar: user.avatar_url
           } : undefined}
           onLogout={handleLogout}
-          LoginComponent={LoginDialog}
-          RegisterComponent={LoginDialog}
+          // LoginComponent={LoginDialog}
+          // RegisterComponent={LoginDialog}
         />
       )}
       <main className="flex-1 overflow-x-hidden w-full">{children}</main>

@@ -65,7 +65,7 @@ export function useStudentDashboard() {
     district: '',
     area: '',
     detailedLocation: '',
-    category: '',
+    // category: '',
     selectedCategories: [],
     selectedSubjects: [],
     selectedClasses: [],
@@ -77,7 +77,7 @@ export function useStudentDashboard() {
     tutoringDays: 5,
     tutoringTime: '',
     tutoringDuration: '',
-    salary: '',
+    // salary: '',
     isSalaryNegotiable: false,
     salaryRange: {
       min: 3000,
@@ -208,12 +208,12 @@ export function useStudentDashboard() {
       district: request.district,
       area: request.area,
       detailedLocation: request.detailedLocation,
-      category: request.category,
+      // category: request.category,
       selectedCategories: request.selectedCategories || [],
       selectedSubjects: request.selectedSubjects || [],
       selectedClasses: request.selectedClasses || [],
       tutorGenderPreference: request.tutorGenderPreference,
-      salary: request.salary,
+      // salary: request.salary,
       isSalaryNegotiable: request.isSalaryNegotiable,
       salaryRange: request.salaryRange,
       extraInformation: request.extraInformation,
@@ -705,10 +705,10 @@ export function useStudentDashboard() {
       const areaMatch = tutor.area.toLowerCase().includes(tutorRequestForm.area.toLowerCase());
       const genderMatch = tutorRequestForm.tutorGenderPreference.toLowerCase() === 'any' || 
         tutor.gender.toLowerCase() === tutorRequestForm.tutorGenderPreference.toLowerCase();
-      const budgetMatch = tutorRequestForm.salary ? 
-        parseFloat(tutor.hourlyRate.toString()) <= parseFloat(tutorRequestForm.salary) : true;
+      // // const budgetMatch = tutorRequestForm.salary ? 
+      //   parseFloat(tutor.hourlyRate.toString()) <= parseFloat(tutorRequestForm.salary) : true;
       
-      return subjectMatch && areaMatch && genderMatch && budgetMatch;
+      // return subjectMatch && areaMatch && genderMatch && budgetMatch;
     });
 
     // Convert Tutor[] to TutorAssignment[] format
@@ -740,12 +740,12 @@ export function useStudentDashboard() {
       district: '',
       area: '',
       detailedLocation: '',
-      category: '',
+      // category: '',
       selectedCategories: [],
       selectedSubjects: [],
       selectedClasses: [],
       tutorGenderPreference: 'any',
-      salary: '',
+      // salary: '',
       isSalaryNegotiable: false,
       salaryRange: {
         min: 3000,
@@ -780,10 +780,10 @@ export function useStudentDashboard() {
           const areaMatch = tutor.area.toLowerCase().includes(tutorRequestForm.area.toLowerCase());
           const genderMatch = tutorRequestForm.tutorGenderPreference.toLowerCase() === 'any' || 
             tutor.gender.toLowerCase() === tutorRequestForm.tutorGenderPreference.toLowerCase();
-          const budgetMatch = tutorRequestForm.salary ? 
-            parseFloat(tutor.hourlyRate.toString()) <= parseFloat(tutorRequestForm.salary) : true;
+          // const budgetMatch = tutorRequestForm.salary ? 
+            // parseFloat(tutor.hourlyRate.toString()) <= parseFloat(tutorRequestForm.salary) : true;
           
-          return subjectMatch && areaMatch && genderMatch && budgetMatch;
+          // return subjectMatch && areaMatch && genderMatch && budgetMatch;
         });
 
         // Refresh posted requests to get the latest data from database
@@ -798,12 +798,12 @@ export function useStudentDashboard() {
           district: '',
           area: '',
           detailedLocation: '',
-          category: '',
+          // category: '',
           selectedCategories: [],
           selectedSubjects: [],
           selectedClasses: [],
           tutorGenderPreference: 'any',
-          salary: '',
+          // salary: '',
           isSalaryNegotiable: false,
           salaryRange: {
             min: 3000,

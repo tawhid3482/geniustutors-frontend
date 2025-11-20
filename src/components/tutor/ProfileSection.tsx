@@ -414,7 +414,7 @@ export default function ProfileSection() {
     setIsLoadingTaxonomy(true);
     try {
       const taxonomy = await taxonomyService.getTaxonomyData();
-      setCategories(taxonomy.categories || []);
+      // setCategories(taxonomy.categories || []);
     } catch (error) {
       console.error('Error fetching taxonomy:', error);
       toast({

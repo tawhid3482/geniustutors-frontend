@@ -40,12 +40,12 @@ export default function ContactForm({ tutorId, tutorName, onContactSubmitted }: 
     district: '',
     area: '',
     detailedLocation: '',
-    category: '',
+    // category: '',
     selectedCategories: [],
     selectedSubjects: [],
     selectedClasses: [],
     tutorGenderPreference: 'any',
-    salary: '',
+    // salary: '',
     isSalaryNegotiable: true,
     salaryRange: {
       min: 0,
@@ -107,7 +107,7 @@ export default function ContactForm({ tutorId, tutorName, onContactSubmitted }: 
       setIsLoadingTaxonomy(true);
       try {
         const taxonomyData = await taxonomyService.getTaxonomyData();
-        setCategories(taxonomyData.categories || []);
+        // setCategories(taxonomyData.categories || []);
         
         // Extract all unique subjects and class levels from all categories
         const allSubjects: any[] = [];
@@ -115,25 +115,25 @@ export default function ContactForm({ tutorId, tutorName, onContactSubmitted }: 
         const processedSubjects = new Set<string>();
         const processedClassLevels = new Set<string>();
 
-        taxonomyData.categories.forEach((category) => {
-          if (category.subjects) {
-            category.subjects.forEach((subject: any) => {
-              if (subject && typeof subject === 'object' && subject.id !== undefined && !processedSubjects.has(subject.name)) {
-                allSubjects.push(subject);
-                processedSubjects.add(subject.name);
-              }
-            });
-          }
+        // taxonomyData.categories.forEach((category) => {
+        //   if (category.subjects) {
+        //     category.subjects.forEach((subject: any) => {
+        //       if (subject && typeof subject === 'object' && subject.id !== undefined && !processedSubjects.has(subject.name)) {
+        //         allSubjects.push(subject);
+        //         processedSubjects.add(subject.name);
+        //       }
+        //     });
+        //   }
           
-          if (category.classLevels) {
-            category.classLevels.forEach((classLevel: any) => {
-              if (classLevel && typeof classLevel === 'object' && classLevel.id !== undefined && !processedClassLevels.has(classLevel.name)) {
-                allClassLevels.push(classLevel);
-                processedClassLevels.add(classLevel.name);
-              }
-            });
-          }
-        });
+        //   if (category.classLevels) {
+        //     category.classLevels.forEach((classLevel: any) => {
+        //       if (classLevel && typeof classLevel === 'object' && classLevel.id !== undefined && !processedClassLevels.has(classLevel.name)) {
+        //         allClassLevels.push(classLevel);
+        //         processedClassLevels.add(classLevel.name);
+        //       }
+        //     });
+        //   }
+        // });
 
         setSubjects(allSubjects);
         setClassLevels(allClassLevels);
