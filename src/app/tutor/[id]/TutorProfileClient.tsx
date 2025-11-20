@@ -1571,39 +1571,17 @@ export default function TutorProfileClient({
         reviewsData.length === 0
       ) {
         const demoReviews: TutorReview[] = [
-          {
-            id: "1",
-            tutor_id: tutorId,
-            reviewer_id: "user1",
-            reviewer_name: "Rahim Ahmed",
-            rating: 5,
-            comment:
-              "Excellent tutor! My son improved significantly in mathematics.",
-            created_at: "2024-01-15T10:30:00.000Z",
-            status: "approved",
-          },
-          {
-            id: "2",
-            tutor_id: tutorId,
-            reviewer_id: "user2",
-            reviewer_name: "Fatima Begum",
-            rating: 4,
-            comment: "Very patient and knowledgeable. Good teaching methods.",
-            created_at: "2024-01-10T14:20:00.000Z",
-            status: "approved",
-          },
-          {
-            id: "3",
-            tutor_id: tutorId,
-            reviewer_id: "user3",
-            reviewer_name: "Karim Khan",
-            rating: 5,
-            comment: "Best tutor in Dhaka. Highly recommended!",
-            created_at: "2024-01-05T09:15:00.000Z",
-            status: "approved",
-            response: "Thank you for your kind words!",
-            response_created_at: "2024-01-06T11:00:00.000Z",
-          },
+          // {
+          //   id: "1",
+          //   tutor_id: tutorId,
+          //   reviewer_id: "user1",
+          //   reviewer_name: "Rahim Ahmed",
+          //   rating: 5,
+          //   comment:
+          //     "Excellent tutor! My son improved significantly in mathematics.",
+          //   created_at: "2024-01-15T10:30:00.000Z",
+          //   status: "approved",
+          // }
         ];
         setReviews(demoReviews);
       } else {
@@ -1619,12 +1597,12 @@ export default function TutorProfileClient({
 
       // Use demo stats if no stats from API
       if (!statsData) {
-        setReviewStats({
-          average_rating: 4.5,
-          total_reviews: 12,
-          approved_reviews: 12,
-          rating_distribution: { 5: 8, 4: 3, 3: 1, 2: 0, 1: 0 },
-        });
+        // setReviewStats({
+        //   average_rating: 4.5,
+        //   total_reviews: 12,
+        //   approved_reviews: 12,
+        //   rating_distribution: { 5: 8, 4: 3, 3: 1, 2: 0, 1: 0 },
+        // });
       } else {
         setReviewStats(statsData);
       }
@@ -1632,25 +1610,25 @@ export default function TutorProfileClient({
       // console.error('Error fetching reviews:', err);
       // Fallback to demo data
       const demoReviews: TutorReview[] = [
-        {
-          id: "1",
-          tutor_id: tutorId,
-          reviewer_id: "user1",
-          reviewer_name: "Rahim Ahmed",
-          rating: 5,
-          comment:
-            "Excellent tutor! My son improved significantly in mathematics.",
-          created_at: "2024-01-15T10:30:00.000Z",
-          status: "approved",
-        },
+        // {
+        //   id: "1",
+        //   tutor_id: tutorId,
+        //   reviewer_id: "user1",
+        //   reviewer_name: "Rahim Ahmed",
+        //   rating: 5,
+        //   comment:
+        //     "Excellent tutor! My son improved significantly in mathematics.",
+        //   created_at: "2024-01-15T10:30:00.000Z",
+        //   status: "approved",
+        // },
       ];
       setReviews(demoReviews);
-      setReviewStats({
-        average_rating: 4.5,
-        total_reviews: 12,
-        approved_reviews: 12,
-        rating_distribution: { 5: 8, 4: 3, 3: 1, 2: 0, 1: 0 },
-      });
+      // setReviewStats({
+      //   average_rating: 4.5,
+      //   total_reviews: 12,
+      //   approved_reviews: 12,
+      //   rating_distribution: { 5: 8, 4: 3, 3: 1, 2: 0, 1: 0 },
+      // });
     } finally {
       setReviewsLoading(false);
     }
@@ -1670,61 +1648,61 @@ export default function TutorProfileClient({
     try {
       const taxonomy = await taxonomyService.getTaxonomyData();
       // Use demo categories if no categories from API
-      if (!taxonomy?.categories || taxonomy.categories.length === 0) {
-        const demoCategories: Category[] = [
-          {
-            id: "1",
-            name: "Science",
-            subjects: [
-              { id: "1", name: "Physics" },
-              { id: "2", name: "Chemistry" },
-              { id: "3", name: "Mathematics" },
-              { id: "4", name: "Biology" },
-            ],
-            classLevels: [
-              { id: "1", name: "Class 9" },
-              { id: "2", name: "Class 10" },
-              { id: "3", name: "Class 11" },
-              { id: "4", name: "Class 12" },
-            ],
-          },
-          {
-            id: "2",
-            name: "Business Studies",
-            subjects: [
-              { id: "5", name: "Accounting" },
-              { id: "6", name: "Finance" },
-              { id: "7", name: "Management" },
-            ],
-            classLevels: [
-              { id: "5", name: "Class 11" },
-              { id: "6", name: "Class 12" },
-              { id: "7", name: "University" },
-            ],
-          },
-        ];
-        setCategories(demoCategories);
-      } else {
-        setCategories(taxonomy.categories);
-      }
+      // if (!taxonomy?.categories || taxonomy.categories.length === 0) {
+      //   const demoCategories: Category[] = [
+      //     {
+      //       id: "1",
+      //       name: "Science",
+      //       subjects: [
+      //         { id: "1", name: "Physics" },
+      //         { id: "2", name: "Chemistry" },
+      //         { id: "3", name: "Mathematics" },
+      //         { id: "4", name: "Biology" },
+      //       ],
+      //       classLevels: [
+      //         { id: "1", name: "Class 9" },
+      //         { id: "2", name: "Class 10" },
+      //         { id: "3", name: "Class 11" },
+      //         { id: "4", name: "Class 12" },
+      //       ],
+      //     },
+      //     {
+      //       id: "2",
+      //       name: "Business Studies",
+      //       subjects: [
+      //         { id: "5", name: "Accounting" },
+      //         { id: "6", name: "Finance" },
+      //         { id: "7", name: "Management" },
+      //       ],
+      //       classLevels: [
+      //         { id: "5", name: "Class 11" },
+      //         { id: "6", name: "Class 12" },
+      //         { id: "7", name: "University" },
+      //       ],
+      //     },
+      //   ];
+      //   setCategories(demoCategories);
+      // } else {
+      //   setCategories(taxonomy.categories);
+      // }
     } catch (error) {
       // console.error('Error fetching taxonomy:', error);
       // Fallback to demo categories
       const demoCategories: Category[] = [
-        {
-          id: "1",
-          name: "Science",
-          subjects: [
-            { id: "1", name: "Physics" },
-            { id: "2", name: "Chemistry" },
-            { id: "3", name: "Mathematics" },
-          ],
-          classLevels: [
-            { id: "1", name: "Class 9" },
-            { id: "2", name: "Class 10" },
-            { id: "3", name: "Class 11" },
-          ],
-        },
+        // {
+        //   id: "1",
+        //   name: "Science",
+        //   subjects: [
+        //     { id: "1", name: "Physics" },
+        //     { id: "2", name: "Chemistry" },
+        //     { id: "3", name: "Mathematics" },
+        //   ],
+        //   classLevels: [
+        //     { id: "1", name: "Class 9" },
+        //     { id: "2", name: "Class 10" },
+        //     { id: "3", name: "Class 11" },
+        //   ],
+        // },
       ];
       setCategories(demoCategories);
     } finally {
