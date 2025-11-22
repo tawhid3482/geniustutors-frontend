@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react'
-import { phoneVerificationService } from '@/services/phoneVerificationService'
+import { useCheckPhoneNumberMutation, useCreateStudentOrGuardianMutation } from '@/redux/features/auth/authApi'
+import { useResendOtpMutation, useSendOtpMutation, useVerifyOtpMutation } from '@/redux/features/phoneVerification/phoneVerificationApi'
 
 interface StudentSignupFormProps {
-  onPhoneVerification: (phoneNumber: string, fullName: string) => void
+  onPhoneVerification: (phoneNumber: string, fullName: string, formData?: any) => void
   onSuccess?: () => void
 }
 
@@ -30,82 +31,111 @@ export const StudentSignupForm: React.FC<StudentSignupFormProps> = ({
     gender: ''
   })
 
-  // Check if phone number already exists
-  const checkPhoneExists = async (phone: string) => {
+  // RTK Query mutations
+  const [checkPhoneNumber] = useCheckPhoneNumberMutation()
+  const [sendOTP] = useSendOtpMutation()
+
+
+  // Check if phone number already exists using RTK Query - FIXED
+  const handleCheckPhoneExists = async (phone: string) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000'}/api/auth/check-phone`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone })
-      });
+      const result = await checkPhoneNumber({ phone }).unwrap()
+      console.log('📞 Phone check response:', result)
       
-      const data = await res.json();
-      return data.exists || false;
-    } catch (error) {
-      console.error('Error checking phone:', error);
-      return false;
+      // Check if phone exists based on API response
+      if (result.success && result.data && result.data.exists === true) {
+        console.log('❌ Phone number already exists')
+        return true
+      }
+      
+      console.log('✅ Phone number is available')
+      return false
+    } catch (error: any) {
+      console.error('Error checking phone:', error)
+      
+      // If there's an error in the API call, check the error response
+      if (error?.data?.data?.exists === true) {
+        return true
+      }
+      
+      // Default to false if there's any uncertainty
+      return false
     }
-  };
+  }
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate required fields
     if (!signupForm.phone || !signupForm.password || !signupForm.fullName || !signupForm.gender) {
       toast.error('Please fill in all required fields')
       return
     }
 
+    // Validate password match
     if (signupForm.password !== signupForm.confirmPassword) {
       toast.error('Passwords do not match')
       return
     }
 
+    // Validate password length
     if (signupForm.password.length < 6) {
       toast.error('Password must be at least 6 characters')
       return
     }
 
     // Validate phone number format (Bangladeshi phone number)
-    const phoneRegex = /^(\+880|880|0)?1[3-9]\d{8}$/;
+    const phoneRegex = /^(\+880|880|0)?1[3-9]\d{8}$/
     if (!phoneRegex.test(signupForm.phone)) {
-      toast.error('Please enter a valid Bangladeshi phone number');
-      return;
+      toast.error('Please enter a valid Bangladeshi phone number')
+      return
     }
 
     setLoading(true)
+    
     try {
-      // Check if phone number already exists
-      const phoneExists = await checkPhoneExists(signupForm.phone);
+      // Check if phone number already exists using RTK Query
+      console.log('🔍 Checking if phone number exists...')
+      const phoneExists = await handleCheckPhoneExists(signupForm.phone)
+      
+      
       if (phoneExists) {
-        throw new Error('An account with this phone number already exists. Please use a different phone number or try logging in.');
+        throw new Error('An account with this phone number already exists. Please use a different phone number or try logging in.')
       }
 
-      // Send OTP for phone verification first
-      console.log('Sending OTP for phone verification...');
-      await phoneVerificationService.sendOTP(signupForm.phone, signupForm.fullName);
-      
-      // Store form data for later use after verification
+      // Prepare form data for student registration
       const formData = {
-        email: signupForm.email || null,
+        email: signupForm.email || undefined,
         password: signupForm.password,
-        full_name: signupForm.fullName,
-        role: 'student',
+        fullName: signupForm.fullName,
+        role: 'STUDENT_GUARDIAN',
         phone: signupForm.phone,
         gender: signupForm.gender
-      };
+      }
+
+      console.log('📋 StudentSignupForm - Form data prepared:', formData)
       
-      console.log('🔍 StudentSignupForm - Form data prepared:', formData);
-      console.log('📋 StudentSignupForm - formData type:', typeof formData);
-      console.log('📋 StudentSignupForm - formData keys:', Object.keys(formData));
+      // Send OTP for phone verification ONLY if phone doesn't exist
+      console.log('📱 Sending OTP for phone verification...')
+        await sendOTP({ 
+        phone: signupForm.phone, 
+        name: signupForm.fullName 
+      }).unwrap()
+
+
+      onPhoneVerification(signupForm.phone, signupForm.fullName, formData)
       
-      // Show phone verification dialog with form data (pass to dialog so it uses register endpoint)
-      console.log('🔄 StudentSignupForm - Calling onPhoneVerification with formData...');
-      // @ts-ignore - LoginDialog signature supports optional userData
-      onPhoneVerification(signupForm.phone, signupForm.fullName, formData);
-      setLoading(false);
-      return; // Don't proceed until phone is verified
     } catch (error: any) {
-      console.error('Error in student registration:', error);
-      toast.error(error.message || 'Signup failed')
+      console.error('❌ Error in student registration:', error)
+      
+      // Handle specific error messages from API
+      if (error?.data?.message) {
+        toast.error(error.data.message)
+      } else if (error.message) {
+        toast.error(error.message)
+      } else {
+        toast.error('Signup failed. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -173,15 +203,15 @@ export const StudentSignupForm: React.FC<StudentSignupFormProps> = ({
           <Label htmlFor="studentGender" className="text-sm font-semibold text-green-800">Gender *</Label>
           <Select 
             value={signupForm.gender} 
-            onValueChange={(value: any) => setSignupForm(prev => ({ ...prev, gender: value }))}
+            onValueChange={(value: string) => setSignupForm(prev => ({ ...prev, gender: value }))}
           >
             <SelectTrigger className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm">
               <SelectValue placeholder="Select your gender" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="male">Male</SelectItem>
-              <SelectItem value="female">Female</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+              <SelectItem value="Male">Male</SelectItem>
+              <SelectItem value="Female">Female</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -229,7 +259,6 @@ export const StudentSignupForm: React.FC<StudentSignupFormProps> = ({
           />
         </div>
       </div>
-
 
       <Button 
         type="submit" 

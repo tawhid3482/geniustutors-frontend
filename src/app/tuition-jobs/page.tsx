@@ -637,7 +637,7 @@ export default function TuitionJobs() {
                         </Badge>
                       </div>
                       <p className="text-xs sm:text-sm font-bold text-black mt-1">
-                        {job.studentClass && `Class ${job.studentClass} • `}ID: {job.id}
+                        {job.studentClass && `Class ${job.studentClass} • `}ID: {job.tutorRequestId}
                       </p>
                     </CardHeader>
                     <CardContent className="flex flex-col flex-grow p-4 sm:p-6">

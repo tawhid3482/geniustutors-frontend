@@ -1462,6 +1462,9 @@ export default function TutorProfileClient({
   const { user } = useAuth();
   const { toast } = useToast();
 
+
+  console.log(tutorId)
+
   // Use RTK Query to fetch single tutor data
   const {
     data: singleTutorResponse,

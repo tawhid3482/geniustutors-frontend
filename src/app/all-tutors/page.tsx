@@ -11,13 +11,49 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext.next";
-import tutorService, { Tutor } from "@/services/tutorService";
 import { API_BASE_URL } from "@/config/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
-import { BANGLADESH_DISTRICTS, BANGLADESH_DISTRICTS_WITH_POST_OFFICES } from "@/data/bangladeshDistricts";
 import { useSearchParams } from "next/navigation";
 import { Pagination } from "@/components/ui/pagination";
+import { useGetAllTutorsQuery } from "@/redux/features/tutorHub/tutorHubApi";
+import { useGetAllDistrictsQuery } from "@/redux/features/district/districtApi";
+import { useGetAllAreaQuery } from "@/redux/features/area/areaApi";
+
+// API response এর সাথে match করতে Tutor type
+interface ApiTutor {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  alternative_number: string;
+  Institute_name: string;
+  department_name: string;
+  year: string;
+  preferred_areas: string[];
+  religion: string;
+  nationality: string;
+  background: string[];
+  avatar: string | null;
+  qualification: string | null;
+  district: string | null;
+  premium: boolean;
+  gender: string;
+  role: string;
+  tutor_id: number;
+  rating: number | null;
+  postOffice: string | null;
+  hourly_rate: number | null;
+  subjects: string[];
+  availability: string | null;
+  education: string | null;
+  total_reviews: number | null;
+  experience: number | null;
+  location: string | null;
+  createdAt: string;
+  verified: boolean;
+  genius: boolean;
+}
 
 export default function AllTutors() {
   const { user, profile } = useAuth();
@@ -37,219 +73,229 @@ export default function AllTutors() {
   const [sortOrder, setSortOrder] = useState<string>("desc");
   const [geniusTutorOnly, setGeniusTutorOnly] = useState(false);
   const [verifiedTutorOnly, setVerifiedTutorOnly] = useState(false);
-  const [tutors, setTutors] = useState<Tutor[]>([]);
+  const [tutors, setTutors] = useState<ApiTutor[]>([]);
+  const [districts, setDistricts] = useState<string[]>([]);
+  const [areas, setAreas] = useState<string[]>([]);
+  const [postOffices, setPostOffices] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [availableAreas, setAvailableAreas] = useState<string[]>([]);
-  const [availablePostOffices, setAvailablePostOffices] = useState<Array<{name: string, postcode: string}>>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
 
   const searchParams = useSearchParams();
 
+  // RTK Query ব্যবহার করে data fetch করা
+  const { data: tutorsData, isLoading: rtkLoading, error: rtkError } = useGetAllTutorsQuery(undefined);
+  const { data: districtData } = useGetAllDistrictsQuery(undefined);
+  const { data: areaData } = useGetAllAreaQuery(undefined);
+
   // Handle URL parameters for pre-filtering
   useEffect(() => {
     const districtParam = searchParams.get('district');
     if (districtParam) {
-      // First try to find by ID (new format)
-      const districtById = BANGLADESH_DISTRICTS_WITH_POST_OFFICES.find(d => 
-        d.id === districtParam
-      );
-      if (districtById) {
-        setSelectedDistrict(districtById.id);
-      } else {
-        // Fallback: try to find by name (old format)
-        const districtByName = BANGLADESH_DISTRICTS_WITH_POST_OFFICES.find(d => 
-          d.name.toLowerCase() === districtParam.toLowerCase()
-        );
-        if (districtByName) {
-          setSelectedDistrict(districtByName.id);
-        }
-      }
+      setSelectedDistrict(districtParam);
     }
   }, [searchParams]);
 
-  // Update available areas when district changes
+  // Process district data from RTK Query
   useEffect(() => {
-    if (selectedDistrict !== 'all') {
-      const district = BANGLADESH_DISTRICTS_WITH_POST_OFFICES.find(d => d.id === selectedDistrict);
-      if (district) {
-        setAvailableAreas(district.areas.map(area => area.name));
-        // Reset area and post office when district changes
-        setSelectedArea('all');
-        setSelectedPostOffice('all');
-      } else {
-        setAvailableAreas([]);
+    if (districtData && districtData.success) {
+      console.log('District Data:', districtData);
+      if (districtData.data && districtData.data.length > 0) {
+        // District names array থেকে সব names নেওয়া
+        const allDistrictNames = districtData.data[0].name || [];
+        setDistricts(allDistrictNames);
       }
-    } else {
-      setAvailableAreas([]);
-      setSelectedArea('all');
-      setSelectedPostOffice('all');
     }
-  }, [selectedDistrict]);
+  }, [districtData]);
 
-  // Update available post offices when area changes
+  // Process area data from RTK Query
   useEffect(() => {
-    if (selectedDistrict !== 'all' && selectedArea !== 'all') {
-      const district = BANGLADESH_DISTRICTS_WITH_POST_OFFICES.find(d => d.id === selectedDistrict);
-      if (district) {
-        const area = district.areas.find(a => a.name === selectedArea);
-        if (area) {
-          setAvailablePostOffices(area.postOffices);
-          // Reset post office when area changes
-          setSelectedPostOffice('all');
-        } else {
-          setAvailablePostOffices([]);
-        }
+    if (areaData && areaData.success) {
+      console.log('Area Data:', areaData);
+      if (areaData.data && areaData.data.length > 0) {
+        // Area names array থেকে সব names নেওয়া
+        const allAreaNames = areaData.data[0].name || [];
+        setAreas(allAreaNames);
       }
-    } else {
-      setAvailablePostOffices([]);
-      setSelectedPostOffice('all');
     }
-  }, [selectedDistrict, selectedArea]);
+  }, [areaData]);
+
+  // Post offices - manually set করা হয়েছে
+  // useEffect(() => {
+  //   const manualPostOffices = [
+  //     "Mirpur Post Office",
+  //     "Gulshan Post Office", 
+  //     "Dhanmondi Post Office",
+  //     "Uttara Post Office",
+  //     "Banani Post Office"
+  //   ];
+  //   setPostOffices(manualPostOffices);
+  // }, []);
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
   };
 
-  const fetchTutors = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const params: any = {};
-      
-      if (selectedSubject !== 'all') {
-        params.subject = selectedSubject;
-      }
-      
-      if (selectedDistrict !== 'all') {
-        params.district = selectedDistrict;
-      }
-      
-      if (selectedArea !== 'all') {
-        params.area = selectedArea;
-      }
-      
-      if (selectedPostOffice !== 'all') {
-        params.postOffice = selectedPostOffice;
-      }
-      
-      if (ratingFilter > 0) {
-        params.minRating = ratingFilter;
-      }
-      
-      // Add new filter parameters
-      if (minExperience > 0) {
-        params.minExperience = minExperience;
-      }
-      
-      if (selectedGender !== 'all') {
-        params.gender = selectedGender;
-      }
-      
-      if (selectedEducation !== 'all') {
-        params.education = selectedEducation;
-      }
-      
-      if (selectedAvailability !== 'all') {
-        params.availability = selectedAvailability;
-      }
-      
-      if (maxPrice) {
-        params.maxPrice = maxPrice;
-      }
-      
-      // Add tutor type filters
-      if (geniusTutorOnly) {
-        params.premium = 'yes';
-      }
-      
-      if (verifiedTutorOnly) {
-        params.verified = 1;
-      }
-      
-      // Add sorting parameters
-      if (sortBy) {
-        params.sortBy = sortBy;
-        params.sortOrder = sortOrder;
-      }
-      
-      // Add pagination parameters
-      params.page = currentPage;
-      params.limit = 6;
-      
-      console.log('Fetching tutors with params:', params);
-      console.log('Genius Tutor Only:', geniusTutorOnly);
-      console.log('Verified Tutor Only:', verifiedTutorOnly);
-      console.log('API URL:', `${API_BASE_URL}/tutors?${new URLSearchParams(params as any).toString()}`);
-      const response = await tutorService.getAllTutors(params);
-      
-      console.log('Full API response:', response);
-      console.log('Response keys:', Object.keys(response));
-      
-      if (response.success) {
-        console.log(`Received ${response.data.length} tutors from API`);
-        console.log('Tutors data:', response.data);
-        console.log('Pagination data:', response.pagination);
-        setTutors(response.data);
-        
-        // Update pagination info
-        if (response.pagination) {
-          setTotalPages(response.pagination.pages);
-          setTotalCount(response.pagination.total);
-          console.log(`Total pages: ${response.pagination.pages}, Total count: ${response.pagination.total}`);
-        } else {
-          console.warn('No pagination data received from API');
-          console.log('Available response properties:', Object.keys(response));
-          // Fallback: calculate pagination based on expected total count
-          // Since we know there are 30 active tutors, calculate pagination
-          const expectedTotal = 30; // We know this from database query
-          const limit = 6;
-          const calculatedPages = Math.ceil(expectedTotal / limit);
-          setTotalPages(calculatedPages);
-          setTotalCount(expectedTotal);
-          console.log(`Using fallback pagination: ${calculatedPages} pages, ${expectedTotal} total`);
-        }
-      } else {
-        console.error('API returned error:', response);
-        setError('Failed to fetch tutors');
-        setTutors([]);
-      }
-    } catch (error) {
-      console.error('Error fetching tutors:', error);
-      setError('Failed to fetch tutors. Please try again later.');
-      setTutors([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedSubject, selectedDistrict, selectedArea, selectedPostOffice, ratingFilter, minExperience, selectedGender, selectedEducation, selectedAvailability, maxPrice, sortBy, sortOrder, geniusTutorOnly, verifiedTutorOnly, currentPage]);
-
+  // RTK Query data process করা
   useEffect(() => {
-    fetchTutors();
-  }, [fetchTutors]);
+    if (tutorsData) {
+      console.log('RTK Query Tutors Data:', tutorsData);
+      if (tutorsData.success) {
+        setTutors(tutorsData.data || []);
+        setTotalCount(tutorsData.data?.length || 0);
+        setTotalPages(Math.ceil((tutorsData.data?.length || 0) / 6));
+      } else {
+        setError('Failed to fetch tutors from API');
+      }
+    }
+  }, [tutorsData]);
+
+  // Loading state set করা
+  useEffect(() => {
+    setIsLoading(rtkLoading);
+  }, [rtkLoading]);
+
+  // Error state set করা
+  useEffect(() => {
+    if (rtkError) {
+      setError('Failed to fetch tutors. Please try again later.');
+      console.error('RTK Error:', rtkError);
+    }
+  }, [rtkError]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedSubject, selectedDistrict, selectedArea, selectedPostOffice, ratingFilter, minExperience, selectedGender, selectedEducation, selectedAvailability, maxPrice, sortBy, sortOrder, geniusTutorOnly, verifiedTutorOnly]);
 
-  // No fallback demo tutors - we'll rely on the API
+  // Filter tutors based on search query and other filters
+  const filteredTutors = tutors.filter(tutor => {
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        tutor.fullName?.toLowerCase().includes(query) ||
+        tutor.subjects?.some(subject => subject.toLowerCase().includes(query)) ||
+        tutor.department_name?.toLowerCase().includes(query) ||
+        tutor.Institute_name?.toLowerCase().includes(query) ||
+        tutor.background?.some(bg => bg.toLowerCase().includes(query));
+      
+      if (!matchesSearch) return false;
+    }
 
-  // Filter tutors based on search query (other filters are applied in API call)
-  const filteredTutors = tutors?.filter(tutor => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      tutor.full_name?.toLowerCase().includes(query) ||
-      (typeof tutor.subjects === 'string' ? 
-        tutor.subjects.toLowerCase().includes(query) :
-        Array.isArray(tutor.subjects) && (tutor.subjects as string[]).some(subject => subject.toLowerCase().includes(query)))
-    );
-  }) || [];
+    // Subject filter
+    if (selectedSubject !== 'all' && !tutor.subjects?.includes(selectedSubject)) {
+      return false;
+    }
+
+    // District filter - আলাদা filter, related না
+    if (selectedDistrict !== 'all' && tutor.district !== selectedDistrict) {
+      return false;
+    }
+
+    // Area filter - আলাদা filter, related না (preferred_areas check)
+    if (selectedArea !== 'all' && !tutor.preferred_areas?.some(area => 
+      area.toLowerCase().includes(selectedArea.toLowerCase()))) {
+      return false;
+    }
+
+    // Post Office filter - আলাদা filter, related না
+    // if (selectedPostOffice !== 'all' && tutor.postOffice !== selectedPostOffice) {
+    //   return false;
+    // }
+
+    // Rating filter
+    if (ratingFilter > 0 && (!tutor.rating || tutor.rating < ratingFilter)) {
+      return false;
+    }
+
+    // Experience filter
+    if (minExperience > 0 && (!tutor.experience || tutor.experience < minExperience)) {
+      return false;
+    }
+
+    // Gender filter
+    if (selectedGender !== 'all' && tutor.gender.toLowerCase() !== selectedGender.toLowerCase()) {
+      return false;
+    }
+
+    // Education filter
+    if (selectedEducation !== 'all' && tutor.education !== selectedEducation) {
+      return false;
+    }
+
+    // Availability filter
+    if (selectedAvailability !== 'all' && tutor.availability !== selectedAvailability) {
+      return false;
+    }
+
+    // Price filter
+    if (maxPrice && (!tutor.hourly_rate || tutor.hourly_rate > maxPrice)) {
+      return false;
+    }
+
+    // Genius tutor filter - premium field check করা
+    if (geniusTutorOnly && !tutor.premium) {
+      return false;
+    }
+
+    // Verified tutor filter
+    if (verifiedTutorOnly && !tutor.verified) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Sort filtered tutors
+  const sortedTutors = [...filteredTutors].sort((a, b) => {
+    let aValue: any = 0;
+    let bValue: any = 0;
+
+    switch (sortBy) {
+      case "rating":
+        aValue = a.rating || 0;
+        bValue = b.rating || 0;
+        break;
+      case "hourly_rate":
+        aValue = a.hourly_rate || 0;
+        bValue = b.hourly_rate || 0;
+        break;
+      case "experience":
+        aValue = a.experience || 0;
+        bValue = b.experience || 0;
+        break;
+      case "total_reviews":
+        aValue = a.total_reviews || 0;
+        bValue = b.total_reviews || 0;
+        break;
+      default:
+        aValue = a.rating || 0;
+        bValue = b.rating || 0;
+    }
+
+    if (sortOrder === "asc") {
+      return aValue - bValue;
+    } else {
+      return bValue - aValue;
+    }
+  });
+
+  // Pagination apply করা
+  const paginatedTutors = sortedTutors.slice((currentPage - 1) * 6, currentPage * 6);
 
   // Generate star rating display
-  const renderStars = (rating: number) => {
+  const renderStars = (rating: number | null) => {
+    if (!rating) {
+      return (
+        <div className="flex items-center">
+          <span className="text-sm text-gray-500">No ratings</span>
+        </div>
+      );
+    }
+    
     return (
       <div className="flex items-center">
         {[...Array(5)].map((_, i) => (
@@ -258,7 +304,7 @@ export default function AllTutors() {
             className={`h-4 w-4 ${i < Math.floor(rating) ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
           />
         ))}
-        <span className="ml-1 text-sm font-medium">{typeof rating === 'number' ? rating.toFixed(1) : rating}</span>
+        <span className="ml-1 text-sm font-medium">{rating.toFixed(1)}</span>
       </div>
     );
   };
@@ -314,9 +360,9 @@ export default function AllTutors() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all" className="font-bold">All Districts</SelectItem>
-                        {BANGLADESH_DISTRICTS_WITH_POST_OFFICES.map((district) => (
-                          <SelectItem key={district.id} value={district.id} className="font-bold">
-                            {district.name}
+                        {districts.map((district, index) => (
+                          <SelectItem key={index} value={district} className="font-bold">
+                            {district}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -328,15 +374,14 @@ export default function AllTutors() {
                     <Select 
                       value={selectedArea} 
                       onValueChange={setSelectedArea}
-                      disabled={selectedDistrict === 'all'}
                     >
                       <SelectTrigger id="area" className="h-10 sm:h-11 font-bold">
-                        <SelectValue placeholder={selectedDistrict === 'all' ? "Select a district first" : "All Areas"} />
+                        <SelectValue placeholder="All Areas" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all" className="font-bold">All Areas</SelectItem>
-                        {availableAreas.map((area) => (
-                          <SelectItem key={area} value={area} className="font-bold">
+                        {areas.map((area, index) => (
+                          <SelectItem key={index} value={area} className="font-bold">
                             {area}
                           </SelectItem>
                         ))}
@@ -344,34 +389,32 @@ export default function AllTutors() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <Label htmlFor="postOffice" className="text-sm font-bold text-green-600">Post Office</Label>
                     <Select 
                       value={selectedPostOffice} 
                       onValueChange={setSelectedPostOffice}
-                      disabled={selectedArea === 'all'}
                     >
                       <SelectTrigger id="postOffice" className="h-10 sm:h-11 font-bold">
-                        <SelectValue placeholder={selectedArea === 'all' ? "Select an area first" : "All Post Offices"} />
+                        <SelectValue placeholder="All Post Offices" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all" className="font-bold">All Post Offices</SelectItem>
-                        {availablePostOffices.map((postOffice) => (
-                          <SelectItem key={postOffice.name} value={postOffice.name} className="font-bold">
-                            {postOffice.name} ({postOffice.postcode})
+                        {postOffices.map((postOffice, index) => (
+                          <SelectItem key={index} value={postOffice} className="font-bold">
+                            {postOffice}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
+                  </div> */}
 
                   <div className="space-y-2">
                     <Label htmlFor="rating" className="text-sm font-bold text-green-600">Minimum Rating</Label>
                     <Select value={ratingFilter.toString()} onValueChange={(value) => setRatingFilter(Number(value))}>
                       <SelectTrigger id="rating" className="h-10 sm:h-11 font-bold">
                         <div className="flex items-center">
-                          
-                        <SelectValue placeholder="Any Rating" />
+                          <SelectValue placeholder="Any Rating" />
                         </div>
                       </SelectTrigger>
                       <SelectContent>
@@ -431,8 +474,7 @@ export default function AllTutors() {
                     <Select value={selectedGender} onValueChange={setSelectedGender}>
                       <SelectTrigger id="gender" className="h-10 sm:h-11 font-bold">
                         <div className="flex items-center">
-                          
-                        <SelectValue placeholder="Any Gender" />
+                          <SelectValue placeholder="Any Gender" />
                         </div>
                       </SelectTrigger>
                       <SelectContent>
@@ -466,6 +508,8 @@ export default function AllTutors() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all" className="font-bold">Any Education</SelectItem>
+                        <SelectItem value="HSC" className="font-bold">HSC</SelectItem>
+                        <SelectItem value="Diploma" className="font-bold">Diploma</SelectItem>
                         <SelectItem value="Bachelor" className="font-bold">Bachelor's Degree</SelectItem>
                         <SelectItem value="Master" className="font-bold">Master's Degree</SelectItem>
                         <SelectItem value="PhD" className="font-bold">PhD</SelectItem>
@@ -478,8 +522,7 @@ export default function AllTutors() {
                     <Select value={selectedAvailability} onValueChange={setSelectedAvailability}>
                       <SelectTrigger id="availability" className="h-10 sm:h-11 font-bold">
                         <div className="flex items-center">
-                          
-                        <SelectValue placeholder="Any Availability" />
+                          <SelectValue placeholder="Any Availability" />
                         </div>
                       </SelectTrigger>
                       <SelectContent>
@@ -636,21 +679,11 @@ export default function AllTutors() {
                     {isLoading ? (
                       <span className="flex items-center"><RefreshCw className="h-3 w-3 mr-2 animate-spin" /> Loading tutors...</span>
                     ) : (
-                      <>Showing <span className="font-medium">{filteredTutors.length}</span> of <span className="font-medium">{totalCount}</span> tutors</>
+                      <>Showing <span className="font-medium">{paginatedTutors.length}</span> of <span className="font-medium">{filteredTutors.length}</span> tutors</>
                     )}
                   </p>
-                  
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={fetchTutors}
-                    className="h-8 w-8"
-                    disabled={isLoading}
-                  >
-                    <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                  </Button>
                   <Button
                     variant={viewMode === "grid" ? "default" : "outline"}
                     size="icon"
@@ -709,12 +742,11 @@ export default function AllTutors() {
               {!isLoading && error && (
                 <div className="text-center p-6 sm:p-8">
                   <p className="text-red-500 mb-4">{error}</p>
-                  <Button onClick={fetchTutors}>Try Again</Button>
                 </div>
               )}
               
               {/* No Results */}
-              {!isLoading && !error && filteredTutors.length === 0 && (
+              {!isLoading && !error && paginatedTutors.length === 0 && (
                 <div className="text-center p-6 sm:p-8">
                   <p className="mb-4">No tutors found matching your criteria.</p>
                   <Button onClick={() => {
@@ -731,200 +763,196 @@ export default function AllTutors() {
               )}
               
               {/* Tutor Listings */}
-              {!isLoading && !error && filteredTutors.length > 0 && (
+              {!isLoading && !error && paginatedTutors.length > 0 && (
                 <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6" : "space-y-4"}>
-                  {filteredTutors.map((tutor) => {
-                    // Process tutor data from API
-                    const tutorSubjects = typeof tutor.subjects === 'string' 
-                      ? tutor.subjects.split(',').map(s => s.trim()) 
-                      : [];
-                    
-                    // Debug log for verified status
-                    console.log(`Tutor ${tutor.full_name} verified status:`, tutor.verified, typeof tutor.verified);
-                    
-                    return (
-                      <Card key={tutor.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                        {viewMode === "grid" ? (
-                          <CardContent className="p-4 sm:p-6">
-                            {/* Profile Picture at the top */}
-                            <div className="flex justify-center mb-4">
-                              <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-2 border-primary">
-                                <AvatarImage src={tutor.avatar_url || "/placeholder.svg"} alt={tutor.full_name} />
-                                <AvatarFallback className="text-lg sm:text-xl">{tutor.full_name?.charAt(0) || 'T'}</AvatarFallback>
-                              </Avatar>
-                            </div>
-                            
-                            {/* Name */}
-                            <div className="text-center mb-3">
-                              <CardTitle className="text-lg sm:text-xl font-bold text-blue-900">
-                                {tutor.full_name?.toUpperCase()}
-                              </CardTitle>
-                            </div>
-                            
-                            {/* University */}
-                            <div className="text-center mb-2">
-                              <p className="text-sm text-gray-600">
-                                {tutor.university_name || 'University not specified'}
-                              </p>
-                            </div>
-                            
-                            {/* Department */}
-                            <div className="text-center mb-3">
-                              <p className="text-sm font-medium text-blue-800">
-                                {tutor.department_name || 'Department not specified'}
-                              </p>
-                            </div>
-                            
-                            {/* Location */}
-                            <div className="flex justify-center mb-3 gap-2 flex-wrap">
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  {paginatedTutors.map((tutor) => (
+                    <Card key={tutor.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                      {viewMode === "grid" ? (
+                        <CardContent className="p-4 sm:p-6">
+                          {/* Profile Picture at the top */}
+                          <div className="flex justify-center mb-4">
+                            <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-2 border-primary">
+                              <AvatarImage src={tutor.avatar || "/placeholder.svg"} alt={tutor.fullName} />
+                              <AvatarFallback className="text-lg sm:text-xl">{tutor.fullName?.charAt(0) || 'T'}</AvatarFallback>
+                            </Avatar>
+                          </div>
+                          
+                          {/* Name */}
+                          <div className="text-center mb-3">
+                            <CardTitle className="text-lg sm:text-xl font-bold text-blue-900">
+                              {tutor.fullName?.toUpperCase()}
+                            </CardTitle>
+                          </div>
+                          
+                          {/* University */}
+                          <div className="text-center mb-2">
+                            <p className="text-sm text-gray-600">
+                              {tutor.Institute_name || 'University not specified'}
+                            </p>
+                          </div>
+                          
+                          {/* Department */}
+                          <div className="text-center mb-3">
+                            <p className="text-sm font-medium text-blue-800">
+                              {tutor.department_name || 'Department not specified'}
+                            </p>
+                          </div>
+                          
+                          {/* Location */}
+                          <div className="flex justify-center mb-3 gap-2 flex-wrap">
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              <MapPin className="mr-1 h-3 w-3" />
+                              {tutor.district || tutor.location || 'Location not specified'}
+                            </Badge>
+                            {tutor.preferred_areas && tutor.preferred_areas.length > 0 && (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                                 <MapPin className="mr-1 h-3 w-3" />
-                                {(tutor.district || tutor.location || 'Location not specified').charAt(0).toUpperCase() + (tutor.district || tutor.location || 'Location not specified').slice(1)}
+                                {tutor.preferred_areas[0]}
                               </Badge>
-                              {tutor.area && (
-                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                  <MapPin className="mr-1 h-3 w-3" />
-                                  {tutor.area.charAt(0).toUpperCase() + tutor.area.slice(1)}
-                                </Badge>
-                              )}
-                            </div>
-                            
-                            {/* Experience */}
-                            <div className="text-center mb-4">
-                              <p className="text-sm text-gray-700">
-                                <span className="font-medium">
-                                  {(() => {
-                                    const experienceText = tutor.tutoring_experience || tutor.experience || '';
-                                    const yearsMatch = experienceText.match(/(\d+)\s*years?/i);
-                                    return yearsMatch ? `${yearsMatch[1]} Years Experience` : 'Experience not specified';
-                                  })()}
-                                </span>
-                              </p>
-                            </div>
-                            
-                            {/* Badges */}
-                            <div className="flex justify-center gap-2 mb-4 flex-wrap">
-                              {tutor.verified === 1 || tutor.verified === '1' ? (
-                                <div 
-                                  className="bg-green-500 hover:bg-green-600 rounded-full p-2 flex items-center justify-center cursor-pointer group relative"
-                                  title="Verified Tutor"
-                                >
-                                  <CheckCircle className="h-5 w-5 text-white" />
-                                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                                    Verified Tutor
-                                  </div>
-                                </div>
-                              ) : (
-                                <Badge variant="outline" className="text-gray-500 border-gray-300 text-xs">Unverified</Badge>
-                              )}
-                              {tutor.premium === 'yes' && (
-                                <div 
-                                  className="bg-blue-500 hover:bg-blue-600 rounded-full p-2 flex items-center justify-center cursor-pointer group relative"
-                                  title="Genius Tutor"
-                                >
-                                  <Check className="h-5 w-5 text-white" />
-                                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                                    Genius Tutor
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                            
-                            {/* View Details Button */}
-                            <div className="flex justify-center">
-                                <Button 
-                                className="bg-green-600 hover:bg-green-700 text-white w-full text-sm font-medium"
-                                  onClick={() => window.location.href = `/tutor/${tutor.id}`}
-                                >
-                                View Details
-                                </Button>
-                              </div>
-                          </CardContent>
-                        ) : (
-                          <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                            <div className="flex-shrink-0">
-                              <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-2 border-primary">
-                                <AvatarImage src={tutor.avatar_url || "/placeholder.svg"} alt={tutor.full_name} />
-                                <AvatarFallback className="text-lg sm:text-xl">{tutor.full_name?.charAt(0) || 'T'}</AvatarFallback>
-                              </Avatar>
-                            </div>
-                            <div className="flex-1 space-y-2 w-full">
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
-                                <CardTitle className="text-lg sm:text-xl font-bold text-blue-900">
-                                  {tutor.full_name?.toUpperCase()}
-                                </CardTitle>
-                                <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                                  {tutor.verified === 1 || tutor.verified === '1' ? (
-                                    <div 
-                                      className="bg-green-500 hover:bg-green-600 rounded-full p-1 flex items-center justify-center cursor-pointer group relative"
-                                      title="Verified Tutor"
-                                    >
-                                      <CheckCircle className="h-4 w-4 text-white" />
-                                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                                        Verified Tutor
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <Badge variant="outline" className="text-gray-500 border-gray-300 text-xs">Unverified</Badge>
-                                  )}
-                                  {tutor.premium === 'yes' && (
-                                    <div 
-                                      className="bg-blue-500 hover:bg-blue-600 rounded-full p-1 flex items-center justify-center cursor-pointer group relative"
-                                      title="Genius Tutor"
-                                    >
-                                      <Check className="h-4 w-4 text-white" />
-                                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                                        Genius Tutor
-                                      </div>
-                                    </div>
-                                  )}
+                            )}
+                          </div>
+                          
+                          {/* Experience */}
+                          <div className="text-center mb-4">
+                            <p className="text-sm text-gray-700">
+                              <span className="font-medium">
+                                {tutor.experience ? `${tutor.experience} Years Experience` : 'Experience not specified'}
+                              </span>
+                            </p>
+                          </div>
+
+                          {/* Rating */}
+                          <div className="text-center mb-3">
+                            {renderStars(tutor.rating)}
+                          </div>
+                          
+                          {/* Badges */}
+                          <div className="flex justify-center gap-2 mb-4 flex-wrap">
+                            {tutor.verified ? (
+                              <div 
+                                className="bg-green-500 hover:bg-green-600 rounded-full p-2 flex items-center justify-center cursor-pointer group relative"
+                                title="Verified Tutor"
+                              >
+                                <CheckCircle className="h-5 w-5 text-white" />
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                  Verified Tutor
                                 </div>
                               </div>
-                              
-                              <p className="text-sm text-gray-600">
-                                {tutor.university_name || 'University not specified'}
-                              </p>
-                              <p className="text-sm font-medium text-blue-800">
-                                {tutor.department_name || 'Department not specified'}
-                              </p>
-                              
-                              <div className="flex gap-2 flex-wrap">
-                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                  <MapPin className="mr-1 h-3 w-3" />
-                                  {(tutor.district || tutor.location || 'Location not specified').charAt(0).toUpperCase() + (tutor.district || tutor.location || 'Location not specified').slice(1)}
-                                </Badge>
-                                {tutor.area && (
-                                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                    <MapPin className="mr-1 h-3 w-3" />
-                                    {tutor.area.charAt(0).toUpperCase() + tutor.area.slice(1)}
-                                  </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-gray-500 border-gray-300 text-xs">Unverified</Badge>
+                            )}
+                            {tutor.premium && (
+                              <div 
+                                className="bg-blue-500 hover:bg-blue-600 rounded-full p-2 flex items-center justify-center cursor-pointer group relative"
+                                title="Premium Tutor"
+                              >
+                                <Award className="h-5 w-5 text-white" />
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                  Premium Tutor
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* View Details Button */}
+                          <div className="flex justify-center">
+                            <Button 
+                              className="bg-green-600 hover:bg-green-700 text-white w-full text-sm font-medium"
+                              onClick={() => window.location.href = `/tutor/${tutor.tutor_id}`}
+                            >
+                              View Details
+                            </Button>
+                          </div>
+                        </CardContent>
+                      ) : (
+                        <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                          <div className="flex-shrink-0">
+                            <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-2 border-primary">
+                              <AvatarImage src={tutor.avatar || "/placeholder.svg"} alt={tutor.fullName} />
+                              <AvatarFallback className="text-lg sm:text-xl">{tutor.fullName?.charAt(0) || 'T'}</AvatarFallback>
+                            </Avatar>
+                          </div>
+                          <div className="flex-1 space-y-2 w-full">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+                              <CardTitle className="text-lg sm:text-xl font-bold text-blue-900">
+                                {tutor.fullName?.toUpperCase()}
+                              </CardTitle>
+                              <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                                {tutor.verified ? (
+                                  <div 
+                                    className="bg-green-500 hover:bg-green-600 rounded-full p-1 flex items-center justify-center cursor-pointer group relative"
+                                    title="Verified Tutor"
+                                  >
+                                    <CheckCircle className="h-4 w-4 text-white" />
+                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                      Verified Tutor
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <Badge variant="outline" className="text-gray-500 border-gray-300 text-xs">Unverified</Badge>
+                                )}
+                                {tutor.premium && (
+                                  <div 
+                                    className="bg-blue-500 hover:bg-blue-600 rounded-full p-1 flex items-center justify-center cursor-pointer group relative"
+                                    title="Premium Tutor"
+                                  >
+                                    <Award className="h-4 w-4 text-white" />
+                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                                      Premium Tutor
+                                    </div>
+                                  </div>
                                 )}
                               </div>
-                              
-                              <p className="text-sm text-gray-700">
-                                <span className="font-medium">
-                                  {(() => {
-                                    const experienceText = tutor.tutoring_experience || tutor.experience || '';
-                                    const yearsMatch = experienceText.match(/(\d+)\s*years?/i);
-                                    return yearsMatch ? `${yearsMatch[1]} Years Experience` : 'Experience not specified';
-                                  })()}
-                                </span>
-                              </p>
-                              
-                              <div className="flex justify-end mt-4">
-                                <Button 
-                                  className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
-                                  onClick={() => window.location.href = `/tutor/${tutor.id}`}
-                                >
-                                  View Details
-                                </Button>
-                              </div>
                             </div>
-                          </CardContent>
-                        )}
-                      </Card>
-                    );
-                  })}
+                            
+                            <p className="text-sm text-gray-600">
+                              {tutor.Institute_name || 'University not specified'}
+                            </p>
+                            <p className="text-sm font-medium text-blue-800">
+                              {tutor.department_name || 'Department not specified'}
+                            </p>
+                            
+                            <div className="flex gap-2 flex-wrap">
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                <MapPin className="mr-1 h-3 w-3" />
+                                {tutor.district || tutor.location || 'Location not specified'}
+                              </Badge>
+                              {tutor.preferred_areas && tutor.preferred_areas.length > 0 && (
+                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                  <MapPin className="mr-1 h-3 w-3" />
+                                  {tutor.preferred_areas[0]}
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <p className="text-sm text-gray-700">
+                              <span className="font-medium">
+                                {tutor.experience ? `${tutor.experience} Years Experience` : 'Experience not specified'}
+                              </span>
+                            </p>
+
+                            <div className="flex items-center gap-4">
+                              {renderStars(tutor.rating)}
+                              {tutor.hourly_rate && (
+                                <Badge variant="secondary" className="bg-orange-50 text-orange-700">
+                                  ৳{tutor.hourly_rate}/hour
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <div className="flex justify-end mt-4">
+                              <Button 
+                                className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
+                                onClick={() => window.location.href = `/tutor/${tutor.id}`}
+                              >
+                                View Details
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      )}
+                    </Card>
+                  ))}
                 </div>
               )}
 
@@ -938,10 +966,7 @@ export default function AllTutors() {
                   />
                 </div>
               )}
-              
             </div>
-
-
           </div>
         </div>
       </div>

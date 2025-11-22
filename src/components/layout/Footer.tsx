@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from "lucide-react";
 import { getWebsiteInfo } from "@/services/websiteService";
 import { usePathname } from "next/navigation";
+import logo from '../../../public/Genius-Tutor-Logo.png'
 
 export const Footer = () => {
   const pathname = usePathname();
@@ -54,7 +55,7 @@ export const Footer = () => {
             {websiteInfo.siteLogo ? (
               <div className="relative max-w-24 sm:max-w-28 md:max-w-36 lg:max-w-44 xl:max-w-52">
                 <Image 
-                  src={websiteInfo.siteLogo} 
+                  src={logo} 
                   alt={websiteInfo.siteName} 
                   width={200}
                   height={200}

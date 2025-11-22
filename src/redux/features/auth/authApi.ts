@@ -13,6 +13,17 @@ const authApi = baseApi.injectEndpoints({
       },
       invalidatesTags: [tagTypes.auth],
     }),
+    createStudentOrGuardian: builder.mutation({
+      query: (formData) => {
+        return {
+          url: "/auth/register/user",
+          method: "POST",
+          data: formData,
+        };
+      },
+      invalidatesTags: [tagTypes.auth],
+    }),
+
     checkPhoneNumber: builder.mutation({
       query: (data) => {
         return {
@@ -65,5 +76,6 @@ useDeleteAuthMutation,
 useGetAllAuthQuery,
 useGetSingleAuthDataQuery,
 useUpdateAuthMutation,
-useCheckPhoneNumberMutation
+useCheckPhoneNumberMutation,
+useCreateStudentOrGuardianMutation
 } = authApi;
