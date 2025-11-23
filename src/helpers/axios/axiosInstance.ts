@@ -15,11 +15,11 @@ instance.defaults.baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://loca
 instance.interceptors.request.use(
   function (config) {
     const accessToken = getFromLocalStorage(authKey);
-    console.log("🚀 API Request:", {
-      url: config.url,
-      method: config.method,
-      data: config.data,
-    });
+    // console.log("🚀 API Request:", {
+    //   url: config.url,
+    //   method: config.method,
+    //   data: config.data,
+    // });
 
     if (accessToken) {
       config.headers.Authorization = accessToken;
@@ -34,20 +34,20 @@ instance.interceptors.request.use(
 
 instance.interceptors.response.use(
   function (response) {
-    console.log("✅ API Response Success:", {
-      status: response.status,
-      data: response.data,
-    });
+    // console.log("✅ API Response Success:", {
+    //   status: response.status,
+    //   data: response.data,
+    // });
     
     // Return the full response, not just data
     return response;
   },
   async function (error) {
-    console.error("❌ API Response Error:", {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message,
-    });
+    // console.error("❌ API Response Error:", {
+    //   status: error.response?.status,
+    //   data: error.response?.data,
+    //   message: error.message,
+    // });
 
     const config = error.config;
     

@@ -104,13 +104,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Login failed');
-      setAuthToken(data.data.token);
-      localStorage.setItem('user', JSON.stringify(data.data.user));
-      setUser(data.data.user);
-      setProfile(data.data.user); // Set profile to user data
+      setAuthToken(data.data[1]);
+      localStorage.setItem('user', JSON.stringify(data.data[0]));
+      setUser(data.data[0]);
+      setProfile(data.data[0]); // Set profile to user data
       
       // Redirect to appropriate dashboard based on role
-      redirectToDashboard(data.data.user);
+      redirectToDashboard(data.data[0]);
     } catch (error) {
       console.error('Login error:', error);
       throw error;

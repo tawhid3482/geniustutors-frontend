@@ -49,11 +49,14 @@ interface DashboardSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onLogout: () => void;
-  role: 'student' | 'tutor' | 'admin' | 'super_admin' | 'manager';
+  role: 'STUDENT_GUARDIAN' | 'TUTOR' | 'ADMIN' | 'SUPER_ADMIN' | 'MANAGER';
   menuItems?: MenuItem[];
 }
 
 export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuItems }: DashboardSidebarProps) {
+ 
+  console.log(menuItems)
+ 
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const { user, profile } = useAuth(); // Access user and profile from AuthContext
 
@@ -108,7 +111,6 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
 
   // Define menu items based on role
   const getMenuItems = () => {
-    // If menuItems are provided, use them (for permission-based menu)
     if (menuItems) {
       const main = menuItems.filter(item => !item.id.includes('profile') && (!item.subMenus || item.subMenus.length === 0));
       const quick = menuItems.filter(item => item.subMenus && item.subMenus.length > 0);
@@ -124,7 +126,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
 
     // Fallback to role-based menu
     switch (role) {
-      case 'student':
+      case 'STUDENT_GUARDIAN':
         return {
           main: [
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -145,7 +147,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'settings', label: 'Settings', icon: Settings },
           ],
         };
-      case 'tutor':
+      case 'TUTOR':
         return {
           main: [
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -170,7 +172,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'note', label: 'Notes', icon: StickyNote },
           ],
         };
-      case 'super_admin':
+      case 'SUPER_ADMIN':
         return {
           main: [
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -183,7 +185,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'profile', label: 'Profile', icon: User },
           ],
         };
-      case 'admin':
+      case 'ADMIN':
         return {
           main: [
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -219,7 +221,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'profile', label: 'Profile Settings', icon: User },
           ],
         };
-      case 'manager':
+      case 'MANAGER':
         return {
           main: [
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -320,7 +322,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
       <div className="flex-1 overflow-y-auto p-2 sm:p-3 lg:p-4 hide-scrollbar smooth-scroll">
         <div className="space-y-6">
           {/* Support Team Info (for student role) */}
-          {role === 'student' && (
+          {role === 'STUDENT_GUARDIAN' && (
             <div className="flex flex-col items-center text-center p-4 bg-green-600 text-white rounded-lg shadow-md mb-6">
               <CardTitle className="text-xl font-bold text-white mb-1">
                 Support Team
@@ -335,20 +337,20 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
           {user && (
             <div className="flex flex-col items-center text-center p-4 bg-green-600 text-white rounded-lg shadow-md mb-6">
               <Avatar className="h-24 w-24 border-4 border-white mb-3">
-                <AvatarImage src={user.avatar_url || "/placeholder.svg"} alt={user.full_name || "User"} />
+                <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.fullName || "User"} />
                 <AvatarFallback className="text-3xl font-bold text-green-800 bg-white">
-                  {user.full_name?.charAt(0) || user.role?.charAt(0).toUpperCase() || 'U'}
+                  {user.fullName?.charAt(0) || user.role?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <CardTitle className="text-xl font-bold text-white mb-1">
-                {user.full_name?.toUpperCase() || user.role?.toUpperCase() || 'User Name'}
+                {user.fullName?.toUpperCase() || user.role?.toUpperCase() || 'User Name'}
               </CardTitle>
               <p className="text-sm text-green-100 mb-1">
                 {user.email || 'user@example.com'}
               </p>
               <p className="text-xs text-green-200">
-                {user.role === 'tutor' && `Tutor ID: ${user.id || 'N/A'} | `}
-                Role: {user.role?.replace(/_/g, ' ').toUpperCase() || 'N/A'} | Since {formatDate(user.created_at)}
+                {user.role === 'TUTOR' && `Tutor ID: ${user.tutor_id || 'N/A'} | `}
+                Role: {user.role?.replace(/_/g, ' ').toUpperCase() || 'N/A'} | Since {formatDate(user.createdAt)}
               </p>
             </div>
           )}

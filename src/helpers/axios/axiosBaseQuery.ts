@@ -29,7 +29,7 @@ export const axiosBaseQuery =
         },
       };
 
-      console.log("🔍 Making API Request:", requestConfig);
+      // console.log("🔍 Making API Request:", requestConfig);
 
       const response = await axiosInstance(requestConfig);
 

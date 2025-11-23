@@ -1,600 +1,544 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, User, Calendar, Clock, Users, Share2, Map, AlertCircle, Building, GraduationCap, Compass, Copy, MessageCircle, Facebook, Twitter } from "lucide-react";
-import { tuitionJobsService, TuitionJob } from "@/services/tuitionJobsService";
-import { useToast } from "@/components/ui/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useAuth } from "@/contexts/AuthContext.next";
-import { LoginDialog } from "@/components/auth/LoginDialog";
-import { useGetSingleTutorRequestQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Phone,
+  MapPin,
+  Building2,
+} from "lucide-react";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
+import { useGetAllAreaQuery } from "@/redux/features/area/areaApi";
+import { useCreateAuthMutation } from "@/redux/features/auth/authApi";
 
-interface TuitionJobDetailsClientProps {
-  jobId: string;
+interface TutorSignupFormProps {
+  onSuccess?: () => void;
 }
 
-export default function TuitionJobDetailsClient({ jobId }: TuitionJobDetailsClientProps) {
-  const router = useRouter();
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const [job, setJob] = useState<TuitionJob | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [applying, setApplying] = useState(false);
-  const [showMap, setShowMap] = useState(false);
-  const [existingApplication, setExistingApplication] = useState<any>(null);
-  const [checkingApplication, setCheckingApplication] = useState(false);
-  const [resettingApplication, setResettingApplication] = useState(false);
+export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
+  onSuccess,
+}) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const {data:singleJob}=useGetSingleTutorRequestQuery()
+  // RTK Queries
+  const { data: categoryData } = useGetAllCategoryQuery(undefined);
+  const { data: areaData } = useGetAllAreaQuery(undefined);
+  const [createAuth, { isLoading: creating }] = useCreateAuthMutation();
 
-  console.log(singleJob)
+  // Form data state
+  const [tutorFormData, setTutorFormData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    alternativePhone: "",
+    universityName: "",
+    departmentName: "",
+    universityYear: "",
+    preferredAreas: [] as string[],
+    background: [] as string[],
+    gender: "",
+    religion: "",
+    nationality: "Bangladeshi",
+    password: "",
+    confirmPassword: "",
+  });
 
+  // Handle input changes
+  const handleTutorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setTutorFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-  // Share functionality
-  const getShareUrl = () => {
-    if (typeof window !== 'undefined') {
-      return window.location.href;
+  const handleTutorSelectChange = (name: string, value: string) => {
+    setTutorFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePreferredAreasChange = (areas: string[]) => {
+    setTutorFormData((prev) => ({ ...prev, preferredAreas: areas }));
+  };
+
+  const handleBackgroundChange = (backgrounds: string[]) => {
+    setTutorFormData((prev) => ({ ...prev, background: backgrounds }));
+  };
+
+  // Prepare categories for MultiSelect
+  const categoryOptions =
+    categoryData?.data?.map((category: any) => ({
+      value: category.name,
+      label: category.name,
+    })) || [];
+
+  // Prepare areas for MultiSelect - flatten all area names
+  const areaOptions =
+    areaData?.data?.flatMap(
+      (area: any) =>
+        area.name?.map((areaName: string) => ({
+          value: areaName,
+          label: areaName,
+        })) || []
+    ) || [];
+
+  // Simplified registration without OTP and phone verification
+  const handleTutorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validate required fields
+    if (
+      !tutorFormData.fullName ||
+      !tutorFormData.phone ||
+      !tutorFormData.universityName ||
+      !tutorFormData.departmentName ||
+      tutorFormData.preferredAreas.length === 0 ||
+      tutorFormData.background.length === 0 ||
+      !tutorFormData.gender ||
+      !tutorFormData.password ||
+      !tutorFormData.confirmPassword
+    ) {
+      toast.error("Please fill in all required fields");
+      return;
     }
-    return '';
-  };
 
-  const getShareText = () => {
-    if (!job) return '';
-    return `Tutor Needed For ${job.subject} - ${job.district}, ${job.area}. Apply now!`;
-  };
+    if (tutorFormData.password !== tutorFormData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
 
-  const handleWhatsAppShare = () => {
-    const url = getShareUrl();
-    const text = getShareText();
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`;
-    window.open(whatsappUrl, '_blank');
-    toast({
-      title: 'Shared on WhatsApp',
-      description: 'Job posting shared successfully on WhatsApp!',
-    });
-  };
+    if (tutorFormData.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
 
-  const handleFacebookShare = () => {
-    const url = getShareUrl();
-    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-    window.open(facebookUrl, '_blank', 'width=600,height=400');
-    toast({
-      title: 'Shared on Facebook',
-      description: 'Job posting shared successfully on Facebook!',
-    });
-  };
+    // Validate phone number format (Bangladeshi phone number)
+    const phoneRegex = /^(\+880|880|0)?1[3-9]\d{8}$/;
+    if (!phoneRegex.test(tutorFormData.phone)) {
+      toast.error("Please enter a valid Bangladeshi phone number");
+      return;
+    }
 
-  const handleTwitterShare = () => {
-    const url = getShareUrl();
-    const text = getShareText();
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-    window.open(twitterUrl, '_blank', 'width=600,height=400');
-    toast({
-      title: 'Shared on Twitter',
-      description: 'Job posting shared successfully on Twitter!',
-    });
-  };
+    setLoading(true);
 
-  const handleCopyLink = async () => {
     try {
-      const url = getShareUrl();
-      await navigator.clipboard.writeText(url);
-      toast({
-        title: 'Link Copied',
-        description: 'Job posting link copied to clipboard!',
-      });
-    } catch (error) {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = getShareUrl();
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      toast({
-        title: 'Link Copied',
-        description: 'Job posting link copied to clipboard!',
-      });
-    }
-  };
+      // Normalize phone number
+      let normalizedPhone = tutorFormData.phone;
+      if (tutorFormData.phone.startsWith("+880")) {
+        normalizedPhone = "0" + tutorFormData.phone.slice(4);
+      } else if (tutorFormData.phone.startsWith("880")) {
+        normalizedPhone = "0" + tutorFormData.phone.slice(3);
+      }
 
-  // Location and Directions functionality
-  const getLocationQuery = () => {
-    if (!job) return '';
-    return `${job.district}, ${job.area}${job.postOffice ? `, ${job.postOffice}` : ''}, Bangladesh`;
-  };
+      // Build registration payload
+      const registrationPayload = {
+        fullName: tutorFormData.fullName,
+        email: tutorFormData.email || null,
+        phone: normalizedPhone,
+        password: tutorFormData.password,
+        role: "TUTOR" as const,
+        gender: tutorFormData.gender,
+        alternative_number: tutorFormData.alternativePhone || null,
+        Institute_name: tutorFormData.universityName,
+        department_name: tutorFormData.departmentName,
+        year: tutorFormData.universityYear || null,
+        preferred_areas: tutorFormData.preferredAreas,
+        religion: tutorFormData.religion || null,
+        nationality: tutorFormData.nationality,
+        background: tutorFormData.background,
+      };
 
-  const handleDirections = () => {
-    const location = getLocationQuery();
-    const encodedLocation = encodeURIComponent(location);
-    
-    // Try to get user's current location for better directions
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedLocation}&travelmode=driving`;
-          window.open(directionsUrl, '_blank');
-        },
-        () => {
-          // Fallback if geolocation fails
-          const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedLocation}&travelmode=driving`;
-          window.open(directionsUrl, '_blank');
+      // console.log("Registration payload:", registrationPayload);
+
+      // Direct registration without OTP - use unwrap() for proper error handling
+      const result = await createAuth(registrationPayload).unwrap();
+      
+      // console.log("Registration successful:", result);
+
+      if (result.success) {
+        toast.success("Registration successful! Please login.");
+        if (onSuccess) {
+          onSuccess();
         }
-      );
-    } else {
-      // Fallback for browsers that don't support geolocation
-      const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedLocation}&travelmode=driving`;
-      window.open(directionsUrl, '_blank');
-    }
-  };
 
-  const handleLocation = () => {
-    setShowMap(true);
-  };
-
-  const fetchJobDetails = useCallback(async (jobId: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await tuitionJobsService.getTuitionJobById(jobId);
-      if (response.success) {
-        setJob(response.data);
-      } else {
-        setError('Failed to fetch job details');
-        toast({
-          title: 'Error',
-          description: 'Failed to load job details. Please try again later.',
-          variant: 'destructive'
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching job details:', error);
-      setError('An error occurred while fetching job details');
-      toast({
-        title: 'Error',
-        description: 'An error occurred while loading job details.',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  const checkExistingApplication = useCallback(async (jobId: string) => {
-    if (!user || user.role !== 'tutor') return;
-    
-    setCheckingApplication(true);
-    try {
-      const response = await tuitionJobsService.checkTutorApplication(jobId);
-      if (response.success && response.data) {
-        setExistingApplication(response.data);
-      } else {
-        setExistingApplication(null);
-      }
-    } catch (error) {
-      console.error('Error checking application:', error);
-      setExistingApplication(null);
-    } finally {
-      setCheckingApplication(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (jobId) {
-      fetchJobDetails(jobId);
-    }
-  }, [jobId, fetchJobDetails]);
-
-  useEffect(() => {
-    if (user && user.role === 'tutor' && job) {
-      checkExistingApplication(job.id);
-    }
-  }, [user, job, checkExistingApplication]);
-
-
-  const handleApplyForJob = async () => {
-    if (!user) {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please log in to apply for tuition jobs.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    if (user.role !== 'tutor') {
-      toast({
-        title: 'Access Denied',
-        description: 'Only tutors can apply for tuition jobs.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setApplying(true);
-    try {
-      const response = await tuitionJobsService.applyForJob(jobId);
-      if (response.success) {
-        toast({
-          title: 'Application Submitted',
-          description: 'Your application has been submitted successfully!',
-        });
-        checkExistingApplication(jobId);
-      } else {
-        toast({
-          title: 'Application Failed',
-          description: response.message || 'Failed to submit application. Please try again.',
-          variant: 'destructive'
+        // Reset form
+        setTutorFormData({
+          fullName: "",
+          email: "",
+          phone: "",
+          alternativePhone: "",
+          universityName: "",
+          departmentName: "",
+          universityYear: "",
+          preferredAreas: [],
+          background: [],
+          gender: "",
+          religion: "",
+          nationality: "Bangladeshi",
+          password: "",
+          confirmPassword: "",
         });
       }
     } catch (error: any) {
-      console.error('Error applying for job:', error);
+      // console.error("Registration error:", error);
       
-      // Check if it's the specific "already applied" message
-      const errorMessage = error?.response?.data?.message || error?.message || '';
-      
-      if (errorMessage.includes('already applied') && errorMessage.includes('under review')) {
-        toast({
-          title: 'Application Already Submitted',
-          description: 'You have already applied for this request and it is under review. Please wait for admin decision.',
-          variant: 'default'
-        });
-        // Refresh the application status to show the current state
-        checkExistingApplication(jobId);
+      // RTK Query error structure - check different possible error formats
+      if (error?.data) {
+        // Case 1: Backend returned error with data property
+        const errorMessage = error.data.message || "Registration failed";
+        toast.error(errorMessage);
+      } else if (error?.error) {
+        // Case 2: Backend returned error with error property
+        const errorMessage = error.error || "Registration failed";
+        toast.error(errorMessage);
+      } else if (error?.message) {
+        // Case 3: JavaScript error or backend message directly
+        const errorMessage = error.message;
+        
+        // Check for specific backend error messages
+        if (errorMessage.includes("phone already registered") || 
+            errorMessage.includes("already exists")) {
+          toast.error("Phone number already registered. Please use a different number.");
+        } else {
+          toast.error(errorMessage);
+        }
       } else {
-        toast({
-          title: 'Application Error',
-          description: errorMessage || 'An error occurred while submitting your application.',
-          variant: 'destructive'
-        });
+        // Case 4: Unknown error format
+        toast.error("Registration failed. Please try again.");
       }
     } finally {
-      setApplying(false);
+      setLoading(false);
     }
   };
-
-  const handleResetApplication = async () => {
-    if (!user || user.role !== 'tutor') return;
-    
-    setResettingApplication(true);
-    try {
-      const response = await tuitionJobsService.resetApplication(jobId);
-      if (response.success) {
-        toast({
-          title: 'Application Reset',
-          description: 'Your application has been reset successfully.',
-        });
-        setExistingApplication(null);
-      } else {
-        toast({
-          title: 'Reset Failed',
-          description: response.message || 'Failed to reset application. Please try again.',
-          variant: 'destructive'
-        });
-      }
-    } catch (error) {
-      console.error('Error resetting application:', error);
-      toast({
-        title: 'Reset Error',
-        description: 'An error occurred while resetting your application.',
-        variant: 'destructive'
-      });
-    } finally {
-      setResettingApplication(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="space-y-6">
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-64 w-full" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !job) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Job Not Found</h1>
-          <p className="text-gray-600 mb-6">{error || 'The tuition job you\'re looking for doesn\'t exist.'}</p>
-          <Button onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Go Back
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Main Content Area */}
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="p-8">
-            {/* Header Section */}
-      <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                Tutor Needed For {job.subject}
-              </h1>
-              <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-                <span>Job ID: {job.id.slice(0, 8)}</span>
-                <span>Posted at: {new Date(job.createdAt).toLocaleDateString()}</span>
-              </div>
-              
-              {/* Location with Map Pin */}
-              <div className="flex flex-col items-center mb-8">
-                <MapPin className="h-8 w-8 text-red-500 mb-2" />
-                <h2 className="text-2xl font-bold text-gray-800">
-                  {job.district.charAt(0).toUpperCase() + job.district.slice(1)}, {job.area.charAt(0).toUpperCase() + job.area.slice(1)}
-                </h2>
-              </div>
-            </div>
-
-            {/* Two Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Left Column - Job Details */}
-              <div className="lg:col-span-2">
-                {/* Job Specification Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  {/* Row 1 */}
-                  <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-                    <Building className="h-6 w-6 text-green-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Medium</p>
-                      <p className="font-semibold text-gray-800">{job.tutoringType}</p>
-            </div>
+    <form onSubmit={handleTutorSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Full Name */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="tutorFullName"
+            className="text-sm font-semibold text-green-800"
+          >
+            Full Name *
+          </Label>
+          <div className="relative">
+            <User className="absolute left-3 top-3 h-4 w-4 text-green-600" />
+            <Input
+              id="tutorFullName"
+              name="fullName"
+              type="text"
+              placeholder="Enter your full name"
+              className="pl-10 h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+              value={tutorFormData.fullName}
+              onChange={handleTutorChange}
+              required
+            />
           </div>
-          
-                  <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-                    <GraduationCap className="h-6 w-6 text-green-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Class</p>
-                      <p className="font-semibold text-gray-800">{job.studentClass}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-                    <Users className="h-6 w-6 text-green-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Student Gender</p>
-                      <p className="font-semibold text-gray-800">{job.studentGender}</p>
-          </div>
-                  </div>
+        </div>
 
-                  {/* Row 2 */}
-                  <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-                    <User className="h-6 w-6 text-green-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Preferred Tutor</p>
-                      <p className="font-semibold text-gray-800">{job.preferredTeacherGender}</p>
+        {/* Email */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="tutorEmail"
+            className="text-sm font-semibold text-green-800"
+          >
+            Email Address (Optional)
+          </Label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-3 h-4 w-4 text-green-600" />
+            <Input
+              id="tutorEmail"
+              name="email"
+              type="email"
+              placeholder="Enter your email address (optional)"
+              className="pl-10 h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+              value={tutorFormData.email}
+              onChange={handleTutorChange}
+            />
+          </div>
+        </div>
+
+        {/* Mobile Number */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="tutorPhone"
+            className="text-sm font-semibold text-green-800"
+          >
+            Mobile Number *
+          </Label>
+          <div className="relative">
+            <Phone className="absolute left-3 top-3 h-4 w-4 text-green-600" />
+            <Input
+              id="tutorPhone"
+              name="phone"
+              type="tel"
+              placeholder="01XXXXXXXXX"
+              className="pl-10 h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+              value={tutorFormData.phone}
+              onChange={handleTutorChange}
+              required
+            />
+          </div>
+          <p className="text-xs text-gray-500">
+            Enter your 11-digit Bangladeshi phone number
+          </p>
+        </div>
+
+        {/* Alternative Number */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="alternativePhone"
+            className="text-sm font-semibold text-green-800"
+          >
+            Alternative Number
+          </Label>
+          <Input
+            id="alternativePhone"
+            name="alternativePhone"
+            type="tel"
+            placeholder="Alternative contact number"
+            className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+            value={tutorFormData.alternativePhone}
+            onChange={handleTutorChange}
+          />
+        </div>
+
+        {/* University Name */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="universityName"
+            className="text-sm font-semibold text-green-800"
+          >
+            Institute Name *
+          </Label>
+          <Input
+            id="universityName"
+            name="universityName"
+            type="text"
+            placeholder="Your university/college name"
+            className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+            value={tutorFormData.universityName}
+            onChange={handleTutorChange}
+            required
+          />
+        </div>
+
+        {/* Department */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="departmentName"
+            className="text-sm font-semibold text-green-800"
+          >
+            Department *
+          </Label>
+          <Input
+            id="departmentName"
+            name="departmentName"
+            type="text"
+            placeholder="Your department"
+            className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+            value={tutorFormData.departmentName}
+            onChange={handleTutorChange}
+            required
+          />
+        </div>
+
+        {/* Year */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="universityYear"
+            className="text-sm font-semibold text-green-800"
+          >
+            Year
+          </Label>
+          <Input
+            id="universityYear"
+            name="universityYear"
+            type="text"
+            placeholder="e.g., 2nd year, Final year"
+            className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+            value={tutorFormData.universityYear}
+            onChange={handleTutorChange}
+          />
+        </div>
+
+        {/* Preferred Areas - From Database */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="preferredAreas"
+            className="text-sm font-semibold text-green-800"
+          >
+            Preferred Areas *
+          </Label>
+          <MultiSelect
+            value={tutorFormData.preferredAreas}
+            onValueChange={handlePreferredAreasChange}
+            placeholder="Select preferred areas"
+            options={areaOptions}
+            maxSelections={5}
+            className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+          />
+        </div>
+
+        {/* Gender */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="tutorGender"
+            className="text-sm font-semibold text-green-800"
+          >
+            Gender *
+          </Label>
+          <Select
+            value={tutorFormData.gender}
+            onValueChange={(value) => handleTutorSelectChange("gender", value)}
+          >
+            <SelectTrigger className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm">
+              <SelectValue placeholder="Select your gender" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Male">Male</SelectItem>
+              <SelectItem value="Female">Female</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Religion */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="religion"
+            className="text-sm font-semibold text-green-800"
+          >
+            Religion
+          </Label>
+          <Input
+            id="religion"
+            name="religion"
+            type="text"
+            placeholder="Your religion"
+            className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+            value={tutorFormData.religion}
+            onChange={handleTutorChange}
+          />
+        </div>
+
+        {/* Nationality */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="nationality"
+            className="text-sm font-semibold text-green-800"
+          >
+            Nationality
+          </Label>
+          <Input
+            id="nationality"
+            name="nationality"
+            type="text"
+            placeholder="Your nationality"
+            className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+            value={tutorFormData.nationality}
+            onChange={handleTutorChange}
+          />
+        </div>
+
+        {/* Background - Categories From Database */}
+        <div className="space-y-2">
+          <Label
+            htmlFor="background"
+            className="text-sm font-semibold text-green-800"
+          >
+           Background
+          </Label>
+          <MultiSelect
+            value={tutorFormData.background}
+            onValueChange={handleBackgroundChange}
+            placeholder="Select teaching categories"
+            options={categoryOptions}
+            maxSelections={5}
+            className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+          />
         </div>
       </div>
 
-                  <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-                    <Calendar className="h-6 w-6 text-green-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Tutoring Days</p>
-                      <p className="font-semibold text-gray-800">{job.daysPerWeek} Days/Week</p>
-                    </div>
-              </div>
-                  
-                  <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-                    <Clock className="h-6 w-6 text-green-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Tutoring Time</p>
-                      <p className="font-semibold text-gray-800">{job.tutoringTime || 'Negotiable'}</p>
-                    </div>
-                </div>
-
-                  {/* Row 3 */}
-                  <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-                    <Users className="h-6 w-6 text-green-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">No of Student</p>
-                      <p className="font-semibold text-gray-800">{job.numberOfStudents || 1}</p>
-                </div>
-                </div>
-                  
-                  <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-                    <GraduationCap className="h-6 w-6 text-green-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Subject</p>
-                      <Badge className="bg-green-100 text-green-800 border-green-200">
-                        {job.subject}
-                      </Badge>
-                </div>
-              </div>
-                  
-                </div>
-
-                {/* Other Requirements */}
-                <div className="mb-8">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-1">
-                      <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-800 mb-2">Other Requirements:</p>
-                      <p className="text-gray-700 leading-relaxed">
-                        {job.extraInformation || 'Highly experienced tutors are requested to apply. Loc: ' + job.district + ', ' + job.area}
-                      </p>
-                    </div>
-                </div>
-        </div>
-
-                {/* Admin Note Section */}
-                {job.adminNote && (
-                  <div className="mb-8">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5">
-                          <AlertCircle className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-blue-900 mb-2">Administrator Note</h4>
-                          <p className="text-sm text-blue-800 whitespace-pre-wrap leading-relaxed">
-                            {job.adminNote}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Apply Button */}
-                <div className="mb-8">
-                  {user && user.role === 'tutor' ? (
-                    checkingApplication ? (
-                  <div className="text-center py-4">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto"></div>
-                    <p className="text-sm text-gray-600 mt-2">Checking...</p>
-                  </div>
-                ) : existingApplication && existingApplication.status !== 'withdrawn' ? (
-                  <div className="space-y-3">
-                        <Badge variant={existingApplication.status === 'accepted' ? 'default' : 'secondary'} className="bg-green-100 text-green-800">
-                      {existingApplication.status}
-                    </Badge>
-                    <p className="text-sm text-gray-600">
-                      Applied on {new Date(existingApplication.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                ) : (
-                  <Button 
-                    onClick={handleApplyForJob}
-                    disabled={applying}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold"
-                      >
-                        <MessageCircle className="h-5 w-5 mr-2" />
-                        {applying ? 'Applying...' : 'Apply'}
-                      </Button>
-                    )
-                  ) : (
-                    <LoginDialog defaultRole="tutor">
-                      <Button 
-                        className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold"
-                      >
-                        <MessageCircle className="h-5 w-5 mr-2" />
-                        Login then apply this job
-                      </Button>
-                    </LoginDialog>
-                  )}
-                </div>
-              </div>
-
-              {/* Right Column - Actions and Sharing */}
-              <div className="lg:col-span-1 space-y-6">
-                {/* Navigation Buttons */}
-                <div className="space-y-3">
-                  <Button 
-                    variant="outline" 
-                    className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 transition-colors"
-                    onClick={handleDirections}
-                    title="Get directions to this location"
-                  >
-                    <Compass className="h-4 w-4 mr-2" />
-                    Directions
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full bg-green-50 hover:bg-green-100 text-green-700 border-green-200 transition-colors"
-                    onClick={handleLocation}
-                    title="View location on map"
-                  >
-                    <MapPin className="h-4 w-4 mr-2" />
-                    Location
-                  </Button>
-                </div>
-
-                {/* Share Post Section */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-gray-800 mb-3">Share this post:</h3>
-                  <div className="flex space-x-3">
-                    <Button 
-                      size="sm" 
-                      className="w-10 h-10 p-0 bg-green-500 hover:bg-green-600 transition-colors"
-                      onClick={handleWhatsAppShare}
-                      title="Share on WhatsApp"
-                    >
-                      <MessageCircle className="h-4 w-4 text-white" />
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      className="w-10 h-10 p-0 bg-blue-600 hover:bg-blue-700 transition-colors"
-                      onClick={handleFacebookShare}
-                      title="Share on Facebook"
-                    >
-                      <Facebook className="h-4 w-4 text-white" />
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      className="w-10 h-10 p-0 bg-sky-500 hover:bg-sky-600 transition-colors"
-                      onClick={handleTwitterShare}
-                      title="Share on Twitter"
-                    >
-                      <Twitter className="h-4 w-4 text-white" />
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      className="w-10 h-10 p-0 bg-red-500 hover:bg-red-600 transition-colors"
-                      onClick={handleCopyLink}
-                      title="Copy Link"
-                    >
-                      <Copy className="h-4 w-4 text-white" />
-                    </Button>
-                </div>
-                </div>
-              </div>
-        </div>
-      </div>
-
-        </div>
-
-        {/* Location Map Modal */}
-        {showMap && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg w-[80vw] h-[70vh] max-w-5xl overflow-hidden relative">
-              {/* Close Button */}
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setShowMap(false)}
-                className="absolute top-3 right-3 z-10 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full w-8 h-8 p-0 bg-white shadow-md"
-              >
-                ×
-              </Button>
-              
-              {/* Google Maps Embed */}
-              <iframe
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(getLocationQuery())}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="rounded-lg"
-              />
-            </div>
+      {/* Password fields */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label
+            htmlFor="tutorPassword"
+            className="text-sm font-semibold text-green-800"
+          >
+            Password *
+          </Label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 h-4 w-4 text-green-600" />
+            <Input
+              id="tutorPassword"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Create a password"
+              className="pl-10 pr-10 h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+              value={tutorFormData.password}
+              onChange={handleTutorChange}
+              required
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-green-600 hover:text-green-700"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </Button>
           </div>
-        )}
+        </div>
+
+        <div className="space-y-2">
+          <Label
+            htmlFor="tutorConfirmPassword"
+            className="text-sm font-semibold text-green-800"
+          >
+            Confirm Password *
+          </Label>
+          <Input
+            id="tutorConfirmPassword"
+            name="confirmPassword"
+            type={showPassword ? "text" : "password"}
+            placeholder="Confirm your password"
+            className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+            value={tutorFormData.confirmPassword}
+            onChange={handleTutorChange}
+            required
+          />
+        </div>
       </div>
 
-    </div>
+      <Button
+        type="submit"
+        className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300"
+        disabled={loading || creating}
+      >
+        {loading || creating ? "Creating Account..." : "Complete Registration"}
+      </Button>
+    </form>
   );
-}
+};

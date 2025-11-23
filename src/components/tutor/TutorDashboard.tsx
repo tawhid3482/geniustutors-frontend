@@ -104,6 +104,7 @@ export function TutorDashboard() {
   const { signOut, user } = useAuth();
   const { toast } = useToast();
 
+
   // Initialize chat functionality
   const {
     chatContacts,
@@ -152,7 +153,7 @@ export function TutorDashboard() {
               activeTab={activeTab}
               onTabChange={setActiveTab}
               onLogout={handleLogout}
-              role="tutor"
+              role="TUTOR"
             />
           </div>
         </div>
@@ -164,10 +165,10 @@ export function TutorDashboard() {
         <DashboardNavbar 
           user={{
             id: user?.id,
-            name: user?.full_name || 'Tutor',
+            fullName: user?.fullName || 'Tutor',
             email: user?.email || '',
-            role: 'tutor',
-            avatar: user?.avatar_url
+            role: 'TUTOR',
+            avatar: user?.avatar
           }} 
           onLogout={handleLogout}
           onToggleSidebar={() => setShowMobileSidebar(!showMobileSidebar)}
@@ -227,7 +228,7 @@ export function TutorDashboard() {
                   setShowMobileSidebar(false);
                 }}
                 onLogout={handleLogout}
-                role="tutor"
+                role="TUTOR"
               />
             </div>
           </aside>

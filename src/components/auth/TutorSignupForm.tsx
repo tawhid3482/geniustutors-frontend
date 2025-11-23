@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
   Eye,
@@ -20,19 +19,20 @@ import {
   Lock,
   User,
   Phone,
-  MapPin,
-  Building2,
 } from "lucide-react";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
 import { useGetAllAreaQuery } from "@/redux/features/area/areaApi";
-import { useCreateAuthMutation } from "@/redux/features/auth/authApi";
+import { useCheckPhoneNumberMutation } from '@/redux/features/auth/authApi';
+import { useSendOtpMutation } from '@/redux/features/phoneVerification/phoneVerificationApi';
 
 interface TutorSignupFormProps {
+  onPhoneVerification: (phoneNumber: string, fullName: string, formData?: any) => void;
   onSuccess?: () => void;
 }
 
 export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
+  onPhoneVerification,
   onSuccess,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -41,7 +41,10 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
   // RTK Queries
   const { data: categoryData } = useGetAllCategoryQuery(undefined);
   const { data: areaData } = useGetAllAreaQuery(undefined);
-  const [createAuth, { isLoading: creating }] = useCreateAuthMutation();
+  
+  // RTK Query mutations for phone verification
+  const [checkPhoneNumber] = useCheckPhoneNumberMutation();
+  const [sendOTP] = useSendOtpMutation();
 
   // Form data state
   const [tutorFormData, setTutorFormData] = useState({
@@ -60,6 +63,33 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
     password: "",
     confirmPassword: "",
   });
+
+  // Check if phone number already exists using RTK Query
+  const handleCheckPhoneExists = async (phone: string) => {
+    try {
+      const result = await checkPhoneNumber({ phone }).unwrap();
+      console.log('📞 Phone check response:', result);
+      
+      // Check if phone exists based on API response
+      if (result.success && result.data && result.data.exists === true) {
+        console.log('❌ Phone number already exists');
+        return true;
+      }
+      
+      console.log('✅ Phone number is available');
+      return false;
+    } catch (error: any) {
+      console.error('Error checking phone:', error);
+      
+      // If there's an error in the API call, check the error response
+      if (error?.data?.data?.exists === true) {
+        return true;
+      }
+      
+      // Default to false if there's any uncertainty
+      return false;
+    }
+  };
 
   // Handle input changes
   const handleTutorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,7 +126,7 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
         })) || []
     ) || [];
 
-  // Simplified registration without OTP and phone verification
+  // Tutor registration with phone verification
   const handleTutorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -136,6 +166,14 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
     setLoading(true);
 
     try {
+      // Check if phone number already exists using RTK Query
+      console.log('🔍 Checking if phone number exists...');
+      const phoneExists = await handleCheckPhoneExists(tutorFormData.phone);
+      
+      if (phoneExists) {
+        throw new Error('An account with this phone number already exists. Please use a different phone number or try logging in.');
+      }
+
       // Normalize phone number
       let normalizedPhone = tutorFormData.phone;
       if (tutorFormData.phone.startsWith("+880")) {
@@ -144,7 +182,7 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
         normalizedPhone = "0" + tutorFormData.phone.slice(3);
       }
 
-      // Build registration payload
+      // Build registration payload for OTP verification
       const registrationPayload = {
         fullName: tutorFormData.fullName,
         email: tutorFormData.email || null,
@@ -162,63 +200,28 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
         background: tutorFormData.background,
       };
 
-      // console.log("Registration payload:", registrationPayload);
-
-      // Direct registration without OTP - use unwrap() for proper error handling
-      const result = await createAuth(registrationPayload).unwrap();
+      // console.log('📋 TutorSignupForm - Form data prepared:', registrationPayload);
       
-      // console.log("Registration successful:", result);
+      // Send OTP for phone verification ONLY if phone doesn't exist
+      console.log('📱 Sending OTP for phone verification...');
+      await sendOTP({ 
+        phone: normalizedPhone, 
+        name: tutorFormData.fullName 
+      }).unwrap();
 
-      if (result.success) {
-        toast.success("Registration successful! Please login.");
-        if (onSuccess) {
-          onSuccess();
-        }
-
-        // Reset form
-        setTutorFormData({
-          fullName: "",
-          email: "",
-          phone: "",
-          alternativePhone: "",
-          universityName: "",
-          departmentName: "",
-          universityYear: "",
-          preferredAreas: [],
-          background: [],
-          gender: "",
-          religion: "",
-          nationality: "Bangladeshi",
-          password: "",
-          confirmPassword: "",
-        });
-      }
+      // Proceed to phone verification
+      onPhoneVerification(normalizedPhone, tutorFormData.fullName, registrationPayload);
+      
     } catch (error: any) {
-      // console.error("Registration error:", error);
+      console.error('❌ Error in tutor registration:', error);
       
-      // RTK Query error structure - check different possible error formats
-      if (error?.data) {
-        // Case 1: Backend returned error with data property
-        const errorMessage = error.data.message || "Registration failed";
-        toast.error(errorMessage);
-      } else if (error?.error) {
-        // Case 2: Backend returned error with error property
-        const errorMessage = error.error || "Registration failed";
-        toast.error(errorMessage);
-      } else if (error?.message) {
-        // Case 3: JavaScript error or backend message directly
-        const errorMessage = error.message;
-        
-        // Check for specific backend error messages
-        if (errorMessage.includes("phone already registered") || 
-            errorMessage.includes("already exists")) {
-          toast.error("Phone number already registered. Please use a different number.");
-        } else {
-          toast.error(errorMessage);
-        }
+      // Handle specific error messages from API
+      if (error?.data?.message) {
+        toast.error(error.data.message);
+      } else if (error.message) {
+        toast.error(error.message);
       } else {
-        // Case 4: Unknown error format
-        toast.error("Registration failed. Please try again.");
+        toast.error('Signup failed. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -535,9 +538,9 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
       <Button
         type="submit"
         className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300"
-        disabled={loading || creating}
+        disabled={loading}
       >
-        {loading || creating ? "Creating Account..." : "Complete Registration"}
+        {loading ? "Verifying Phone..." : "Send OTP & Continue"}
       </Button>
     </form>
   );

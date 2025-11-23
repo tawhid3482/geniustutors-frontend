@@ -19,7 +19,7 @@ import Image from "next/image";
 interface NavbarProps {
   user?: {
     id?: string;
-    name: string;
+    fullName: string;
     email: string;
     role: string;
     avatar?: string;
@@ -45,6 +45,9 @@ export const DashboardNavbar = ({ user, onLogout, onToggleSidebar, showMobileSid
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+
+  console.log("user5641", user)
   
   useEffect(() => {
     const fetchWebsiteInfo = async () => {

@@ -203,7 +203,7 @@ export const FeaturedOnSection = () => {
                       className="max-h-12 xs:max-h-16 sm:max-h-20 w-full object-contain"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = '/placeholder-logo.png'; // Add a fallback image
+                        target.src = '/placeholder.svg'; // Add a fallback image
                       }}
                     />
                   </div>

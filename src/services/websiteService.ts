@@ -33,7 +33,7 @@ export const getWebsiteInfo = async (): Promise<WebsiteInfo> => {
     }
     throw new Error(response.data.message || 'Failed to fetch website information');
   } catch (error) {
-    console.error('Error fetching website information:', error);
+    // console.error('Error fetching website information:', error);
     // Return default values if API call fails
     return {
       siteName: 'Tutor Connect',
