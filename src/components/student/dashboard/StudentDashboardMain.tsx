@@ -53,7 +53,6 @@ import { StudentOverview } from "./StudentOverview";
 import { StudentRequestForm } from "./StudentRequestForm";
 import { StudentPostedJobs } from "./StudentPostedJobs";
 import { StudentSearch } from "./StudentSearch";
-import { StudentBookings } from "./StudentBookings";
 import { StudentProfile } from "./StudentProfile";
 import { StudentCourses } from "./StudentCourses";
 import { JoinCommunity } from "./JoinCommunity";
@@ -202,20 +201,20 @@ export function StudentDashboardMain() {
   // Authentication and routing
   useEffect(() => {
     if (!user) {
-      router.push('/');
+      // router.push('/');
       return;
     }
 
     // Check if user has student role
-    if (user.role && user.role !== 'student') {
+    if (user.role && user.role !== 'STUDENT_GUARDIAN') {
       // Redirect users to their specific dashboards
-      if (user.role === 'admin') {
+      if (user.role === 'ADMIN') {
         router.push('/admin/dashboard');
-      } else if (user.role === 'manager') {
+      } else if (user.role === 'MANAGER') {
         router.push('/manager/dashboard');
-      } else if (user.role === 'super_admin') {
+      } else if (user.role === 'SUPER_ADMIN') {
         router.push('/super-admin/dashboard');
-      } else if (user.role === 'tutor') {
+      } else if (user.role === 'TUTOR') {
         router.push('/dashboard');
       }
       return;
@@ -225,7 +224,7 @@ export function StudentDashboardMain() {
   const handleLogout = async () => {
     try {
       await signOut();
-      router.push('/');
+      // router.push('/');
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -251,10 +250,7 @@ export function StudentDashboardMain() {
 
   // Fetch posted jobs
   const fetchPostedJobs = useCallback(async () => {
-    console.log('=== FRONTEND COMPONENT DEBUG ===');
-    console.log('Function: fetchPostedJobs');
-    console.log('Component: StudentDashboardMain');
-    console.log('Timestamp:', new Date().toISOString());
+   
     console.log('Current state:', {
       isLoading: true,
       error: null,
@@ -281,21 +277,13 @@ export function StudentDashboardMain() {
       });
       
       if (response && response.success) {
-        console.log('Response is successful, processing data...');
-        // Data is already in the correct format from getStudentTutorRequests()
         const jobsData = response.data || [];
-        console.log('Setting posted jobs:', jobsData);
         setPostedJobs(jobsData);
-        
-        // Set total count from student's own jobs
-        const count = jobsData.length;
-        console.log('Setting total count:', count);
+                const count = jobsData.length;
         setTotalCount(count);
         
-        console.log('State updated successfully');
       } else {
-        console.warn('Unexpected response format:', response);
-        console.log('Setting empty state due to unexpected response');
+  
         setPostedJobs([]);
         setTotalCount(0);
       }
@@ -306,7 +294,7 @@ export function StudentDashboardMain() {
       console.error('Error stack:', error?.stack);
       console.error('Full error object:', error);
       
-      setError('Failed to load posted jobs');
+      // setError('Failed to load posted jobs');
       setPostedJobs([]);
       setTotalCount(0);
       
@@ -516,14 +504,14 @@ export function StudentDashboardMain() {
   const loadTaxonomyData = async () => {
     try {
       const taxonomyData = await taxonomyService.getTaxonomyData();
-      setCategories(taxonomyData.categories);
+      // setCategories(taxonomyData.categories);
       
-      // Extract all subjects and locations from categories
-      const allSubjects = taxonomyData.categories.flatMap(cat => cat.subjects);
-      const allLocations = taxonomyData.categories.flatMap(cat => cat.classLevels);
+      // // Extract all subjects and locations from categories
+      // const allSubjects = taxonomyData.categories.flatMap(cat => cat.subjects);
+      // const allLocations = taxonomyData.categories.flatMap(cat => cat.classLevels);
       
-      setSubjects(allSubjects);
-      setLocations(allLocations);
+      // setSubjects(allSubjects);
+      // setLocations(allLocations);
     } catch (error) {
       console.error("Error loading taxonomy data:", error);
     }
@@ -866,7 +854,7 @@ export function StudentDashboardMain() {
               activeTab={activeTab}
               onTabChange={setActiveTab}
               onLogout={handleLogout}
-              role="student"
+              role="STUDENT_GUARDIAN"
             />
           </div>
         </div>
@@ -877,10 +865,10 @@ export function StudentDashboardMain() {
         {/* Sticky Navbar */}
         <DashboardNavbar 
           user={{
-            name: user?.full_name || user?.name || 'Student',
+            fullName: user?.fullName || user?.name || 'Student',
             email: user?.email || '',
-            role: user?.role || 'student',
-            avatar: user?.avatar_url
+            role: user?.role || 'STUDENT_GUARDIAN',
+            avatar: user?.avatar
           }}
           onLogout={handleLogout}
           onToggleSidebar={() => setShowMobileSidebar(!showMobileSidebar)}
@@ -892,7 +880,7 @@ export function StudentDashboardMain() {
           <div className="w-full max-w-none content-container">
             {activeTab === 'dashboard' && (
               <StudentOverview 
-                profile={{ name: user?.name || 'Student' }}
+                profile={{ name: user?.fullName || 'Student' }}
                 requestsPostedCount={postedJobs.length}
                 tutorRequestedCount={0}
                 tutorAssignedCount={0}
@@ -997,7 +985,7 @@ export function StudentDashboardMain() {
                   setShowMobileSidebar(false);
                 }}
                 onLogout={handleLogout}
-                role="student"
+                role="STUDENT_GUARDIAN"
               />
             </div>
           </aside>

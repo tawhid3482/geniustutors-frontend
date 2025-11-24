@@ -55,7 +55,7 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuItems }: DashboardSidebarProps) {
  
-  console.log(menuItems)
+  console.log(role)
  
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const { user, profile } = useAuth(); // Access user and profile from AuthContext
@@ -68,7 +68,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
       newExpanded.add(menuId);
     }
     setExpandedMenus(newExpanded);
-  };
+  };  
 
   // Icon mapping
   const iconMap: { [key: string]: any } = {

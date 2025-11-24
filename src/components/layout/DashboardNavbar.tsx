@@ -149,9 +149,9 @@ export const DashboardNavbar = ({ user, onLogout, onToggleSidebar, showMobileSid
             )}
 
             {/* Theme Toggle - Positioned at far right */}
-            <div className="flex items-center">
+            {/* <div className="flex items-center">
               <ThemeToggle />
-            </div>
+            </div> */}
 
             {/* Mobile Menu Toggle */}
             <Button 

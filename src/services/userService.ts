@@ -4,9 +4,9 @@ import { getAuthToken } from '@/utils/auth';
 export interface User {
   id: string;
   tutor_id?: string;
-  full_name: string;
+  fullName: string;
   email: string;
-  role: 'super_admin' | 'admin' | 'manager' | 'tutor' | 'student';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'TUTOR' | 'STUDENT_GUARDIAN';
   phone?: string;
   avatar_url?: string;
   location?: string;
@@ -35,10 +35,10 @@ export interface User {
 }
 
 export interface NewUser {
-  full_name: string;
+  fullName: string;
   email: string;
   password: string;
-  role: 'super_admin' | 'admin' | 'manager' | 'tutor' | 'student';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'TUTOR' | 'STUDENT_GUARDIAN';
   phone?: string;
   district?: string;
   gender?: 'male' | 'female' | 'other';

@@ -10,20 +10,17 @@ export default function TutorPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If not loading and no user, redirect to homepage
     if (!authLoading && !user) {
       router.push('/');
       return;
     }
-
-    // If user exists but is not a tutor, redirect to homepage
+    
     if (!authLoading && user && user.role !== 'tutor') {
       router.push('/');
       return;
     }
   }, [user, authLoading, router]);
 
-  // Show loading while checking auth or redirecting
   if (authLoading || !user || user.role !== 'tutor') {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-white z-50">

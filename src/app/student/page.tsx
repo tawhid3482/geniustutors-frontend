@@ -4,31 +4,29 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext.next';
 import { RefreshCw } from 'lucide-react';
-// import { StudentDashboardMain } from '@/components/student/dashboard/StudentDashboardMain';
+import { StudentDashboardMain } from '@/components/student/dashboard/StudentDashboardMain';
 
 export default function StudentDashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  // Redirect logic for unauthenticated or non-student users
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        // User not logged in, redirect to home page
         router.push('/');
         return;
       }
 
       // Check if user has student role
-      if (user.role && user.role !== 'student') {
+      if (user.role && user.role !== 'STUDENT_GUARDIAN') {
         // Redirect users to their specific dashboards
-        if (user.role === 'admin') {
+        if (user.role === 'ADMIN') {
           router.push('/admin/dashboard');
-        } else if (user.role === 'manager') {
+        } else if (user.role === 'MANAGER') {
           router.push('/manager/dashboard');
-        } else if (user.role === 'super_admin') {
+        } else if (user.role === 'SUPER_ADMIN') {
           router.push('/super-admin/dashboard');
-        } else if (user.role === 'tutor') {
+        } else if (user.role === 'TUTOR') {
           router.push('/dashboard');
         } else {
           // For other roles, redirect to home
@@ -52,7 +50,7 @@ export default function StudentDashboardPage() {
   }
 
   // User not authenticated or doesn't have access - show loading while redirecting
-  if (!user || user.role !== 'student') {
+  if (!user || user.role !== 'STUDENT_GUARDIAN') {
     return (
       <div className="min-h-screen w-full flex items-center justify-center">
         <div className="text-center">
@@ -63,5 +61,5 @@ export default function StudentDashboardPage() {
     );
   }
 
-  // return <StudentDashboardMain />;
+  return <StudentDashboardMain />;
 }
