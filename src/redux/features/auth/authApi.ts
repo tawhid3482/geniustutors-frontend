@@ -35,9 +35,9 @@ const authApi = baseApi.injectEndpoints({
       invalidatesTags: [tagTypes.auth],
     }),
 
-    getAllAuth: builder.query({
+    getAllUsers: builder.query({
       query: () => ({
-        url: "/auth",
+        url: "/auth/users",
         method: "GET",
       }),
       providesTags: [tagTypes.auth],
@@ -73,7 +73,7 @@ const authApi = baseApi.injectEndpoints({
 export const {
 useCreateAuthMutation,
 useDeleteAuthMutation,
-useGetAllAuthQuery,
+useGetAllUsersQuery,
 useGetSingleAuthDataQuery,
 useUpdateAuthMutation,
 useCheckPhoneNumberMutation,

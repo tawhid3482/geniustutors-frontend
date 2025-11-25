@@ -14,6 +14,7 @@ import { toast } from '@/components/ui/use-toast';
 import { MoreHorizontal, Search, UserPlus, Filter, CheckCircle, XCircle, AlertCircle, User, Mail, Phone, MapPin, School } from 'lucide-react';
 import { userService, User as UserType } from '@/services/userService';
 import { useRole } from '@/contexts/RoleContext';
+import { useGetAllUsersQuery } from '@/redux/features/auth/authApi';
 
 // Using the User type from userService
 type UserData = UserType;
@@ -39,6 +40,12 @@ export function UserManagementSection() {
     password: ''
   });
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
+
+
+  const {data:alUsersData}=useGetAllUsersQuery(undefined)
+  console.log(alUsersData)
+
+
 
   // Fetch users from database
   const fetchUsers = async () => {
@@ -143,6 +150,12 @@ export function UserManagementSection() {
     
     // Filter out super admin users
     result = result.filter(user => user.role !== 'SUPER_ADMIN');
+
+
+
+
+
+
     
     // Filter by search term
     if (searchTerm) {

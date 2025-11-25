@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext.next';
-import { api } from '@/config/api';
 
 export interface MenuItem {
   id: string;
@@ -12,7 +11,7 @@ export interface MenuItem {
 
 export interface Permission {
   id: string;
-  name: string;
+  fullName: string;
   description: string;
   module: string;
   action: string;
@@ -33,18 +32,28 @@ export function usePermissionMenu() {
       }
 
       try {
-        const response = await api.get('/auth/permissions');
-        console.log('Permissions response:', response);
-        const permissions = response.permissions || response.data?.permissions || [];
-        setUserPermissions(permissions.map((p: Permission) => p.name));
+        // For now, use role-based permissions since your API doesn't return permissions
+        const roleBasedPermissions = getDefaultPermissions(user.role);
+        setUserPermissions(roleBasedPermissions);
+        
+        // If you want to fetch from API later, use this:
+        // const response = await fetch(`http://localhost:5000/api/auth/me/${user.id}`);
+        // const data = await response.json();
+        // console.log('User data:', data);
+        // 
+        // // If the API returns permissions in the future
+        // if (data.data?.permissions) {
+        //   setUserPermissions(data.data.permissions.map((p: Permission) => p.name));
+        // } else {
+        //   // Fallback to role-based permissions
+        //   const roleBasedPermissions = getDefaultPermissions(user.role);
+        //   setUserPermissions(roleBasedPermissions);
+        // }
       } catch (error: any) {
         console.error('Error fetching permissions:', error);
-        console.error('Error details:', {
-          message: error.message,
-          response: error.response,
-          isNetworkError: error.isNetworkError
-        });
-        setUserPermissions([]);
+        // Fallback to role-based permissions
+        const roleBasedPermissions = getDefaultPermissions(user.role);
+        setUserPermissions(roleBasedPermissions);
       } finally {
         setLoading(false);
       }
@@ -53,15 +62,67 @@ export function usePermissionMenu() {
     fetchPermissions();
   }, [user]);
 
+  // Get default permissions based on role
+  const getDefaultPermissions = (role: string): string[] => {
+    switch (role) {
+      case 'SUPER_ADMIN':
+        return [
+          'Manage Users',
+          'Manage Admins', 
+          'Manage Super Admins',
+          'System Configuration',
+          'View Dashboard',
+          'Manage Roles',
+          'Delete System Roles',
+          'Manage Tutors',
+          'Manage Students',
+          'Manage Payments',
+          'Manage Testimonials',
+          'Manage Courses',
+          'Manage Platform'
+        ];
+      case 'ADMIN':
+        return [
+          'Manage Users',
+          'Manage Tutors',
+          'Manage Students',
+          'View Dashboard',
+          'Manage Payments',
+          'Manage Testimonials',
+          'Manage Courses'
+        ];
+      case 'MANAGER':
+        return [
+          'Manage Tutors',
+          'Manage Students',
+          'View Dashboard',
+          'Manage Testimonials',
+          'Manage Courses'
+        ];
+      case 'TUTOR':
+        return [
+          'View Profile',
+          'Manage Availability'
+        ];
+      case 'STUDENT_GUARDIAN':
+        return [
+          'View Profile',
+          'Find Tutors'
+        ];
+      default:
+        return [];
+    }
+  };
+
   // Check if user has permission
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
     
     // Super admin has all permissions
-    if (user.role === 'super_admin') return true;
+    if (user.role === 'SUPER_ADMIN') return true;
     
     // Admin has all permissions except super admin specific ones
-    if (user.role === 'admin') {
+    if (user.role === 'ADMIN') {
       const adminRestrictedPermissions = [
         'Manage Super Admins',
         'Delete System Roles',
@@ -70,7 +131,7 @@ export function usePermissionMenu() {
       return !adminRestrictedPermissions.includes(permission);
     }
     
-    // Manager and other roles need explicit permissions from database
+    // Manager and other roles need explicit permissions
     return userPermissions.includes(permission);
   };
 
@@ -96,6 +157,7 @@ export function usePermissionMenu() {
       // If item has submenus, filter them too
       if (item.subMenus) {
         const filteredSubMenus = filterMenuItems(item.subMenus);
+        // Only keep the item if it has visible submenus
         if (filteredSubMenus.length === 0) return false;
         item.subMenus = filteredSubMenus;
       }
@@ -113,4 +175,3 @@ export function usePermissionMenu() {
     loading
   };
 }
-

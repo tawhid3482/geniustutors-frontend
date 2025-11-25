@@ -103,14 +103,14 @@ export function ManagerDashboard({ user: pageUser }: { user: any }) {
   const user = pageUser || {
     name: "Manager User",
     email: "manager@tutorconnect.com",
-    role: "manager",
+    role: "MANAGER",
     avatar: "/images/avatars/manager.png"
   };
 
   // Ensure user has the correct structure for RoleProvider
   const roleUser = user ? {
     id: user.id || user.user_id,
-    name: user.name || user.full_name,
+    fullName: user.fullName || user.fullName,
     email: user.email,
     role: user.role,
     avatar: user.avatar
@@ -122,27 +122,27 @@ export function ManagerDashboard({ user: pageUser }: { user: any }) {
   };
 
   // Check if user can access current tab
-  const canAccessTab = (tabId: string): boolean => {
-    const menuItems = getMenuItems();
-    const findMenuItem = (items: any[], id: string): any => {
-      for (const item of items) {
-        if (item.id === id) return item;
-        if (item.subMenus) {
-          const found = findMenuItem(item.subMenus, id);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
+  // const canAccessTab = (tabId: string): boolean => {
+  //   const menuItems = getMenuItems();
+  //   const findMenuItem = (items: any[], id: string): any => {
+  //     for (const item of items) {
+  //       if (item.id === id) return item;
+  //       if (item.subMenus) {
+  //         const found = findMenuItem(item.subMenus, id);
+  //         if (found) return found;
+  //       }
+  //     }
+  //     return null;
+  //   };
 
-    const menuItem = findMenuItem(menuItems, tabId);
-    if (!menuItem) return false;
+  //   const menuItem = findMenuItem(menuItems, tabId);
+  //   if (!menuItem) return false;
     
-    // If no permission required, allow access
-    if (!menuItem.permission) return true;
+  //   // If no permission required, allow access
+  //   if (!menuItem.permission) return true;
     
-    return hasPermission(menuItem.permission);
-  };
+  //   return hasPermission(menuItem.permission);
+  // };
 
   // Render dashboard overview section
   const renderDashboard = () => {
@@ -271,22 +271,22 @@ export function ManagerDashboard({ user: pageUser }: { user: any }) {
   }
 
   // Check if user can access the current tab
-  if (!canAccessTab(activeTab)) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
-        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-          <p className="text-gray-600 mb-6">You don't have permission to access this section.</p>
-          <Button 
-            onClick={() => setActiveTab('dashboard')} 
-            className="w-full"
-          >
-            Go to Dashboard
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // if (!canAccessTab(activeTab)) {
+  //   return (
+  //     <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
+  //       <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-4">
+  //         <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+  //         <p className="text-gray-600 mb-6">You don't have permission to access this section.</p>
+  //         <Button 
+  //           onClick={() => setActiveTab('dashboard')} 
+  //           className="w-full"
+  //         >
+  //           Go to Dashboard
+  //         </Button>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 w-full manager-dashboard">
@@ -321,7 +321,7 @@ export function ManagerDashboard({ user: pageUser }: { user: any }) {
           {/* Sticky Navbar */}
           <DashboardNavbar 
             user={user ? {
-              name: user.name || user.full_name,
+              fullName: user.fullName || user.fullName,
               email: user.email,
               role: user.role,
               avatar: user.avatar

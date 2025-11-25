@@ -1,67 +1,57 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Calendar, MapPin, User, RefreshCw } from "lucide-react";
-import { tutorRequestService, TutorRequest } from '@/services/tutorRequestService';
-import { formatDistanceToNow } from 'date-fns';
+import { BookOpen, MapPin, User, RefreshCw } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { useGetAllTutorRequestsQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
 
-/**
- * RecentTuitionRequests Component
- * Displays the most recent tuition requests in the admin dashboard
- */
 export function RecentTuitionRequests() {
-  const [tuitionRequests, setTuitionRequests] = useState<TutorRequest[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: tutorRequestsData,
+    isLoading,
+    error: rtkError,
+    refetch,
+    isFetching,
+  } = useGetAllTutorRequestsQuery(undefined, {
+    refetchOnMountOrArgChange: true, // Add this
+  });
 
-  const fetchTuitionRequests = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // Fetch the most recent tuition requests (limit to 3 for the dashboard)
-      const response = await tutorRequestService.getAllTutorRequests({
-        limit: 3
-      });
-      
-      if (response.success) {
-        setTuitionRequests(response.data);
-      } else {
-        setError('Failed to fetch tuition requests');
-      }
-    } catch (err) {
-      console.error('Error fetching tuition requests:', err);
-      setError('An error occurred while fetching tuition requests');
-    } finally {
-      setIsLoading(false);
-    }
+  console.log('Tutor Requests Data:', tutorRequestsData);
+
+  const handleRefresh = () => {
+    refetch(); // This should force a refetch
   };
 
-  useEffect(() => {
-    fetchTuitionRequests();
-    
-    // Set up auto-refresh every 60 seconds
-    const interval = setInterval(fetchTuitionRequests, 60000);
-    
-    return () => clearInterval(interval);
-  }, []);
-
-  // Helper function to get appropriate icon based on subject
-  const getSubjectIcon = (subjects: string[]) => {
-    // Default to BookOpen icon
-    return <BookOpen className="h-5 w-5" />;
-  };
-
-  // Format the timestamp to relative time (e.g., "2 hours ago")
   const formatTimestamp = (timestamp: string) => {
     try {
       return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
     } catch (error) {
-      return 'Recently';
+      return "Recently";
     }
   };
+
+  const getSubjectIcon = (subjects: string[]) => {
+    return <BookOpen className="h-5 w-5" />;
+  };
+
+  const getSubjectsText = (request: any) => {
+    if (request.selectedSubjects && request.selectedSubjects.length > 0) {
+      return request.selectedSubjects.join(", ");
+    }
+    return "No subjects specified";
+  };
+
+  const getClassesText = (request: any) => {
+    if (request.selectedClasses && request.selectedClasses.length > 0) {
+      return request.selectedClasses.join(", ");
+    }
+    return "No classes specified";
+  };
+
+  const tuitionRequests = tutorRequestsData?.data || [];
+  const error = rtkError ? 'Failed to fetch tuition requests' : null;
+  const isRefreshing = isLoading || isFetching;
 
   return (
     <Card>
@@ -71,40 +61,54 @@ export function RecentTuitionRequests() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => fetchTuitionRequests()}
-            disabled={isLoading}
+            onClick={handleRefresh}
+            disabled={isRefreshing}
             className="flex items-center gap-2"
           >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {isRefreshing ? (
           <div className="flex justify-center items-center h-40">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-700"></div>
           </div>
         ) : error ? (
           <div className="text-center text-red-500 py-4">{error}</div>
         ) : tuitionRequests.length === 0 ? (
-          <div className="text-center text-muted-foreground py-4">No tuition requests found</div>
+          <div className="text-center text-muted-foreground py-4">
+            No tuition requests found
+          </div>
         ) : (
           <div className="space-y-4">
-            {tuitionRequests.map((request) => (
-              <div key={request.id} className="flex items-center gap-4 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+            {tuitionRequests.slice(0, 3).map((request: any) => (
+              <div
+                key={request.id}
+                className="flex items-center gap-4 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+              >
                 <div className="bg-blue-100 p-2 rounded-full text-blue-700">
-                  {getSubjectIcon(request.selectedSubjects)}
+                  {getSubjectIcon(request.selectedSubjects || [])}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium truncate">
-                    {request.category && <span className="text-blue-600 font-semibold mr-2">{request.category}</span>}
-                    {request.selectedSubjects?.join(', ') || 'No subjects'} - {request.selectedClasses?.join(', ') || 'No classes'}
+                    {getSubjectsText(request)} - {getClassesText(request)}
                   </div>
-                  <div className="text-sm text-muted-foreground flex items-center gap-1">
-                    <User className="h-3 w-3" /> Student Request • 
-                    <MapPin className="h-3 w-3 ml-1" /> {request.district}
+                  <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                    <User className="h-3 w-3" />
+                    {request.studentGender || "Student"} •
+                    <MapPin className="h-3 w-3 ml-1" />
+                    {request.district || "Location not specified"}
                   </div>
+                  {request.salaryRange && (
+                    <div className="text-sm text-green-600 mt-1">
+                      Salary: ৳{request.salaryRange.min} - ৳
+                      {request.salaryRange.max}
+                    </div>
+                  )}
                 </div>
                 <div className="text-sm text-muted-foreground whitespace-nowrap">
                   {formatTimestamp(request.createdAt)}

@@ -1,4 +1,4 @@
-// Generic Dashboard Sidebar Component
+ 
 import {
   BookOpen,
   Search,
@@ -37,13 +37,13 @@ import {
   Users2,
   StickyNote,
   Megaphone,
-  MessageCircle, // Added MessageCircle import
+  MessageCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { MenuItem } from '@/hooks/usePermissionMenu';
-import { useAuth } from '@/contexts/AuthContext.next'; // Import useAuth
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Import Avatar components
-import { CardTitle } from '@/components/ui/card'; // Import CardTitle for consistent styling
+import { useAuth } from '@/contexts/AuthContext.next';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { CardTitle } from '@/components/ui/card';
 
 interface DashboardSidebarProps {
   activeTab: string;
@@ -55,11 +55,16 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuItems }: DashboardSidebarProps) {
  
-  console.log(role)
+  console.log('🔍 DashboardSidebar Debug:', {
+    role,
+    hasMenuItems: !!menuItems,
+    menuItemsCount: menuItems?.length || 0,
+    menuItems: menuItems // Show actual menu items
+  });
  
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
-  const { user, profile } = useAuth(); // Access user and profile from AuthContext
-
+  const { user, profile } = useAuth();
+  
   const toggleMenu = (menuId: string) => {
     const newExpanded = new Set(expandedMenus);
     if (newExpanded.has(menuId)) {
@@ -68,7 +73,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
       newExpanded.add(menuId);
     }
     setExpandedMenus(newExpanded);
-  };  
+  };
 
   // Icon mapping
   const iconMap: { [key: string]: any } = {
@@ -106,26 +111,20 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
     Users2,
     StickyNote,
     Megaphone,
-    MessageCircle, // Added MessageCircle to iconMap
+    MessageCircle,
   };
 
-  // Define menu items based on role
+  // Define menu items based on role - FIXED VERSION
   const getMenuItems = () => {
-    if (menuItems) {
-      const main = menuItems.filter(item => !item.id.includes('profile') && (!item.subMenus || item.subMenus.length === 0));
-      const quick = menuItems.filter(item => item.subMenus && item.subMenus.length > 0);
-      const account = menuItems.filter(item => item.id.includes('profile'));
-      
-      return {
-        main,
-        quick,
-        account
-      };
-    }
-    
+    // Always use role-based menu for now to ensure it works
+    return getRoleBasedMenuItems();
+  };
 
-    // Fallback to role-based menu
-    switch (role) {
+  // Separate function for role-based menu items - FIXED
+  const getRoleBasedMenuItems = () => {
+        const normalizedRole = role?.toUpperCase().trim();
+    
+    switch (normalizedRole) {
       case 'STUDENT_GUARDIAN':
         return {
           main: [
@@ -190,7 +189,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
           main: [
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
             { id: 'tution-request', label: 'Tution Requests', icon: Briefcase },
-            { id: 'tutor connect', label: 'Tutor Connect', icon: BookCheck },
+            { id: 'tutor-connect', label: 'Tutor Connect', icon: BookCheck },
             { id: 'reviews', label: 'Reviews', icon: Star },
             { id: 'users', label: 'User Management', icon: Users },
             { id: 'role-management', label: 'Role Management', icon: Key },
@@ -222,6 +221,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
           ],
         };
       case 'MANAGER':
+        console.log('✅ Loading MANAGER menu');
         return {
           main: [
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -232,29 +232,50 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'featured-media', label: 'Featured Media', icon: Globe },
             { id: 'payments', label: 'Payment Management', icon: DollarSign },
           ],
-          quick: [
-          ],
+          quick: [],
           account: [
             { id: 'profile', label: 'Profile Settings', icon: User },
           ],
         };
       default:
+        console.warn('❌ Unknown role:', normalizedRole, 'Original role:', role);
         return {
-          main: [],
+          main: [
+            { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+            { id: 'profile', label: 'Profile', icon: User },
+          ],
           quick: [],
-          account: [],
+          account: [
+            { id: 'settings', label: 'Settings', icon: Settings },
+          ],
         };
     }
   };
 
   const resolvedMenuItems = getMenuItems();
 
+  console.log('🎯 Final resolved menu items for', role, ':', {
+    main: resolvedMenuItems.main.length,
+    quick: resolvedMenuItems.quick.length,
+    account: resolvedMenuItems.account.length,
+    allMainItems: resolvedMenuItems.main.map(item => ({ id: item.id, label: item.label })),
+    allQuickItems: resolvedMenuItems.quick.map(item => ({ id: item.id, label: item.label })),
+    allAccountItems: resolvedMenuItems.account.map(item => ({ id: item.id, label: item.label }))
+  });
+
   const renderMenuItem = (item: any) => {
+    if (!item || !item.id) {
+      console.warn('❌ Invalid menu item:', item);
+      return null;
+    }
+
     const hasSubMenus = item.subMenus && item.subMenus.length > 0;
     const isExpanded = expandedMenus.has(item.id);
     
     // Get icon component - handle both string and component icons
     const IconComponent = typeof item.icon === 'string' ? iconMap[item.icon] : item.icon;
+
+    console.log('🖼️ Rendering menu item:', item.id, item.label, 'hasSubMenus:', hasSubMenus);
 
     return (
       <div key={item.id} className="space-y-1">
@@ -263,6 +284,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             if (hasSubMenus) {
               toggleMenu(item.id);
             } else {
+              console.log('📱 Changing tab to:', item.id);
               onTabChange(item.id);
             }
           }}
@@ -288,11 +310,19 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
         {hasSubMenus && isExpanded && (
           <div className="ml-4 space-y-1">
             {item.subMenus.map((subItem: any) => {
+              if (!subItem || !subItem.id) {
+                console.warn('❌ Invalid submenu item:', subItem);
+                return null;
+              }
+              
               const SubIconComponent = typeof subItem.icon === 'string' ? iconMap[subItem.icon] : subItem.icon;
               return (
                 <button
                   key={subItem.id}
-                  onClick={() => onTabChange(subItem.id)}
+                  onClick={() => {
+                    console.log('📱 Changing tab to submenu:', subItem.id);
+                    onTabChange(subItem.id);
+                  }}
                   className={`w-full flex items-center px-2 sm:px-3 lg:px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:bg-green-50 hover:text-green-700 ${
                     activeTab === subItem.id
                       ? 'bg-green-600 text-white shadow-md'
@@ -321,6 +351,16 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
     <div className="flex flex-col h-full bg-white">
       <div className="flex-1 overflow-y-auto p-2 sm:p-3 lg:p-4 hide-scrollbar smooth-scroll">
         <div className="space-y-6">
+          {/* Debug Info - Remove in production */}
+          {/* <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-blue-700 text-sm">
+              <strong>Debug:</strong> Role: <code>{role}</code> | 
+              Main Items: {resolvedMenuItems.main.length} | 
+              Quick Items: {resolvedMenuItems.quick.length} | 
+              Account Items: {resolvedMenuItems.account.length}
+            </p>
+          </div> */}
+
           {/* Support Team Info (for student role) */}
           {role === 'STUDENT_GUARDIAN' && (
             <div className="flex flex-col items-center text-center p-4 bg-green-600 text-white rounded-lg shadow-md mb-6">
@@ -354,46 +394,70 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
               </p>
             </div>
           )}
+          
           {/* Main Menu */}
-          <div>
-            <h3 className="px-2 sm:px-3 text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">
-              Main Menu
-            </h3>
-            <div className="space-y-1 sm:space-y-2">
-              {resolvedMenuItems.main.map((item) => renderMenuItem(item))}
+          {resolvedMenuItems.main.length > 0 ? (
+            <div>
+              <h3 className="px-2 sm:px-3 text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">
+                Main Menu ({resolvedMenuItems.main.length} items)
+              </h3>
+              <div className="space-y-1 sm:space-y-2">
+                {resolvedMenuItems.main.map((item) => renderMenuItem(item))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-red-700 text-sm text-center">
+                ❌ No main menu items available for role: {role}
+              </p>
+            </div>
+          )}
           
           {/* Quick Actions */}
           {resolvedMenuItems.quick.length > 0 && (
-            <>
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="px-2 sm:px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">
-                  Quick Actions
-                </h3>
-                <div className="space-y-1 sm:space-y-2">
-                  {resolvedMenuItems.quick.map((item) => renderMenuItem(item))}
-                </div>
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="px-2 sm:px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">
+                Quick Actions ({resolvedMenuItems.quick.length} items)
+              </h3>
+              <div className="space-y-1 sm:space-y-2">
+                {resolvedMenuItems.quick.map((item) => renderMenuItem(item))}
               </div>
-            </>
+            </div>
           )}
 
           {/* Account */}
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="px-2 sm:px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">
-              Account
-            </h3>
-            <div className="space-y-1 sm:space-y-2">
-              {resolvedMenuItems.account.map((item) => renderMenuItem(item))}
-              <button
-                onClick={onLogout}
-                className="w-full flex items-center px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-sm font-medium rounded-lg transition-all duration-200 hover:bg-red-50 hover:text-red-700 text-red-600 hover:shadow-sm"
-              >
-                <LogOut className="h-4 w-4 sm:h-5 sm:w-5 mr-3" />
-                <span className="font-medium text-xs sm:text-sm lg:text-base">Logout</span>
-              </button>
+          {resolvedMenuItems.account.length > 0 ? (
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="px-2 sm:px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">
+                Account ({resolvedMenuItems.account.length} items)
+              </h3>
+              <div className="space-y-1 sm:space-y-2">
+                {resolvedMenuItems.account.map((item) => renderMenuItem(item))}
+                <button
+                  onClick={onLogout}
+                  className="w-full flex items-center px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-sm font-medium rounded-lg transition-all duration-200 hover:bg-red-50 hover:text-red-700 text-red-600 hover:shadow-sm"
+                >
+                  <LogOut className="h-4 w-4 sm:h-5 sm:w-5 mr-3" />
+                  <span className="font-medium text-xs sm:text-sm lg:text-base">Logout</span>
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="px-2 sm:px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">
+                Account
+              </h3>
+              <div className="space-y-1 sm:space-y-2">
+                <button
+                  onClick={onLogout}
+                  className="w-full flex items-center px-2 sm:px-3 lg:px-4 py-2 sm:py-3 text-sm font-medium rounded-lg transition-all duration-200 hover:bg-red-50 hover:text-red-700 text-red-600 hover:shadow-sm"
+                >
+                  <LogOut className="h-4 w-4 sm:h-5 sm:w-5 mr-3" />
+                  <span className="font-medium text-xs sm:text-sm lg:text-base">Logout</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

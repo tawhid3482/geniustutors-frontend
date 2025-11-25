@@ -15,6 +15,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useState, useEffect } from "react";
 import { getWebsiteInfo } from "@/services/websiteService";
 import logo from "../../../public/Genius-Tutor-Logo.png";
+import { useRouter } from "next/navigation";
 
 interface NavbarProps {
   user?: {
@@ -44,6 +45,8 @@ export const Navbar = ({
     siteLogo: "/logo.svg",
   });
 
+  const router = useRouter();
+
   useEffect(() => {
     const fetchWebsiteInfo = async () => {
       try {
@@ -67,6 +70,10 @@ export const Navbar = ({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const handleDashboard = async () => {
+    router.push("/dashboard");
+  };
 
   // console.log(user)
 
@@ -164,6 +171,9 @@ export const Navbar = ({
                       <div className="text-xs text-primary">{user.role}</div>
                     </DropdownMenuItem>
 
+                    <DropdownMenuItem onClick={handleDashboard}>
+                      Dashboard
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={onLogout}>
                       Logout
                     </DropdownMenuItem>

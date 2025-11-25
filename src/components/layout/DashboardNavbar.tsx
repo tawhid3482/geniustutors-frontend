@@ -47,7 +47,6 @@ export const DashboardNavbar = ({ user, onLogout, onToggleSidebar, showMobileSid
   }, []);
 
 
-  console.log("user5641", user)
   
   useEffect(() => {
     const fetchWebsiteInfo = async () => {
