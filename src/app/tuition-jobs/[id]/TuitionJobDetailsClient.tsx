@@ -636,7 +636,7 @@ export default function TuitionJobDetailsClient({
                       </Button>
                     )
                   ) : (
-                    <LoginDialog defaultRole="tutor">
+                    <LoginDialog defaultRole="TUTOR">
                       <Button className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-semibold">
                         <MessageCircle className="h-5 w-5 mr-2" />
                         Login then apply this job

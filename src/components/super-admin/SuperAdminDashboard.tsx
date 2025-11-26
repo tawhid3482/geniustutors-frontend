@@ -80,7 +80,7 @@ export function SuperAdminDashboard({ user }: { user: any }) {
               activeTab={activeTab}
               onTabChange={setActiveTab}
               onLogout={handleLogout}
-              role="super_admin"
+              role="SUPER_ADMIN"
             />
           </div>
         </div>
@@ -91,10 +91,10 @@ export function SuperAdminDashboard({ user }: { user: any }) {
         {/* Sticky Navbar */}
         <DashboardNavbar 
           user={user ? {
-            name: user.full_name,
+            fullName: user.fullName,
             email: user.email,
             role: user.role,
-            avatar: user.avatar_url
+            avatar: user.avatar
           } : undefined}
           onLogout={handleLogout}
           onToggleSidebar={() => setShowMobileSidebar(!showMobileSidebar)}
@@ -138,7 +138,7 @@ export function SuperAdminDashboard({ user }: { user: any }) {
                   setShowMobileSidebar(false);
                 }}
                 onLogout={handleLogout}
-                role="super_admin"
+                role="SUPER_ADMIN"
               />
             </div>
           </aside>

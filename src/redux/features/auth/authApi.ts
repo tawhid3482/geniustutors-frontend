@@ -13,6 +13,26 @@ const authApi = baseApi.injectEndpoints({
       },
       invalidatesTags: [tagTypes.auth],
     }),
+    loginUser: builder.mutation({
+      query: (formData) => {
+        return {
+          url: "/auth/login",
+          method: "POST",
+          data: formData,
+        };
+      },
+      invalidatesTags: [tagTypes.auth],
+    }),
+    loginAdmin: builder.mutation({
+      query: (formData) => {
+        return {
+          url: "/auth/login/admin",
+          method: "POST",
+          data: formData,
+        };
+      },
+      invalidatesTags: [tagTypes.auth],
+    }),
     createStudentOrGuardian: builder.mutation({
       query: (formData) => {
         return {
@@ -77,5 +97,7 @@ useGetAllUsersQuery,
 useGetSingleAuthDataQuery,
 useUpdateAuthMutation,
 useCheckPhoneNumberMutation,
-useCreateStudentOrGuardianMutation
+useCreateStudentOrGuardianMutation,
+useLoginAdminMutation,
+useLoginUserMutation
 } = authApi;

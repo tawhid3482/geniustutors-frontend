@@ -475,7 +475,7 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
   // Render taxonomy management section
   const renderTaxonomyManagement = () => {
     return (
-      <TaxonomyManagement />
+      <div />
     );
   };
 

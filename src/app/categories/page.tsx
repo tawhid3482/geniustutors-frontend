@@ -119,10 +119,10 @@ export default function CategoriesPage() {
     <div className="flex min-h-screen flex-col w-full overflow-x-hidden">
       <Navbar 
         user={user ? {
-          name: user.full_name,
+          fullName: user.fullName,
           email: user.email,
           role: user.role,
-          avatar: user.avatar_url
+          avatar: user.avatar
         } : undefined}
         onLogout={handleLogout}
         LoginComponent={LoginDialog}
