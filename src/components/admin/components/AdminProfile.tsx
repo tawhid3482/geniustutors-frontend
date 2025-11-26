@@ -24,6 +24,8 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
   const { user: authUser, updateUserProfile } = useAuth();
   const user = propUser || authUser;
   const { toast } = useToast();
+
+  
   
   // Profile data state
   const [profileData, setProfileData] = useState<ProfileData>({

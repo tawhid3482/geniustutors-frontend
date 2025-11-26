@@ -189,7 +189,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
           main: [
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
             { id: 'tution-request', label: 'Tution Requests', icon: Briefcase },
-            { id: 'tutor-connect', label: 'Tutor Connect', icon: BookCheck },
+            // { id: 'tutor-connect', label: 'Tutor Connect', icon: BookCheck },
             { id: 'reviews', label: 'Reviews', icon: Star },
             { id: 'users', label: 'User Management', icon: Users },
             { id: 'role-management', label: 'Role Management', icon: Key },
