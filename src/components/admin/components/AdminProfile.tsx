@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext.next';
 import { Eye, EyeOff, Save, User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useChangePasswordMutation, useUpdateAdminProfileMutation } from '@/redux/features/auth/authApi';
 
 interface ProfileData {
   id: string;
@@ -25,7 +26,9 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
   const user = propUser || authUser;
   const { toast } = useToast();
 
-  
+  // RTK Query mutations
+  const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
+  const [updateAdminProfile, { isLoading: isUpdatingProfile }] = useUpdateAdminProfileMutation();
   
   // Profile data state
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -43,20 +46,22 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
     newPassword: '',
     confirmPassword: '',
   });
-  
+
   // UI state
-  const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Combined loading state for initial data loading
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
   
   // Load profile data on component mount
   useEffect(() => {
     const loadProfileData = async () => {
       if (user?.id) {
         try {
-          setIsLoading(true);
+          setIsInitialLoading(true);
           const response = await fetch(`/api/users/profile/${user.id}`, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -109,7 +114,7 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
             createdAt: user.createdAt || user.created_at || '',
           });
         } finally {
-          setIsLoading(false);
+          setIsInitialLoading(false);
         }
       }
     };
@@ -117,28 +122,26 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
     loadProfileData();
   }, [user]);
   
-  // Handle profile data update
+  // Handle profile data update using RTK Query
   const handleProfileUpdate = async () => {
     try {
-      setIsLoading(true);
-      
       // Prepare update data - only include fields that have changed
       const updateData: {
-        full_name?: string;
+        fullName?: string;
         email?: string;
         phone?: string;
       } = {};
       
       // Get original user data for comparison
       const originalData = {
-        fullName: user.fullName || user.full_name || '',
+        fullName: user.fullName || user.fullName || '',
         email: user.email || '',
         phone: user.phone || '',
       };
       
       // Only include fields that have actually changed
       if (profileData.fullName !== originalData.fullName) {
-        updateData.full_name = profileData.fullName;
+        updateData.fullName = profileData.fullName;
       }
       if (profileData.email !== originalData.email) {
         updateData.email = profileData.email;
@@ -157,19 +160,14 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
         return;
       }
       
-      // Call API to update profile
-      const response = await fetch(`/api/users/profile/${user.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(updateData),
-      });
+      console.log(updateData, user.id)
+
+      const result = await updateAdminProfile({
+        id: user.id,
+        data: updateData
+      }).unwrap();
       
-      const data = await response.json();
-      
-      if (data.success) {
+      if (result.success) {
         // Update local auth context if available
         if (updateUserProfile) {
           updateUserProfile({
@@ -187,21 +185,19 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
         
         setIsEditing(false);
       } else {
-        throw new Error(data.message || data.error || 'Failed to update profile');
+        throw new Error(result.message || result.error || 'Failed to update profile');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
       toast({
         title: 'Update Failed',
-        description: error instanceof Error ? error.message : 'Failed to update profile',
+        description: error?.data?.message || error?.message || 'Failed to update profile',
         variant: 'destructive',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
   
-  // Handle password change
+  // Handle password change using RTK Query
   const handlePasswordChange = async () => {
     // Validate passwords
     if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -213,7 +209,7 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
       return;
     }
     
-    if (passwordData.newPassword.length < 8) {
+    if (passwordData.newPassword.length < 6) {
       toast({
         title: 'Password Too Short',
         description: 'Password must be at least 8 characters long',
@@ -223,24 +219,16 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
     }
     
     try {
-      setIsLoading(true);
+      // Call RTK Query mutation to change password
+      const result = await changePassword({
+        id: user.id,
+        data: {
+          oldPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }
+      }).unwrap();
       
-      // Call API to change password
-      const response = await fetch(`/api/auth/change-password`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          current_password: passwordData.currentPassword,
-          new_password: passwordData.newPassword,
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
+      if (result.success) {
         toast({
           title: 'Password Changed',
           description: 'Your password has been changed successfully.',
@@ -253,17 +241,15 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
           confirmPassword: '',
         });
       } else {
-        throw new Error(data.message || data.error || 'Failed to change password');
+        throw new Error(result.message || result.error || 'Failed to change password');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error changing password:', error);
       toast({
         title: 'Password Change Failed',
-        description: error instanceof Error ? error.message : 'Failed to change password',
+        description: error?.data?.message || error?.message || 'Failed to change password',
         variant: 'destructive',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
   
@@ -295,7 +281,7 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {isLoading ? (
+              {isInitialLoading ? (
                 <div className="flex justify-center items-center py-8">
                   <div className="h-8 w-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
                   <span className="ml-2 text-muted-foreground">Loading profile...</span>
@@ -310,7 +296,7 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
                       <h3 className="text-lg font-medium">{profileData.fullName}</h3>
                       <p className="text-sm text-muted-foreground">{profileData.role}</p>
                     </div>
-                                    </div>
+                  </div>
                   {!isEditing && (
                     <Button 
                       variant="outline" 
@@ -324,7 +310,7 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
                 </div>
               )}
               
-              {!isLoading && (
+              {!isInitialLoading && (
                 <div className="grid gap-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -396,10 +382,10 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
                 </Button>
                 <Button 
                   onClick={handleProfileUpdate}
-                  disabled={isLoading}
+                  disabled={isUpdatingProfile}
                   className="bg-green-600 hover:bg-green-700"
                 >
-                  {isLoading ? (
+                  {isUpdatingProfile ? (
                     <span className="flex items-center gap-2">
                       <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       Saving...
@@ -492,10 +478,10 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
             <CardFooter>
               <Button 
                 onClick={handlePasswordChange}
-                disabled={isLoading || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+                disabled={isChangingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
                 className="bg-green-600 hover:bg-green-700 ml-auto"
               >
-                {isLoading ? (
+                {isChangingPassword ? (
                   <span className="flex items-center gap-2">
                     <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     Updating...

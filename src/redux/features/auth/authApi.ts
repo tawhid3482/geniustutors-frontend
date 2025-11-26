@@ -89,6 +89,28 @@ const authApi = baseApi.injectEndpoints({
       },
       invalidatesTags: [tagTypes.auth],
     }),
+
+    changePassword: builder.mutation({
+      query: ({ id, data }) => {
+        return {
+          url: `/auth/change-password/${id}`,
+          method: "PATCH",
+          data: data,   
+        };
+      },
+      invalidatesTags: [tagTypes.auth],
+    }),
+    
+    updateAdminProfile: builder.mutation({
+      query: ({ id, data }) => {
+        return {
+          url: `/auth/update-admin-profile/${id}`,
+          method: "PATCH",
+          data: data,   
+        };
+      },
+      invalidatesTags: [tagTypes.auth],
+    }),
     
 
   }),
@@ -103,5 +125,7 @@ useCheckPhoneNumberMutation,
 useCreateStudentOrGuardianMutation,
 useLoginAdminMutation,
 useLoginUserMutation,
-useUpdateUserMutation
+useUpdateUserMutation,
+useChangePasswordMutation,
+useUpdateAdminProfileMutation
 } = authApi;
