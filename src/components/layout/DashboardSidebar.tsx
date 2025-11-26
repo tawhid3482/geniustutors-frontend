@@ -351,15 +351,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
     <div className="flex flex-col h-full bg-white">
       <div className="flex-1 overflow-y-auto p-2 sm:p-3 lg:p-4 hide-scrollbar smooth-scroll">
         <div className="space-y-6">
-          {/* Debug Info - Remove in production */}
-          {/* <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <p className="text-blue-700 text-sm">
-              <strong>Debug:</strong> Role: <code>{role}</code> | 
-              Main Items: {resolvedMenuItems.main.length} | 
-              Quick Items: {resolvedMenuItems.quick.length} | 
-              Account Items: {resolvedMenuItems.account.length}
-            </p>
-          </div> */}
+     
 
           {/* Support Team Info (for student role) */}
           {role === 'STUDENT_GUARDIAN' && (
@@ -398,9 +390,9 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
           {/* Main Menu */}
           {resolvedMenuItems.main.length > 0 ? (
             <div>
-              <h3 className="px-2 sm:px-3 text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">
+              {/* <h3 className="px-2 sm:px-3 text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">
                 Main Menu ({resolvedMenuItems.main.length} items)
-              </h3>
+              </h3> */}
               <div className="space-y-1 sm:space-y-2">
                 {resolvedMenuItems.main.map((item) => renderMenuItem(item))}
               </div>

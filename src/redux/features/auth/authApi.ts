@@ -69,16 +69,7 @@ const authApi = baseApi.injectEndpoints({
       }),
       providesTags: [tagTypes.auth],
     }),
-    updateAuth: builder.mutation({
-      query: ({ id, data }) => {
-        return {
-          url: `/auth/update/${id}`,
-          method: "PATCH",
-          data: data,
-        };
-      },
-      invalidatesTags: [tagTypes.auth],
-    }),
+
 
     deleteAuth: builder.mutation({
       query: (id: string) => ({
@@ -87,6 +78,19 @@ const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [tagTypes.auth],
     }),
+
+    updateUser: builder.mutation({
+      query: ({ id, data }) => {
+        return {
+          url: `/auth/update/${id}`,
+          method: "PATCH",
+          data: data,   
+        };
+      },
+      invalidatesTags: [tagTypes.auth],
+    }),
+    
+
   }),
 });
 
@@ -95,9 +99,9 @@ useCreateAuthMutation,
 useDeleteAuthMutation,
 useGetAllUsersQuery,
 useGetSingleAuthDataQuery,
-useUpdateAuthMutation,
 useCheckPhoneNumberMutation,
 useCreateStudentOrGuardianMutation,
 useLoginAdminMutation,
-useLoginUserMutation
+useLoginUserMutation,
+useUpdateUserMutation
 } = authApi;

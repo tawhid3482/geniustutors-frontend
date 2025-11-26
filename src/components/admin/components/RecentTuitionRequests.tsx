@@ -14,10 +14,9 @@ export function RecentTuitionRequests() {
     refetch,
     isFetching,
   } = useGetAllTutorRequestsQuery(undefined, {
-    refetchOnMountOrArgChange: true, // Add this
+    refetchOnMountOrArgChange: true, 
   });
 
-  console.log('Tutor Requests Data:', tutorRequestsData);
 
   const handleRefresh = () => {
     refetch(); // This should force a refetch

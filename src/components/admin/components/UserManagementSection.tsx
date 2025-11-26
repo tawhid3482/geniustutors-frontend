@@ -7,23 +7,80 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from '@/components/ui/use-toast';
 import { MoreHorizontal, Search, UserPlus, Filter, CheckCircle, XCircle, AlertCircle, User, Mail, Phone, MapPin, School } from 'lucide-react';
-import { userService, User as UserType } from '@/services/userService';
 import { useRole } from '@/contexts/RoleContext';
-import { useGetAllUsersQuery } from '@/redux/features/auth/authApi';
+import { 
+  useCreateAuthMutation,
+  useGetAllUsersQuery, 
+  useUpdateUserMutation, 
+  // useUpdateUsersMutation 
+} from '@/redux/features/auth/authApi';
 
-// Using the User type from userService
-type UserData = UserType;
+// User type based on your backend response
+export type UserData = {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  alternative_number?: string | null;
+  role: 'STUDENT_GUARDIAN' | 'TUTOR' | 'ADMIN' | 'MANAGER' | 'SUPER_ADMIN';
+  status: 'active' | 'suspended' | 'pending';
+  email_verified?: boolean;
+  verified?: boolean;
+  avatar_url?: string;
+  avatar?: string;
+  district?: string | null;
+  location?: string | null;
+  gender?: string;
+  bio?: string;
+  education?: string | null;
+  experience?: string | null;
+  subjects?: string[];
+  hourly_rate?: number;
+  availability?: string | null;
+  premium?: boolean;
+  rating?: number | null;
+  total_reviews?: number;
+  tutor_id?: number;
+  genius?: boolean;
+  createdAt?: string;
+  created_at?: string;
+  updated_at?: string;
+  institute_name?: string;
+  nationality?: string;
+  postOffice?: string | null;
+  preferred_areas?: string[];
+  qualification?: string | null;
+  religion?: string;
+  studentId?: string | null;
+  year?: string;
+  background?: string[];
+};
 
 export function UserManagementSection() {
   const { canDelete, canSuspend } = useRole();
+  
+  // RTK Query hooks
+  const { 
+    data: usersResponse, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useGetAllUsersQuery(undefined, {
+    pollingInterval: 30000, // Auto-refresh every 30 seconds
+  });
+
+  const [createUser] = useCreateAuthMutation();
+  const [updateUser] = useUpdateUserMutation();
+  // const [deleteUser] = useDeleteUserMutation();
+  // const [updateUserStatus] = useUpdateUserStatusMutation();
+
+  // State management
   const [users, setUsers] = useState<UserData[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -31,118 +88,67 @@ export function UserManagementSection() {
   const [showUserDetailsModal, setShowUserDetailsModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showEditUserModal, setShowEditUserModal] = useState(false);
+  
   const [newUser, setNewUser] = useState({
     fullName: '',
     email: '',
-    role: 'student',
+    role: 'STUDENT_GUARDIAN' as 'STUDENT_GUARDIAN' | 'TUTOR' | 'ADMIN' | 'MANAGER',
     phone: '',
     gender: '' as 'male' | 'female' | 'other' | '',
-    password: ''
+    password: 'defaultPassword123' // You might want to generate this or make it required
   });
+
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
 
 
-  const {data:alUsersData}=useGetAllUsersQuery(undefined)
-  console.log(alUsersData)
 
 
-
-  // Fetch users from database
-  const fetchUsers = async () => {
-    setIsLoading(true);
-    try {
-      // Use userService to fetch users
-      const fetchedUsers = await userService.getAllUsers();
-      setUsers(fetchedUsers);
-    } catch (error: any) {
-      console.error('Error fetching users:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load users. Please try again.',
-        variant: 'destructive'
-      });
-      
-      // Fallback to mock data if API fails (excluding super_admin users)
-      const mockUsers: UserData[] = [
-        {
-          id: '1',
-          fullName: 'John Doe',
-          email: 'john@example.com',
-          role: 'STUDENT_GUARDIAN',
-          phone: '+880 1712345678',
-          avatar_url: 'https://ui-avatars.com/api/?name=John+Doe',
-          status: 'active',
-          email_verified: true,
-          created_at: '2023-01-15T10:30:00Z',
-          district: 'Dhaka'
-        },
-        {
-          id: '2',
-          fullName: 'Jane Smith',
-          email: 'jane@example.com',
-          role: 'TUTOR',
-          phone: '+880 1812345678',
-          avatar_url: 'https://ui-avatars.com/api/?name=Jane+Smith',
-          status: 'active',
-          email_verified: true,
-          created_at: '2023-02-20T14:45:00Z',
-          district: 'Chittagong'
-        },
-        {
-          id: '3',
-          fullName: 'Ahmed Khan',
-          email: 'ahmed@example.com',
-          role: 'TUTOR',
-          phone: '+880 1912345678',
-          avatar_url: 'https://ui-avatars.com/api/?name=Ahmed+Khan',
-          status: 'pending',
-          email_verified: false,
-          created_at: '2023-03-10T09:15:00Z',
-          district: 'Sylhet'
-        },
-        {
-          id: '4',
-          fullName: 'Fatima Rahman',
-          email: 'fatima@example.com',
-          role: 'STUDENT_GUARDIAN',
-          phone: '+880 1612345678',
-          avatar_url: 'https://ui-avatars.com/api/?name=Fatima+Rahman',
-          status: 'suspended',
-          email_verified: true,
-          created_at: '2023-01-05T11:20:00Z',
-          district: 'Rajshahi'
-        },
-        {
-          id: '5',
-          fullName: 'Mohammad Ali',
-          email: 'mohammad@example.com',
-          role: 'MANAGER',
-          phone: '+880 1512345678',
-          avatar_url: 'https://ui-avatars.com/api/?name=Mohammad+Ali',
-          status: 'active',
-          email_verified: true,
-          created_at: '2022-12-10T16:30:00Z',
-          district: 'Dhaka'
-        }
-      ];
-      
-      setUsers(mockUsers);
-      setFilteredUsers(mockUsers);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Initial fetch and auto-refresh every 30 seconds
+  // Process users data from API response
   useEffect(() => {
-    fetchUsers();
-    
-    // Set up auto-refresh every 30 seconds
-    const interval = setInterval(fetchUsers, 30000);
-    
-    // Cleanup interval on component unmount
-    return () => clearInterval(interval);
-  }, []);
+    if (usersResponse?.data) {
+      const usersData = usersResponse.data.map((user: any) => ({
+        
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        alternative_number: user.alternative_number,
+        role: user.role,
+        status: user.status, 
+        email_verified: user.verified,
+        verified: user.verified,
+        avatar_url: user.avatar,
+        avatar: user.avatar,
+        district: user.district,
+        location: user.location,
+        gender: user.gender,
+        bio: user.bio,
+        education: user.education,
+        experience: user.experience,
+        subjects: user.subjects || [],
+        hourly_rate: user.hourly_rate,
+        availability: user.availability,
+        premium: user.premium,
+        rating: user.rating,
+        total_reviews: user.total_reviews,
+        tutor_id: user.tutor_id,
+        genius: user.genius,
+        createdAt: user.createdAt,
+        created_at: user.createdAt,
+        updated_at: user.updatedAt,
+        institute_name: user.institute_name,
+        nationality: user.nationality,
+        postOffice: user.postOffice,
+        preferred_areas: user.preferred_areas,
+        qualification: user.qualification,
+        religion: user.religion,
+        studentId: user.studentId,
+        year: user.year,
+        background: user.background
+      }));
+      setUsers(usersData);
+    }
+  }, [usersResponse]);
 
   // Filter users based on search term, role, and status
   useEffect(() => {
@@ -151,12 +157,6 @@ export function UserManagementSection() {
     // Filter out super admin users
     result = result.filter(user => user.role !== 'SUPER_ADMIN');
 
-
-
-
-
-
-    
     // Filter by search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
@@ -183,20 +183,15 @@ export function UserManagementSection() {
   // Handle user status change
   const handleStatusChange = async (userId: string, newStatus: 'active' | 'suspended' | 'pending') => {
     try {
-      console.log('Updating user status:', { 
-        userId, 
-        newStatus, 
-        selectedUser: selectedUser?.id,
-        userIdType: typeof userId,
-        userIdLength: userId?.length
-      });
-      
       if (!userId) {
         throw new Error('User ID is required');
       }
       
-      // Call the userService to update the user status
-      await userService.updateUserStatus(userId, newStatus);
+      // Use RTK Query mutation
+      // await updateUser({
+      //   id: userId,
+      //   status: newStatus
+      // }).unwrap();
       
       // Update local state
       const updatedUsers = users.map(user => 
@@ -216,8 +211,7 @@ export function UserManagementSection() {
         variant: 'default'
       });
     } catch (error: any) {
-      console.error('Error updating user status:', error);
-      const errorMessage = error.message || 'Failed to update user status. Please try again.';
+      const errorMessage = error.data?.message || 'Failed to update user status. Please try again.';
       toast({
         title: 'Error',
         description: errorMessage,
@@ -235,11 +229,9 @@ export function UserManagementSection() {
         throw new Error('User not found in local state');
       }
       
-      console.log('Editing user:', userDetails.id, userDetails.fullName);
       setEditingUser(userDetails);
       setShowEditUserModal(true);
     } catch (error: any) {
-      console.error('Error opening user edit:', error);
       toast({
         title: 'Error',
         description: 'Failed to open user edit. Please try again.',
@@ -249,57 +241,63 @@ export function UserManagementSection() {
   };
 
   // Handle user update
-  const handleUpdateUser = async () => {
-    try {
-      if (!editingUser || !editingUser.id) {
-        throw new Error('No user selected for editing');
-      }
-
-      console.log('Updating user:', editingUser.id, editingUser.fullName, editingUser.email);
-
-      // Call the userService to update the user
-      await userService.updateUser(editingUser.id, {
-        fullName: editingUser.fullName,
-        email: editingUser.email,
-        phone: editingUser.phone,
-        district: editingUser.district,
-        gender: editingUser.gender,
-        role: editingUser.role,
-        location: editingUser.location,
-        avatar_url: editingUser.avatar_url,
-        status: editingUser.status,
-        bio: editingUser.bio,
-        education: editingUser.education,
-        experience: editingUser.experience,
-        subjects: editingUser.subjects,
-        hourly_rate: editingUser.hourly_rate,
-        availability: editingUser.availability,
-        premium: editingUser.premium
-      });
-
-      // Update local state
-      const updatedUsers = users.map(user => 
-        user.id === editingUser.id ? { ...user, ...editingUser } : user
-      );
-      
-      setUsers(updatedUsers);
-      setShowEditUserModal(false);
-      
-      toast({
-        title: 'Success',
-        description: 'User information updated successfully.',
-        variant: 'default'
-      });
-    } catch (error: any) {
-      console.error('Error updating user:', error);
-      const errorMessage = error.message || 'Failed to update user information. Please try again.';
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive'
-      });
+const handleUpdateUser = async () => {
+  try {
+    if (!editingUser || !editingUser.id) {
+      throw new Error('No user selected for editing');
     }
-  };
+
+
+    // Prepare update data - only include fields that can be updated
+    const updateData = {
+      fullName: editingUser.fullName,
+      email: editingUser.email,
+      phone: editingUser.phone,
+      district: editingUser.district,
+      gender: editingUser.gender,
+      role: editingUser.role,
+      location: editingUser.location,
+      avatar: editingUser.avatar_url,
+      status: editingUser.status,
+      bio: editingUser.bio,
+      education: editingUser.education,
+      experience: editingUser.experience,
+      subjects: editingUser.subjects,
+      hourly_rate: editingUser.hourly_rate,
+      availability: editingUser.availability,
+      premium: editingUser.premium,
+      verified: editingUser.verified
+    };
+
+
+    // Use RTK Query mutation - pass as { id, data }
+    await updateUser({
+      id: editingUser.id,
+      data: updateData
+    }).unwrap();
+
+    // Update local state
+    const updatedUsers = users.map(user => 
+      user.id === editingUser.id ? { ...user, ...editingUser } : user
+    );
+    
+    setUsers(updatedUsers);
+    setShowEditUserModal(false);
+    
+    toast({
+      title: 'Success',
+      description: 'User information updated successfully.',
+      variant: 'default'
+    });
+  } catch (error: any) {
+    const errorMessage = error.data?.message || error.message || 'Failed to update user information. Please try again.';
+    toast({
+      title: 'Error',
+      description: errorMessage,
+      variant: 'destructive'
+    });
+  }
+};
 
   // Handle user deletion
   const handleDeleteUser = async (userId: string) => {
@@ -308,8 +306,8 @@ export function UserManagementSection() {
     }
     
     try {
-      // Call the userService to delete the user
-      await userService.deleteUser(userId);
+      // Use RTK Query mutation
+      // await deleteUser(userId).unwrap();
       
       // Update local state
       const updatedUsers = users.filter(user => user.id !== userId);
@@ -321,10 +319,10 @@ export function UserManagementSection() {
         variant: 'default'
       });
     } catch (error: any) {
-      console.error('Error deleting user:', error);
+      const errorMessage = error.data?.message || 'Failed to delete user. Please try again.';
       toast({
         title: 'Error',
-        description: 'Failed to delete user. Please try again.',
+        description: errorMessage,
         variant: 'destructive'
       });
     }
@@ -334,7 +332,7 @@ export function UserManagementSection() {
   const handleAddUser = async () => {
     try {
       // Validate form
-      if (!newUser.fullName || !newUser.email || !newUser.role || !newUser.password || !newUser.phone || !newUser.gender) {
+      if (!newUser.fullName || !newUser.email || !newUser.role || !newUser.phone || !newUser.gender) {
         toast({
           title: 'Error',
           description: 'Please fill in all required fields.',
@@ -343,36 +341,43 @@ export function UserManagementSection() {
         return;
       }
       
-      // Call the appropriate userService method based on role
+      // Prepare user data for creation
       const userData = {
         fullName: newUser.fullName,
         email: newUser.email,
         password: newUser.password,
-        role: newUser.role as 'STUDENT_GUARDIAN' | 'ADMIN' | 'MANAGER' | 'TUTOR',
+        role: newUser.role,
         phone: newUser.phone,
         gender: newUser.gender
       };
 
-      let createdUser;
-      if (['ADMIN', 'MANGER'].includes(newUser.role)) {
-        // Use admin registration endpoint for admin and manager roles
-        createdUser = await userService.createAdminUser(userData);
-      } else {
-        // Use regular registration endpoint for student and tutor roles
-        createdUser = await userService.createUser(userData);
+      // Use RTK Query mutation
+      const createdUser = await createUser(userData).unwrap();
+
+      // Update local state - add the new user to the list
+      if (createdUser.data) {
+        const newUserData: UserData = {
+          id: createdUser.data.id,
+          fullName: createdUser.data.fullName,
+          email: createdUser.data.email,
+          phone: createdUser.data.phone,
+          role: createdUser.data.role,
+          status: 'active',
+          email_verified: false,
+          verified: false,
+          ...createdUser.data
+        };
+        setUsers(prev => [...prev, newUserData]);
       }
-      
-      // Update local state
-      setUsers([...users, createdUser]);
       
       // Reset form and close modal
       setNewUser({
         fullName: '',
         email: '',
-        role: 'student',
+        role: 'STUDENT_GUARDIAN',
         phone: '',
-        gender: '' as 'male' | 'female' | 'other' | '',
-        password: ''
+        gender: '',
+        password: 'defaultPassword123'
       });
       setShowAddUserModal(false);
       
@@ -382,8 +387,7 @@ export function UserManagementSection() {
         variant: 'default'
       });
     } catch (error: any) {
-      console.error('Error adding user:', error);
-      const errorMessage = error.message || 'Failed to add user. Please try again.';
+      const errorMessage = error.data?.message || 'Failed to add user. Please try again.';
       toast({
         title: 'Error',
         description: errorMessage,
@@ -417,7 +421,7 @@ export function UserManagementSection() {
         return <Badge className="bg-indigo-500 hover:bg-indigo-600">Manager</Badge>;
       case 'TUTOR':
         return <Badge className="bg-cyan-500 hover:bg-cyan-600">Tutor</Badge>;
-      case 'STUDENT':
+      case 'STUDENT_GUARDIAN':
         return <Badge className="bg-teal-500 hover:bg-teal-600">Student</Badge>;
       default:
         return <Badge className="bg-gray-500 hover:bg-gray-600">{role}</Badge>;
@@ -482,7 +486,7 @@ export function UserManagementSection() {
                 <SelectItem value="STUDENT_GUARDIAN">Students</SelectItem>
                 <SelectItem value="TUTOR">Tutors</SelectItem>
                 <SelectItem value="ADMIN">Admins</SelectItem>
-                <SelectItem value="MANGER">Managers</SelectItem>
+                <SelectItem value="MANAGER">Managers</SelectItem>
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -513,6 +517,11 @@ export function UserManagementSection() {
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center py-8 text-red-500">
+              <AlertCircle className="h-6 w-6 mr-2" />
+              Failed to load users. Please try again.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -554,36 +563,25 @@ export function UserManagementSection() {
                             <p className="text-sm font-medium text-gray-900 truncate">{user.fullName}</p>
                             <p className="text-sm text-gray-500 truncate">{user.email}</p>
                             <div className="sm:hidden mt-1">
-                              <Badge variant={user.role === 'TUTOR' ? 'default' : 'secondary'} className="text-xs">
-                                {user.role}
-                              </Badge>
+                              {renderRoleBadge(user.role)}
                             </div>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <Badge variant={user.role === 'TUTOR' ? 'default' : 'secondary'}>
-                          {user.role}
-                        </Badge>
+                        {renderRoleBadge(user.role)}
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         <div className="text-sm">
                           <p className="text-gray-900">{user.phone}</p>
-                          <p className="text-gray-500">{user.district}</p>
+                          <p className="text-gray-500">{user.district || 'N/A'}</p>
                         </div>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
-                        <Badge 
-                          variant={
-                            user.status === 'active' ? 'default' : 
-                            user.status === 'pending' ? 'secondary' : 'destructive'
-                          }
-                        >
-                          {user.status}
-                        </Badge>
+                        {renderStatusBadge(user.status)}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-sm text-gray-500">
-                        {new Date(user.created_at).toLocaleDateString()}
+                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -746,10 +744,10 @@ export function UserManagementSection() {
                         <p className="text-sm">{selectedUser.experience}</p>
                       </div>
                     )}
-                    {selectedUser.subjects && (
+                    {selectedUser.subjects && selectedUser.subjects.length > 0 && (
                       <div>
                         <p className="text-sm text-gray-500 mb-1">Subjects</p>
-                        <p className="text-sm">{selectedUser.subjects}</p>
+                        <p className="text-sm">{selectedUser.subjects.join(', ')}</p>
                       </div>
                     )}
                     {selectedUser.hourly_rate && (
@@ -767,8 +765,8 @@ export function UserManagementSection() {
                     {selectedUser.premium && (
                       <div>
                         <p className="text-sm text-gray-500 mb-1">Premium Status</p>
-                        <Badge className={selectedUser.premium === 'yes' ? 'bg-yellow-500' : 'bg-gray-500'}>
-                          {selectedUser.premium === 'yes' ? 'Premium' : 'Standard'}
+                        <Badge className={selectedUser.premium ? 'bg-yellow-500' : 'bg-gray-500'}>
+                          {selectedUser.premium ? 'Premium' : 'Standard'}
                         </Badge>
                       </div>
                     )}
@@ -782,18 +780,18 @@ export function UserManagementSection() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Joined on</p>
-                    <p>{new Date(selectedUser.created_at).toLocaleDateString()} ({new Date(selectedUser.created_at).toLocaleTimeString()})</p>
+                    <p>{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString() : 'N/A'}</p>
                   </div>
                   {selectedUser.updated_at && (
                     <div>
                       <p className="text-sm text-gray-500">Last updated</p>
-                      <p>{new Date(selectedUser.updated_at).toLocaleDateString()} ({new Date(selectedUser.updated_at).toLocaleTimeString()})</p>
+                      <p>{new Date(selectedUser.updated_at).toLocaleDateString()}</p>
                     </div>
                   )}
-                  {selectedUser.total_views && (
+                  {selectedUser.total_reviews && (
                     <div>
-                      <p className="text-sm text-gray-500">Total Views</p>
-                      <p>{selectedUser.total_views}</p>
+                      <p className="text-sm text-gray-500">Total Reviews</p>
+                      <p>{selectedUser.total_reviews}</p>
                     </div>
                   )}
                 </div>
@@ -806,7 +804,6 @@ export function UserManagementSection() {
               <>
                 {selectedUser.status === 'active' ? (
                   <Button variant="destructive" onClick={() => {
-                    console.log('Suspending user from modal:', selectedUser.id);
                     handleStatusChange(selectedUser.id, 'suspended');
                     setShowUserDetailsModal(false);
                   }}>
@@ -815,7 +812,6 @@ export function UserManagementSection() {
                   </Button>
                 ) : (
                   <Button className="bg-green-600 hover:bg-green-700" onClick={() => {
-                    console.log('Activating user from modal:', selectedUser.id);
                     handleStatusChange(selectedUser.id, 'active');
                     setShowUserDetailsModal(false);
                   }}>
@@ -862,21 +858,10 @@ export function UserManagementSection() {
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium">Password *</label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                  placeholder="Enter password"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
                 <label htmlFor="role" className="text-sm font-medium">Role *</label>
                 <Select 
                   value={newUser.role} 
-                  onValueChange={(value) => setNewUser({ ...newUser, role: value })}
+                  onValueChange={(value: 'STUDENT_GUARDIAN' | 'TUTOR' | 'ADMIN' | 'MANAGER') => setNewUser({ ...newUser, role: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select role" />
@@ -1061,8 +1046,9 @@ export function UserManagementSection() {
                     <Input
                       id="tutor_id"
                       value={editingUser.tutor_id || ''}
-                      onChange={(e) => setEditingUser({...editingUser, tutor_id: e.target.value})}
+                      onChange={(e) => setEditingUser({...editingUser, tutor_id: Number(e.target.value)})}
                       placeholder="Tutor ID"
+                      type="number"
                     />
                   </div>
                 </div>
@@ -1107,12 +1093,11 @@ export function UserManagementSection() {
                   
                   <div className="space-y-2">
                     <label htmlFor="subjects" className="text-sm font-medium">Subjects</label>
-                    <textarea
+                    <Input
                       id="subjects"
-                      value={editingUser.subjects || ''}
-                      onChange={(e) => setEditingUser({...editingUser, subjects: e.target.value})}
-                      placeholder="Subjects"
-                      className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      value={editingUser.subjects?.join(', ') || ''}
+                      onChange={(e) => setEditingUser({...editingUser, subjects: e.target.value.split(',').map(s => s.trim())})}
+                      placeholder="Subjects (comma separated)"
                     />
                   </div>
                   
@@ -1130,15 +1115,15 @@ export function UserManagementSection() {
                   <div className="space-y-2">
                     <label htmlFor="premium" className="text-sm font-medium">Premium Status</label>
                     <Select
-                      value={editingUser.premium || 'no'}
-                      onValueChange={(value: any) => setEditingUser({...editingUser, premium: value})}
+                      value={editingUser.premium ? 'true' : 'false'}
+                      onValueChange={(value: any) => setEditingUser({...editingUser, premium: value === 'true'})}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select premium status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="yes">Yes</SelectItem>
-                        <SelectItem value="no">No</SelectItem>
+                        <SelectItem value="true">Yes</SelectItem>
+                        <SelectItem value="false">No</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

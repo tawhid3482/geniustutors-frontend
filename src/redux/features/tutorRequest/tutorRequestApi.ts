@@ -39,6 +39,18 @@ const tutorRequestsApi = baseApi.injectEndpoints({
       invalidatesTags: [tagTypes.tutorRequests],
     }),
 
+updateTutorRequestsStatus: builder.mutation({
+  query: ({ id, data }) => {
+    return {
+      url: `/tutor-requests/${id}/status`,
+      method: "PATCH",
+      data: data,   
+    };
+  },
+  invalidatesTags: [tagTypes.tutorRequests],
+}),
+
+
     deleteTutorRequests: builder.mutation({
       query: (id: string) => ({
         url: `/tutor-requests/delete/${id}`,
@@ -54,5 +66,6 @@ export const {
   useDeleteTutorRequestsMutation,
   useGetAllTutorRequestsQuery,
   useUpdateTutorRequestsMutation,
-  useGetSingleTutorRequestQuery
+  useGetSingleTutorRequestQuery,
+  useUpdateTutorRequestsStatusMutation
 } = tutorRequestsApi;
