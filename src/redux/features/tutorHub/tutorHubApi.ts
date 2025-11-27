@@ -44,16 +44,16 @@ const TutorHubApi = baseApi.injectEndpoints({
   providesTags: [tagTypes.TutorHub],
 }),
     
-    // updateTutorHub: builder.mutation({
-    //   query: ({ id, data }) => {
-    //     return {
-    //       url: `/categories/update/${id}`,
-    //       method: "PATCH",
-    //       data: data,
-    //     };
-    //   },
-    //   invalidatesTags: [tagTypes.TutorHub],
-    // }),
+    UpdateTutorStatus: builder.mutation({
+      query: ({ id, data }) => {
+        return {
+          url: `/tutor-hub/tutor-status/${id}`,
+          method: "PATCH",
+          data: data,
+        };
+      },
+      invalidatesTags: [tagTypes.TutorHub],
+    }),
 
     // deleteTutorHub: builder.mutation({
     //   query: (id: string) => ({
@@ -70,5 +70,6 @@ useGetAllTutorHubSearchQuery,
 useGetAllTutorHubStatsQuery,
 useGetAllTutorHubByCategoryQuery,
 useGetSingleTutorHubQuery,
-useGetAllTutorsQuery
+useGetAllTutorsQuery,
+useUpdateTutorStatusMutation
 } = TutorHubApi;

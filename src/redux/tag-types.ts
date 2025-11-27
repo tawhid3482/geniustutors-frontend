@@ -12,6 +12,7 @@ export enum tagTypes {
   VideoTestimonial = "VideoTestimonial",
   FeatureMedia = "FeatureMedia",
   phoneVerify = "phoneVerify",
+  upgradePackages = "upgradePackages",
 }
 
 export const tagTypesList = [
@@ -28,4 +29,5 @@ export const tagTypesList = [
   tagTypes.VideoTestimonial,
   tagTypes.FeatureMedia,
   tagTypes.phoneVerify,
+  tagTypes.upgradePackages,
 ];

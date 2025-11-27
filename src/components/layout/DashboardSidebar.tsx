@@ -192,7 +192,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             // { id: 'tutor-connect', label: 'Tutor Connect', icon: BookCheck },
             { id: 'reviews', label: 'Reviews', icon: Star },
             { id: 'users', label: 'User Management', icon: Users },
-            { id: 'role-management', label: 'Role Management', icon: Key },
+            // { id: 'role-management', label: 'Role Management', icon: Key },
             { id: 'upgrade-applications', label: 'Upgrade Applications', icon: Shield },
             { id: 'upgrade-packages', label: 'Package Management', icon: Settings },
             { id: 'tutor-applications', label: 'Tutor Applications', icon: UserCheck },
