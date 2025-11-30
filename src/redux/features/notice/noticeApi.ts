@@ -21,7 +21,15 @@ const noticeApi = baseApi.injectEndpoints({
       }),
       providesTags: [tagTypes.notice],
     }),
-  
+
+    GetAllNoticeByRole: builder.query({
+      query: ({ id }) => ({
+        url: `/notice/role/${id}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.notice],
+    }),
+
     UpdateNotice: builder.mutation({
       query: ({ id, data }) => {
         return {
@@ -44,9 +52,9 @@ const noticeApi = baseApi.injectEndpoints({
 });
 
 export const {
-    useCreateNoticeMutation,
-    useGetAllNoticeQuery,
-    useDeleteNoticeMutation,
-    useUpdateNoticeMutation
-
+  useCreateNoticeMutation,
+  useGetAllNoticeQuery,
+  useDeleteNoticeMutation,
+  useUpdateNoticeMutation,
+  useGetAllNoticeByRoleQuery,
 } = noticeApi;
