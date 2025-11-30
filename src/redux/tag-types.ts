@@ -13,6 +13,7 @@ export enum tagTypes {
   FeatureMedia = "FeatureMedia",
   phoneVerify = "phoneVerify",
   upgradePackages = "upgradePackages",
+  notice = "notice",
 }
 
 export const tagTypesList = [
@@ -30,4 +31,5 @@ export const tagTypesList = [
   tagTypes.FeatureMedia,
   tagTypes.phoneVerify,
   tagTypes.upgradePackages,
+  tagTypes.notice,
 ];

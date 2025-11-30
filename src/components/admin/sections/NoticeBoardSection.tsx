@@ -1,207 +1,251 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Megaphone, Plus, Trash2, Eye, Search, Filter } from "lucide-react";
-import { noticeBoardService, Notice, CreateNoticeRequest } from "@/services/noticeBoardService";
+import { Megaphone, Plus, Trash2, Eye, Search } from "lucide-react";
 import { useRole } from "@/contexts/RoleContext";
+import {
+  useCreateNoticeMutation,
+  useDeleteNoticeMutation,
+  useGetAllNoticeQuery,
+  useUpdateNoticeMutation,
+} from "@/redux/features/notice/noticeApi";
 
 export function NoticeBoardSection() {
   const { toast } = useToast();
   const { canDelete } = useRole();
-  
+
   // State management
-  const [notices, setNotices] = useState<Notice[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [isLoading, setIsLoading] = useState(false);
-  const [pagination, setPagination] = useState({
+  const [selectedNotice, setSelectedNotice] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Form state for creating new notice
+  const [newNotice, setNewNotice] = useState({
+    title: "",
+    content: "",
+    type: "info",
+    status: "active",
+    target_audience: "all",
+  });
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // RTK Query hooks with proper filtering
+  const { 
+    data: noticesResponse, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useGetAllNoticeQuery({
+    ...(typeFilter !== "all" && { type: typeFilter }),
+    ...(statusFilter !== "all" && { status: statusFilter }),
+    ...(debouncedSearch && { search: debouncedSearch }),
+  });
+
+  const [createNotice, { isLoading: isCreating }] = useCreateNoticeMutation();
+  const [updateNotice, { isLoading: isUpdating }] = useUpdateNoticeMutation();
+  const [deleteNotice, { isLoading: isDeleting }] = useDeleteNoticeMutation();
+
+  const notices = noticesResponse?.data || [];
+  const pagination = noticesResponse?.pagination || {
     total: 0,
     page: 1,
     limit: 50,
-    totalPages: 0
-  });
-  
-  // Form state for creating new notice
-  const [newNotice, setNewNotice] = useState<CreateNoticeRequest>({
-    title: '',
-    content: '',
-    type: 'info',
-    status: 'active',
-    target_audience: 'all'
-  });
-
-  // Load notices on component mount and when filters change
-  useEffect(() => {
-    loadNotices();
-  }, [searchQuery, typeFilter, statusFilter]);
-
-  const loadNotices = async () => {
-    setIsLoading(true);
-    try {
-      const response = await noticeBoardService.getNotices({
-        type: typeFilter !== 'all' ? typeFilter : undefined,
-        status: statusFilter !== 'all' ? statusFilter : undefined,
-        search: searchQuery || undefined,
-        page: pagination.page,
-        limit: pagination.limit
-      });
-      
-      if (response.success) {
-        console.log('Notices data:', response.data);
-        setNotices(response.data);
-        setPagination(response.pagination);
-      } else {
-        throw new Error('Failed to load notices');
-      }
-    } catch (error) {
-      console.error('Error loading notices:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load notices',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    totalPages: 0,
   };
+
+  // Manual filtering as fallback (if API doesn't support filtering)
+  const filteredNotices = useMemo(() => {
+    if (!notices.length) return [];
+
+    return notices.filter((notice: any) => {
+      // Search filter
+      const matchesSearch = debouncedSearch 
+        ? notice.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          notice.content.toLowerCase().includes(debouncedSearch.toLowerCase())
+        : true;
+
+      // Type filter
+      const matchesType = typeFilter !== "all" 
+        ? notice.type === typeFilter 
+        : true;
+
+      // Status filter
+      const matchesStatus = statusFilter !== "all" 
+        ? notice.status === statusFilter 
+        : true;
+
+      return matchesSearch && matchesType && matchesStatus;
+    });
+  }, [notices, debouncedSearch, typeFilter, statusFilter]);
+
+  // Use filteredNotices if API doesn't handle filtering, otherwise use notices
+  const displayNotices = debouncedSearch || typeFilter !== "all" || statusFilter !== "all" 
+    ? filteredNotices 
+    : notices;
 
   const handleCreateNotice = async () => {
     if (!newNotice.title.trim() || !newNotice.content.trim()) {
       toast({
-        title: 'Validation Error',
-        description: 'Please fill in all required fields',
-        variant: 'destructive'
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
       });
       return;
     }
 
     try {
-      setIsLoading(true);
-      
-      const response = await noticeBoardService.createNotice(newNotice);
-      
+      const response = await createNotice(newNotice).unwrap();
+
       if (response.success) {
         setShowCreateModal(false);
-        setNewNotice({ title: '', content: '', type: 'info', status: 'active', target_audience: 'all' });
-        
-        // Reload notices to show the new one
-        await loadNotices();
-        
-        toast({
-          title: 'Success',
-          description: 'Notice created successfully'
+        setNewNotice({
+          title: "",
+          content: "",
+          type: "info",
+          status: "active",
+          target_audience: "all",
         });
-      } else {
-        throw new Error(response.message || 'Failed to create notice');
+
+        // Refetch the notices to get the updated list
+        refetch();
+
+        toast({
+          title: "Success",
+          description: "Notice created successfully",
+        });
       }
-    } catch (error) {
-      console.error('Error creating notice:', error);
+    } catch (error: any) {
+      console.error("Error creating notice:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to create notice',
-        variant: 'destructive'
+        title: "Error",
+        description: error?.data?.message || "Failed to create notice",
+        variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleDeleteNotice = async (noticeId: string) => {
+    if (!confirm("Are you sure you want to delete this notice?")) {
+      return;
+    }
+
     try {
-      setIsLoading(true);
-      
-      const response = await noticeBoardService.deleteNotice(noticeId);
-      
+      const response = await deleteNotice(noticeId).unwrap();
+
       if (response.success) {
-        // Reload notices to reflect the deletion
-        await loadNotices();
+        // Refetch the notices to get the updated list
+        refetch();
         
         toast({
-          title: 'Success',
-          description: 'Notice deleted successfully'
+          title: "Success",
+          description: "Notice deleted successfully",
         });
-      } else {
-        throw new Error(response.message || 'Failed to delete notice');
       }
-    } catch (error) {
-      console.error('Error deleting notice:', error);
+    } catch (error: any) {
+      console.error("Error deleting notice:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to delete notice',
-        variant: 'destructive'
+        title: "Error",
+        description: error?.data?.message || "Failed to delete notice",
+        variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const handleViewNotice = (notice: Notice) => {
+  const handleViewNotice = (notice: any) => {
     setSelectedNotice(notice);
     setShowViewModal(true);
   };
 
-  const getTypeBadge = (type: Notice['type']) => {
-    const styles = {
-      info: 'bg-blue-100 text-blue-800 border-blue-200',
-      warning: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      success: 'bg-green-100 text-green-800 border-green-200',
-      urgent: 'bg-red-100 text-red-800 border-red-200'
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setTypeFilter("all");
+    setStatusFilter("all");
+  };
+
+  const getTypeBadge = (type: string) => {
+    const styles: any = {
+      info: "bg-blue-100 text-blue-800 border-blue-200",
+      warning: "bg-yellow-100 text-yellow-800 border-yellow-200",
+      success: "bg-green-100 text-green-800 border-green-200",
+      urgent: "bg-red-100 text-red-800 border-red-200",
     };
-    
-    const labels = {
-      info: 'Info',
-      warning: 'Warning',
-      success: 'Success',
-      urgent: 'Urgent'
+
+    const labels: any = {
+      info: "Info",
+      warning: "Warning",
+      success: "Success",
+      urgent: "Urgent",
     };
-    
+
+    return <Badge className={styles[type]}>{labels[type]}</Badge>;
+  };
+
+  const getStatusBadge = (status: string) => {
     return (
-      <Badge className={styles[type]}>
-        {labels[type]}
+      <Badge variant={status === "active" ? "default" : "secondary"}>
+        {status === "active" ? "Active" : "Inactive"}
       </Badge>
     );
   };
 
-  const getStatusBadge = (status: Notice['status']) => {
-    return (
-      <Badge variant={status === 'active' ? 'default' : 'secondary'}>
-        {status === 'active' ? 'Active' : 'Inactive'}
-      </Badge>
-    );
-  };
-
-  const getTargetAudienceBadge = (target_audience: Notice['target_audience']) => {
-    console.log('getTargetAudienceBadge called with:', target_audience);
-    // Handle undefined or null values
+  const getTargetAudienceBadge = (target_audience: string) => {
     if (!target_audience) {
-      target_audience = 'all';
+      target_audience = "all";
     }
-    
-    const styles = {
-      all: 'bg-gray-100 text-gray-800 border-gray-200',
-      tutors: 'bg-blue-100 text-blue-800 border-blue-200',
-      students: 'bg-green-100 text-green-800 border-green-200'
+
+    const styles: any = {
+      all: "bg-gray-100 text-gray-800 border-gray-200",
+      tutors: "bg-blue-100 text-blue-800 border-blue-200",
+      students: "bg-green-100 text-green-800 border-green-200",
     };
-    
-    const labels = {
-      all: 'All Users',
-      tutors: 'Tutors Only',
-      students: 'Students Only'
+
+    const labels: any = {
+      all: "All Users",
+      tutors: "Tutors Only",
+      students: "Students Only",
     };
-    
+
     return (
       <Badge className={styles[target_audience]}>
         {labels[target_audience]}
@@ -210,14 +254,16 @@ export function NoticeBoardSection() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
+
+  const hasActiveFilters = searchQuery || typeFilter !== "all" || statusFilter !== "all";
 
   return (
     <div className="space-y-6">
@@ -225,9 +271,11 @@ export function NoticeBoardSection() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Notice Board</h1>
-          <p className="text-gray-600 mt-1">Manage and publish important notices for users</p>
+          <p className="text-gray-600 mt-1">
+            Manage and publish important notices for users
+          </p>
         </div>
-        <Button 
+        <Button
           onClick={() => setShowCreateModal(true)}
           className="bg-green-600 hover:bg-green-700 text-white"
         >
@@ -243,7 +291,7 @@ export function NoticeBoardSection() {
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search notices..."
+                placeholder="Search notices by title or content..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -273,8 +321,41 @@ export function NoticeBoardSection() {
                 <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                onClick={handleClearFilters}
+                className="whitespace-nowrap"
+              >
+                Clear Filters
+              </Button>
+            )}
           </div>
         </div>
+        
+        {/* Active filters indicator */}
+        {hasActiveFilters && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {searchQuery && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Search: "{searchQuery}"
+              </Badge>
+            )}
+            {typeFilter !== "all" && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Type: {typeFilter}
+              </Badge>
+            )}
+            {statusFilter !== "all" && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Status: {statusFilter}
+              </Badge>
+            )}
+            <Badge variant="outline" className="ml-auto">
+              {displayNotices.length} notice(s) found
+            </Badge>
+          </div>
+        )}
       </div>
 
       {/* Notices Table */}
@@ -286,7 +367,6 @@ export function NoticeBoardSection() {
               <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Target Audience</TableHead>
-              <TableHead>Created By</TableHead>
               <TableHead>Created At</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -294,28 +374,61 @@ export function NoticeBoardSection() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   <div className="flex justify-center">
                     <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-green-600"></div>
                   </div>
-                  <div className="mt-2 text-sm text-muted-foreground">Loading notices...</div>
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    Loading notices...
+                  </div>
                 </TableCell>
               </TableRow>
-            ) : notices.length === 0 ? (
+            ) : error ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
-                  <div className="text-muted-foreground">No notices found</div>
+                <TableCell colSpan={6} className="text-center py-8">
+                  <div className="text-red-600">Error loading notices</div>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => refetch()}
+                    className="mt-2"
+                  >
+                    Retry
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ) : displayNotices.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8">
+                  <div className="text-muted-foreground">
+                    {hasActiveFilters 
+                      ? "No notices match your filters. Try adjusting your search criteria." 
+                      : "No notices found. Create your first notice to get started."}
+                  </div>
+                  {hasActiveFilters && (
+                    <Button 
+                      variant="outline" 
+                      onClick={handleClearFilters}
+                      className="mt-2"
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ) : (
-              notices.map((notice) => (
+              displayNotices.map((notice: any) => (
                 <TableRow key={notice.id}>
-                  <TableCell className="font-medium">{notice.title}</TableCell>
+                  <TableCell className="font-medium">
+                    <div className="max-w-[200px] truncate" title={notice.title}>
+                      {notice.title}
+                    </div>
+                  </TableCell>
                   <TableCell>{getTypeBadge(notice.type)}</TableCell>
                   <TableCell>{getStatusBadge(notice.status)}</TableCell>
-                  <TableCell>{getTargetAudienceBadge(notice.target_audience)}</TableCell>
-                  <TableCell>{notice.created_by_name || 'Unknown'}</TableCell>
-                  <TableCell>{formatDate(notice.created_at)}</TableCell>
+                  <TableCell>
+                    {getTargetAudienceBadge(notice.target_audience)}
+                  </TableCell>
+                  <TableCell>{formatDate(notice.createdAt)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
@@ -331,10 +444,11 @@ export function NoticeBoardSection() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDeleteNotice(notice.id)}
+                          disabled={isDeleting}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="w-4 h-4 mr-1" />
-                          Delete
+                          {isDeleting ? "Deleting..." : "Delete"}
                         </Button>
                       )}
                     </div>
@@ -355,25 +469,30 @@ export function NoticeBoardSection() {
               Create New Notice
             </DialogTitle>
             <DialogDescription>
-              Create a new notice to inform users about important updates or information.
+              Create a new notice to inform users about important updates or
+              information.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Notice Title</Label>
+              <Label htmlFor="title">Notice Title *</Label>
               <Input
                 id="title"
                 value={newNotice.title}
-                onChange={(e) => setNewNotice({...newNotice, title: e.target.value})}
+                onChange={(e) =>
+                  setNewNotice({ ...newNotice, title: e.target.value })
+                }
                 placeholder="Enter notice title"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="content">Notice Content</Label>
+              <Label htmlFor="content">Notice Content *</Label>
               <Textarea
                 id="content"
                 value={newNotice.content}
-                onChange={(e) => setNewNotice({...newNotice, content: e.target.value})}
+                onChange={(e) =>
+                  setNewNotice({ ...newNotice, content: e.target.value })
+                }
                 placeholder="Enter notice content"
                 rows={4}
               />
@@ -381,7 +500,15 @@ export function NoticeBoardSection() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="type">Notice Type</Label>
-                <Select value={newNotice.type} onValueChange={(value) => setNewNotice({...newNotice, type: value as Notice['type']})}>
+                <Select
+                  value={newNotice.type}
+                  onValueChange={(value) =>
+                    setNewNotice({
+                      ...newNotice,
+                      type: value,
+                    })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -395,7 +522,15 @@ export function NoticeBoardSection() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select value={newNotice.status} onValueChange={(value) => setNewNotice({...newNotice, status: value as Notice['status']})}>
+                <Select
+                  value={newNotice.status}
+                  onValueChange={(value) =>
+                    setNewNotice({
+                      ...newNotice,
+                      status: value,
+                    })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -408,7 +543,15 @@ export function NoticeBoardSection() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="target_audience">Target Audience</Label>
-              <Select value={newNotice.target_audience} onValueChange={(value) => setNewNotice({...newNotice, target_audience: value as Notice['target_audience']})}>
+              <Select
+                value={newNotice.target_audience}
+                onValueChange={(value) =>
+                  setNewNotice({
+                    ...newNotice,
+                    target_audience: value,
+                  })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -424,12 +567,12 @@ export function NoticeBoardSection() {
             <Button variant="outline" onClick={() => setShowCreateModal(false)}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleCreateNotice}
-              disabled={isLoading}
+              disabled={isCreating}
               className="bg-green-600 hover:bg-green-700"
             >
-              {isLoading ? 'Creating...' : 'Create Notice'}
+              {isCreating ? "Creating..." : "Create Notice"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -447,37 +590,59 @@ export function NoticeBoardSection() {
           {selectedNotice && (
             <div className="space-y-4 py-4">
               <div>
-                <Label className="text-sm font-medium text-gray-500">Title</Label>
+                <Label className="text-sm font-medium text-gray-500">
+                  Title
+                </Label>
                 <p className="text-lg font-semibold">{selectedNotice.title}</p>
               </div>
               <div>
-                <Label className="text-sm font-medium text-gray-500">Content</Label>
-                <p className="text-gray-700 whitespace-pre-wrap">{selectedNotice.content}</p>
+                <Label className="text-sm font-medium text-gray-500">
+                  Content
+                </Label>
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {selectedNotice.content}
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Type</Label>
-                  <div className="mt-1">{getTypeBadge(selectedNotice.type)}</div>
+                  <Label className="text-sm font-medium text-gray-500">
+                    Type
+                  </Label>
+                  <div className="mt-1">
+                    {getTypeBadge(selectedNotice.type)}
+                  </div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Status</Label>
-                  <div className="mt-1">{getStatusBadge(selectedNotice.status)}</div>
+                  <Label className="text-sm font-medium text-gray-500">
+                    Status
+                  </Label>
+                  <div className="mt-1">
+                    {getStatusBadge(selectedNotice.status)}
+                  </div>
                 </div>
               </div>
               <div>
-                <Label className="text-sm font-medium text-gray-500">Target Audience</Label>
-                <div className="mt-1">{getTargetAudienceBadge(selectedNotice.target_audience)}</div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-500">Created By</Label>
-                  <p>{selectedNotice.created_by_name || 'Unknown'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-500">Created At</Label>
-                  <p>{formatDate(selectedNotice.created_at)}</p>
+                <Label className="text-sm font-medium text-gray-500">
+                  Target Audience
+                </Label>
+                <div className="mt-1">
+                  {getTargetAudienceBadge(selectedNotice.target_audience)}
                 </div>
               </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-500">
+                  Created At
+                </Label>
+                <p>{formatDate(selectedNotice.createdAt)}</p>
+              </div>
+              {selectedNotice.updatedAt && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">
+                    Last Updated
+                  </Label>
+                  <p>{formatDate(selectedNotice.updatedAt)}</p>
+                </div>
+              )}
             </div>
           )}
           <DialogFooter>
