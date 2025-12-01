@@ -20,12 +20,9 @@ export function PopularCategorySection() {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const router = useRouter();
 
-  // Use RTK Query to fetch categories
   const { data: categoryData, isLoading, error } = useGetAllCategoryQuery(undefined);
 
-  // console.log('Category Data:', categories);
-
-  // Set categories when data is available
+ 
   useEffect(() => {
     if (categoryData?.data) {
       // Add tuition count to each category (you can modify this based on your actual data)
