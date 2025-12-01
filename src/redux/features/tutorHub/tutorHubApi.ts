@@ -19,6 +19,13 @@ const TutorHubApi = baseApi.injectEndpoints({
       }),
       providesTags: [tagTypes.TutorHub],
     }),
+    getAllTutorPublic: builder.query({
+      query: () => ({
+        url: "/tutor-hub/tutors/public",
+        method: "GET",
+      }),
+      providesTags: [tagTypes.TutorHub],
+    }),
 
   getAllTutorHubSearch: builder.query({
   query: (searchQuery: string) => ({
@@ -71,5 +78,6 @@ useGetAllTutorHubStatsQuery,
 useGetAllTutorHubByCategoryQuery,
 useGetSingleTutorHubQuery,
 useGetAllTutorsQuery,
-useUpdateTutorStatusMutation
+useUpdateTutorStatusMutation,
+useGetAllTutorPublicQuery
 } = TutorHubApi;

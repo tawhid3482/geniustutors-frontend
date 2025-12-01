@@ -16,11 +16,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
 import { useSearchParams } from "next/navigation";
 import { Pagination } from "@/components/ui/pagination";
-import { useGetAllTutorsQuery } from "@/redux/features/tutorHub/tutorHubApi";
+import { useGetAllTutorPublicQuery } from "@/redux/features/tutorHub/tutorHubApi";
 import { useGetAllDistrictsQuery } from "@/redux/features/district/districtApi";
 import { useGetAllAreaQuery } from "@/redux/features/area/areaApi";
 
-// API response এর সাথে match করতে Tutor type
 interface ApiTutor {
   id: string;
   fullName: string;
@@ -85,10 +84,11 @@ export default function AllTutors() {
 
   const searchParams = useSearchParams();
 
-  // RTK Query ব্যবহার করে data fetch করা
-  const { data: tutorsData, isLoading: rtkLoading, error: rtkError } = useGetAllTutorsQuery(undefined);
+  const { data: tutorsData, isLoading: rtkLoading, error: rtkError } = useGetAllTutorPublicQuery(undefined);
   const { data: districtData } = useGetAllDistrictsQuery(undefined);
   const { data: areaData } = useGetAllAreaQuery(undefined);
+
+  console.log('Tutors Data from RTK Query:', tutorsData);
 
   // Handle URL parameters for pre-filtering
   useEffect(() => {

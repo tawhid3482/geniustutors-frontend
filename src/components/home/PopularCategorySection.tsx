@@ -23,13 +23,14 @@ export function PopularCategorySection() {
   // Use RTK Query to fetch categories
   const { data: categoryData, isLoading, error } = useGetAllCategoryQuery(undefined);
 
+  // console.log('Category Data:', categories);
+
   // Set categories when data is available
   useEffect(() => {
     if (categoryData?.data) {
       // Add tuition count to each category (you can modify this based on your actual data)
       const categoriesWithTuitions = categoryData.data.map((category: any) => ({
         ...category,
-        tuitions:0 // Random tuition count for demo
       }));
       setCategories(categoriesWithTuitions);
     }
@@ -168,7 +169,7 @@ export function PopularCategorySection() {
 
               {/* Tuition count */}
               <p className="text-primary font-bold text-lg">
-                {category.tuitions || 0}
+                {category.tuitions }
               </p>
               <p className="text-gray-600 text-xs">Tuitions</p>
 
