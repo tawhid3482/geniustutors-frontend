@@ -1492,7 +1492,7 @@ export default function TutorProfileClient({
   const [hasUserReviewed, setHasUserReviewed] = useState<boolean>(false);
 
   // Tuition job posting form state
-  const [tuitionFormData, setTuitionFormData] = useState<TutorRequestFormData>({
+  const [tuitionFormData, setTuitionFormData] = useState<any>({
     phoneNumber: "",
     studentGender: "" as any,
     district: "",
@@ -1721,7 +1721,7 @@ export default function TutorProfileClient({
       );
       if (district) {
         setAvailableAreas(district.areas.map((area) => area.name));
-        setTuitionFormData((prev) => ({
+        setTuitionFormData((prev:any) => ({
           ...prev,
           area: "",
         }));

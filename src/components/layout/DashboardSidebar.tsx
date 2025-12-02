@@ -131,7 +131,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
             { id: 'posted-jobs', label: 'Tutor Request', icon: List },
             { id: 'search', label: 'Find Tutor', icon: Search },
-            { id: 'request', label: 'Posted Job', icon: BookOpen },
+            // { id: 'request', label: 'Posted Job', icon: BookOpen },
             { id: 'profile', label: 'Update Profile', icon: User },
             { id: 'demo-classes', label: 'Demo Class', icon: BookOpen },
             { id: 'approval-letter', label: 'Approval Letter', icon: FileCheck },

@@ -34,7 +34,7 @@ export default function ContactForm({ tutorId, tutorName, onContactSubmitted }: 
   const [classLevels, setClassLevels] = useState<any[]>([]);
   
   // Form data state
-  const [formData, setFormData] = useState<TutorRequestFormData>({
+  const [formData, setFormData] = useState<any>({
     phoneNumber: user?.phone || '',
     studentGender: 'male',
     district: '',

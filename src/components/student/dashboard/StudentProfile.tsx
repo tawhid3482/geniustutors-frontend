@@ -3,214 +3,260 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Camera, CreditCard, RefreshCw } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { User, Camera, RefreshCw } from "lucide-react";
 import { ALL_DISTRICTS } from "@/data/bangladeshDistricts";
-import { avatarService } from "@/services/avatarService";
 import { toast } from "@/components/ui/use-toast";
+import {
+  useChangePasswordMutation,
+  useUpdateUserProfileMutation,
+} from "@/redux/features/auth/authApi";
+import { useAuth } from "@/contexts/AuthContext.next";
+import { useRouter } from "next/navigation";
 
 interface StudentProfileProps {
   profile: any;
-  paymentMethods: any[];
-  isLoadingPaymentMethods: boolean;
-  handleProfileUpdate: (profile: any) => Promise<void>;
-  handlePasswordChange: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<boolean>;
-  handleAddPaymentMethod: (method: any) => Promise<boolean>;
-  handleUpdatePaymentMethod: (id: string, method: any) => Promise<boolean>;
-  handleDeletePaymentMethod: (id: string) => Promise<boolean>;
-  handleSetDefaultPaymentMethod: (id: string) => Promise<boolean>;
+  refetchProfile?: () => void; // Optional: to refetch profile data after update
 }
 
 export function StudentProfile({
   profile,
-  paymentMethods,
-  isLoadingPaymentMethods,
-  handleProfileUpdate,
-  handlePasswordChange,
-  handleAddPaymentMethod,
-  handleUpdatePaymentMethod,
-  handleDeletePaymentMethod,
-  handleSetDefaultPaymentMethod
+  refetchProfile,
 }: StudentProfileProps) {
   const [profileForm, setProfileForm] = useState({
-    name: profile.name,
-    email: profile.email,
-    phone: profile.phone,
-    district: profile.district,
-    location: profile.location,
+    fullName: profile.name || "",
+    email: profile.email || "",
+    phone: profile.phone || "",
+    district: profile.district || "",
+    location: profile.location || "",
   });
 
   const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
-  const [paymentForm, setPaymentForm] = useState({
-    type: 'bKash' as 'bKash' | 'Nagad' | 'Rocket' | 'Card' | 'Bank',
-    accountNumber: '',
-    accountHolderName: '',
-  });
-
-  const [editingPaymentMethod, setEditingPaymentMethod] = useState<string | null>(null);
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string>("");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const { user, signOut } = useAuth();
+  const router = useRouter();
 
-  // Update profile form when profile changes
+  // RTK Query mutations
+  const [updateProfile, { isLoading: isUpdatingProfile }] =
+    useUpdateUserProfileMutation();
+  const [changePassword, { isLoading: isChangingPassword }] =
+    useChangePasswordMutation();
+
   useEffect(() => {
     setProfileForm({
-      name: profile.name,
-      email: profile.email,
-      phone: profile.phone,
-      district: profile.district,
-      location: profile.location,
+      fullName: profile.name || "",
+      email: profile.email || "",
+      phone: profile.phone || "",
+      district: profile.district || "",
+      location: profile.location || "",
     });
+
+    // Reset preview if profile has avatar
+    if (profile.avatar) {
+      setProfilePhotoPreview(profile.avatar);
+    }
   }, [profile]);
 
-  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Validate file size (2MB limit)
-      if (file.size > 2 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please select an image smaller than 2MB",
-          variant: "destructive"
-        });
-        return;
-      }
+  const uploadImage = async (file: File): Promise<string> => {
+    const data = new FormData();
+    data.append("image", file);
 
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Invalid file type",
-          description: "Please select an image file (JPG, PNG, GIF)",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      setProfilePhoto(file);
-      setIsUploadingAvatar(true);
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfilePhotoPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-
-      // Upload to server
-      try {
-        const result = await avatarService.uploadAvatar(file);
-        
-        if (result.success && result.data) {
-          toast({
-            title: "Success",
-            description: "Profile photo uploaded successfully",
-          });
-          
-          // Update the profile with the new avatar URL
-          await handleProfileUpdate({
-            ...profile,
-            ...profileForm,
-            avatar: result.data.fileUrl,
-          });
-        } else {
-          toast({
-            title: "Upload failed",
-            description: result.error || "Failed to upload profile photo",
-            variant: "destructive"
-          });
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/upload-image`,
+        {
+          method: "POST",
+          body: data,
         }
-      } catch (error) {
-        console.error('Error uploading avatar:', error);
-        toast({
-          title: "Upload failed",
-          description: "An error occurred while uploading the profile photo",
-          variant: "destructive"
-        });
-      } finally {
-        setIsUploadingAvatar(false);
-      }
+      );
+      if (!res.ok) throw new Error("Failed to upload image");
+      const result = await res.json();
+      return result.url;
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to upload image",
+        variant: "destructive",
+      });
+      throw err;
     }
   };
 
-  const handleCancelEditPaymentMethod = () => {
-    setEditingPaymentMethod(null);
-    setPaymentForm({
-      type: 'bKash',
-      accountNumber: '',
-      accountHolderName: '',
-    });
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Set preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfilePhotoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Store the file for later upload when saving
+    setProfilePhoto(file);
   };
 
   // Profile form handlers
   const handleProfileFormChange = (field: string, value: string) => {
-    setProfileForm(prev => ({
+    setProfileForm((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleProfileFormSubmit = async () => {
-    await handleProfileUpdate({
-      ...profile,
-      ...profileForm,
-      avatar: profile.avatar, // Use the actual avatar URL from profile, not the preview
-    });
-  };
+    // Check if userId is available
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "User ID not found. Please log in again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  const handlePasswordFormSubmit = async () => {
-    const success = await handlePasswordChange(
-      passwordForm.currentPassword,
-      passwordForm.newPassword,
-      passwordForm.confirmPassword
-    );
-    
-    if (success) {
-      setPasswordForm({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
+    try {
+      let avatarUrl = profile.avatar; // Keep existing avatar by default
+
+      // If a new photo is selected, upload it first
+      if (profilePhoto) {
+        setIsUploadingAvatar(true);
+        try {
+          avatarUrl = await uploadImage(profilePhoto);
+          toast({
+            title: "Success",
+            description: "Profile photo uploaded successfully",
+          });
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description:
+              error?.data?.message || "Failed to upload profile photo",
+            variant: "destructive",
+          });
+          return; // Stop if image upload fails
+        } finally {
+          setIsUploadingAvatar(false);
+        }
+      }
+
+      // Update profile with user ID
+      await updateProfile({
+        id: user?.id,
+        data: {
+          ...profileForm,
+          avatar: avatarUrl, // Include the avatar URL (existing or new)
+        },
+      }).unwrap();
+
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+
+      signOut();
+      router.push("/");
+      toast({
+        description: "Please Login again to see the changes",
+      });
+      // Clear the photo state after successful update
+      setProfilePhoto(null);
+
+      // Refetch profile if refetch function provided
+      if (refetchProfile) {
+        refetchProfile();
+      }
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: error?.data?.message || "Failed to update profile",
+        variant: "destructive",
       });
     }
   };
 
-  const handlePaymentFormSubmit = async () => {
-    if (editingPaymentMethod) {
-      const success = await handleUpdatePaymentMethod(editingPaymentMethod, paymentForm);
-      if (success) {
-        setEditingPaymentMethod(null);
-        setPaymentForm({
-          type: 'bKash',
-          accountNumber: '',
-          accountHolderName: '',
-        });
-      }
-    } else {
-      const success = await handleAddPaymentMethod(paymentForm);
-      if (success) {
-        setPaymentForm({
-          type: 'bKash',
-          accountNumber: '',
-          accountHolderName: '',
-        });
-      }
+  const handlePasswordFormSubmit = async () => {
+    // Check if userId is available
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "User ID not found. Please log in again.",
+        variant: "destructive",
+      });
+      return;
     }
-  };
 
-  const handleEditPaymentMethod = (method: any) => {
-    setEditingPaymentMethod(method.id);
-    setPaymentForm({
-      type: method.type,
-      accountNumber: method.account_number,
-      accountHolderName: method.account_holder_name,
-    });
+    // Validate passwords
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "New passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Change password with user ID
+      await changePassword({
+        id: user?.id,
+        data: {
+          oldPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        },
+      }).unwrap();
+
+      toast({
+        title: "Success",
+        description: "Password changed successfully",
+      });
+
+      signOut();
+      router.push("/");
+      toast({
+        description: "Please Login again",
+      });
+
+      // Clear form
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error: any) {
+      console.error("Error changing password:", error);
+      toast({
+        title: "Error",
+        description: error?.data?.message || "Failed to change password",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -223,48 +269,95 @@ export function StudentProfile({
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Full Name</Label>
-              <Input className="mt-1" value={profileForm.name} onChange={(e) => handleProfileFormChange('name', e.target.value)} />
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                className="mt-1"
+                value={profileForm.fullName}
+                onChange={(e) =>
+                  handleProfileFormChange("fullName", e.target.value)
+                }
+              />
             </div>
             <div>
-              <Label>Email</Label>
-              <Input className="mt-1" value={profileForm.email} onChange={(e) => handleProfileFormChange('email', e.target.value)} />
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                className="mt-1"
+                value={profileForm.email}
+                onChange={(e) =>
+                  handleProfileFormChange("email", e.target.value)
+                }
+                type="email"
+              />
             </div>
             <div>
-              <Label>Phone</Label>
-              <Input className="mt-1" value={profileForm.phone} onChange={(e) => handleProfileFormChange('phone', e.target.value)} />
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                className="mt-1"
+                value={profileForm.phone}
+                onChange={(e) =>
+                  handleProfileFormChange("phone", e.target.value)
+                }
+                type="tel"
+              />
             </div>
             <div>
-              <Label>District</Label>
-              <Select value={profileForm.district || ''} onValueChange={(v) => handleProfileFormChange('district', v)}>
-                <SelectTrigger className="mt-1">
+              <Label htmlFor="district">District</Label>
+              <Select
+                value={profileForm.district || ""}
+                onValueChange={(v) => handleProfileFormChange("district", v)}
+              >
+                <SelectTrigger id="district" className="mt-1">
                   <SelectValue placeholder="Select district" />
                 </SelectTrigger>
                 <SelectContent>
-                  {ALL_DISTRICTS.map(district => (
-                    <SelectItem key={district} value={district}>{district}</SelectItem>
+                  {ALL_DISTRICTS.map((district) => (
+                    <SelectItem key={district} value={district}>
+                      {district}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Location</Label>
-              <Input className="mt-1" value={profileForm.location} onChange={(e) => handleProfileFormChange('location', e.target.value)} placeholder="Enter your current location (e.g., Dhanmondi, Dhaka)" />
+            <div className="md:col-span-2">
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                className="mt-1"
+                value={profileForm.location}
+                onChange={(e) =>
+                  handleProfileFormChange("location", e.target.value)
+                }
+                placeholder="Enter your current location (e.g., Dhanmondi, Dhaka)"
+              />
             </div>
-            <div>
+            <div className="md:col-span-2">
               <Label>Profile Photo</Label>
               <div className="mt-1 flex items-center gap-4">
                 <div className="relative">
-                  <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300 overflow-hidden">
+                  <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-300 overflow-hidden">
                     {profilePhotoPreview ? (
-                      <img src={profilePhotoPreview} alt="Profile Preview" className="h-full w-full object-cover" />
+                      <img
+                        src={profilePhotoPreview}
+                        alt="Profile Preview"
+                        className="h-full w-full object-cover"
+                      />
                     ) : profile.avatar ? (
-                      <img src={profile.avatar} alt="Profile" className="h-full w-full object-cover" />
+                      <img
+                        src={profile.avatar}
+                        alt="Profile"
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
                       <User className="h-8 w-8 text-gray-400" />
                     )}
                   </div>
-                  <label htmlFor="photo-upload" className="absolute bottom-0 right-0 bg-green-600 text-white p-1 rounded-full cursor-pointer hover:bg-green-700 transition-colors">
+                  <label
+                    htmlFor="photo-upload"
+                    className="absolute bottom-0 right-0 bg-green-600 text-white p-1 rounded-full cursor-pointer hover:bg-green-700 transition-colors"
+                  >
                     <Camera className="h-3 w-3" />
                   </label>
                   <input
@@ -273,27 +366,55 @@ export function StudentProfile({
                     accept="image/*"
                     onChange={handlePhotoUpload}
                     className="hidden"
-                    disabled={isUploadingAvatar}
                   />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground mb-2">
-                    Upload a profile photo to personalize your account
+                    {profilePhoto
+                      ? "New photo selected. Click 'Save Changes' to upload."
+                      : "Upload a profile photo to personalize your account"}
                   </p>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => document.getElementById('photo-upload')?.click()}
-                    disabled={isUploadingAvatar}
+                    onClick={() =>
+                      document.getElementById("photo-upload")?.click()
+                    }
                   >
-                    {isUploadingAvatar ? "Uploading..." : "Choose Photo"}
+                    Choose Photo
                   </Button>
+                  {profilePhoto && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-2"
+                      onClick={() => {
+                        setProfilePhoto(null);
+                        setProfilePhotoPreview(profile.avatar || "");
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
           </div>
           <div className="flex justify-end mt-4">
-            <Button className="bg-green-600 hover:bg-green-700" onClick={handleProfileFormSubmit}>Save Changes</Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              onClick={handleProfileFormSubmit}
+              disabled={isUpdatingProfile || isUploadingAvatar}
+            >
+              {isUpdatingProfile || isUploadingAvatar ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  {isUploadingAvatar ? "Uploading..." : "Saving..."}
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -306,20 +427,69 @@ export function StudentProfile({
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Current Password</Label>
-              <Input type="password" className="mt-1" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))} placeholder="Enter current password" />
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                className="mt-1"
+                value={passwordForm.currentPassword}
+                onChange={(e) =>
+                  setPasswordForm((prev) => ({
+                    ...prev,
+                    currentPassword: e.target.value,
+                  }))
+                }
+                placeholder="Enter current password"
+              />
             </div>
             <div>
-              <Label>New Password</Label>
-              <Input type="password" className="mt-1" value={passwordForm.newPassword} onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))} placeholder="Enter new password" />
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                className="mt-1"
+                value={passwordForm.newPassword}
+                onChange={(e) =>
+                  setPasswordForm((prev) => ({
+                    ...prev,
+                    newPassword: e.target.value,
+                  }))
+                }
+                placeholder="Enter new password"
+              />
             </div>
             <div className="md:col-span-2">
-              <Label>Confirm New Password</Label>
-              <Input type="password" className="mt-1" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))} placeholder="Confirm new password" />
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                className="mt-1"
+                value={passwordForm.confirmPassword}
+                onChange={(e) =>
+                  setPasswordForm((prev) => ({
+                    ...prev,
+                    confirmPassword: e.target.value,
+                  }))
+                }
+                placeholder="Confirm new password"
+              />
             </div>
           </div>
           <div className="flex justify-end mt-4">
-            <Button className="bg-green-600 hover:bg-green-700" onClick={handlePasswordFormSubmit}>Update Password</Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              onClick={handlePasswordFormSubmit}
+              disabled={isChangingPassword}
+            >
+              {isChangingPassword ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Password"
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>

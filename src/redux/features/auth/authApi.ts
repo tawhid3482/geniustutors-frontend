@@ -111,6 +111,16 @@ const authApi = baseApi.injectEndpoints({
       },
       invalidatesTags: [tagTypes.auth],
     }),
+    updateUserProfile: builder.mutation({
+      query: ({ id, data }) => {
+        return {
+          url: `/auth/update-user-profile/${id}`,
+          method: "PATCH",
+          data: data,   
+        };
+      },
+      invalidatesTags: [tagTypes.auth],
+    }),
     
 
   }),
@@ -127,5 +137,6 @@ useLoginAdminMutation,
 useLoginUserMutation,
 useUpdateUserMutation,
 useChangePasswordMutation,
-useUpdateAdminProfileMutation
+useUpdateAdminProfileMutation,
+useUpdateUserProfileMutation,
 } = authApi;

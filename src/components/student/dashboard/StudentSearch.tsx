@@ -14,60 +14,43 @@ import {
 } from "@/components/ui/select";
 import { Toggle } from "@/components/ui/toggle";
 import { Search, Star, Award, CheckCircle } from "lucide-react";
-import { FilterGender } from "@/types/student";
 import { ALL_DISTRICTS } from "@/data/bangladeshDistricts";
 import { useGetAllTutorPublicQuery } from "@/redux/features/tutorHub/tutorHubApi";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect } from "react";
 
-interface StudentSearchProps {
-  searchQuery: string;
-  filterSubject: string;
-  filterArea: string;
-  filterGender: FilterGender;
-  filterRating: number;
-  viewMode: string;
-  setSearchQuery: (query: string) => void;
-  setFilterSubject: (subject: string) => void;
-  setFilterArea: (area: string) => void;
-  setFilterGender: (gender: FilterGender) => void;
-  setFilterRating: (rating: number) => void;
-  setViewMode: (mode: string) => void;
-  inviteDemo: (tutor: any) => void;
-}
-
-export function StudentSearch({
-  searchQuery,
-  filterSubject,
-  filterArea,
-  filterGender,
-  filterRating,
-  viewMode,
-  setSearchQuery,
-  setFilterSubject,
-  setFilterArea,
-  setFilterGender,
-  setFilterRating,
-  setViewMode,
-  inviteDemo,
-}: StudentSearchProps) {
-  const {
-    data: tutorsResponse,
-    isLoading,
-    error,
-  } = useGetAllTutorPublicQuery(undefined);
-
-  // Extract tutors from the response
-  const tutors = tutorsResponse?.data || [];
-  console.log("All tutors:", tutors);
-
-  // State for additional filters
+export function StudentSearch() {
+  // Local state for all filters and search
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterSubject, setFilterSubject] = useState("any");
+  const [filterArea, setFilterArea] = useState("all");
+  const [filterGender, setFilterGender] = useState("any");
+  const [filterRating, setFilterRating] = useState(0);
+  const [viewMode, setViewMode] = useState("grid");
   const [filterExperience, setFilterExperience] = useState<string>("0");
   const [filterEducation, setFilterEducation] = useState<string>("all");
   const [filterAvailability, setFilterAvailability] = useState<string>("all");
   const [filterMaxPrice, setFilterMaxPrice] = useState<string>("");
   const [filterSortBy, setFilterSortBy] = useState<string>("all");
   const [filterSortOrder, setFilterSortOrder] = useState<string>("desc");
+
+  // RTK Query to fetch tutors
+  const {
+    data: tutorsResponse,
+    isLoading,
+    error,
+    refetch,
+  } = useGetAllTutorPublicQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+
+  // Extract tutors from the response
+  const tutors = tutorsResponse?.data || [];
+
+  // Auto-refetch data when component mounts
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   // Helper function to check if tutor is verified
   const isVerified = (verified: any) => {
@@ -80,19 +63,6 @@ export function StudentSearch({
 
   // Filter tutors based on all criteria
   const filteredTutors = tutors.filter((tutor: any) => {
-    console.log(
-      "Checking tutor:",
-      tutor.fullName,
-      "Status:",
-      tutor.tutorStatus
-    );
-
-    // Only show approved tutors - REMOVED this filter to show all tutors
-    // if (tutor.tutorStatus !== "approved") {
-    //   console.log("Rejected because not approved:", tutor.fullName);
-    //   return false;
-    // }
-
     // Search by name, email, institute, department, or subjects
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
@@ -116,7 +86,6 @@ export function StudentSearch({
         !departmentMatch &&
         !subjectMatch
       ) {
-        console.log("Rejected by search query:", tutor.fullName);
         return false;
       }
     }
@@ -124,25 +93,17 @@ export function StudentSearch({
     // Filter by subject (case-insensitive)
     if (filterSubject !== "any") {
       if (tutor.subjects && tutor.subjects.length > 0) {
-        // Convert subjects to lowercase for comparison
         const lowerCaseSubjects = tutor.subjects.map(
           (subject: string) => subject?.toLowerCase() || ""
         );
         const filterSubjectLower = filterSubject.toLowerCase();
-        // Check if any subject includes the filter subject (partial match)
         const hasSubject = lowerCaseSubjects.some((subject: string) =>
           subject.includes(filterSubjectLower)
         );
         if (!hasSubject) {
-          console.log(
-            "Rejected by subject filter:",
-            tutor.fullName,
-            tutor.subjects
-          );
           return false;
         }
       } else {
-        console.log("Rejected - no subjects:", tutor.fullName);
         return false;
       }
     }
@@ -153,7 +114,6 @@ export function StudentSearch({
         !tutor.district ||
         tutor.district.toLowerCase() !== filterArea.toLowerCase()
       ) {
-        console.log("Rejected by area filter:", tutor.fullName, tutor.district);
         return false;
       }
     }
@@ -164,16 +124,14 @@ export function StudentSearch({
         !tutor.gender ||
         tutor.gender.toLowerCase() !== filterGender.toLowerCase()
       ) {
-        console.log("Rejected by gender filter:", tutor.fullName, tutor.gender);
         return false;
       }
     }
 
-    // Filter by rating - handle null/undefined ratings
+    // Filter by rating
     if (filterRating > 0) {
       const tutorRating = tutor.rating || 0;
       if (tutorRating < filterRating) {
-        console.log("Rejected by rating filter:", tutor.fullName, tutor.rating);
         return false;
       }
     }
@@ -183,11 +141,6 @@ export function StudentSearch({
       const minExperience = parseInt(filterExperience);
       const tutorExperience = tutor.experience || 0;
       if (tutorExperience < minExperience) {
-        console.log(
-          "Rejected by experience filter:",
-          tutor.fullName,
-          tutor.experience
-        );
         return false;
       }
     }
@@ -198,11 +151,6 @@ export function StudentSearch({
         !tutor.education ||
         tutor.education.toLowerCase() !== filterEducation.toLowerCase()
       ) {
-        console.log(
-          "Rejected by education filter:",
-          tutor.fullName,
-          tutor.education
-        );
         return false;
       }
     }
@@ -213,11 +161,6 @@ export function StudentSearch({
         !tutor.availability ||
         tutor.availability.toLowerCase() !== filterAvailability.toLowerCase()
       ) {
-        console.log(
-          "Rejected by availability filter:",
-          tutor.fullName,
-          tutor.availability
-        );
         return false;
       }
     }
@@ -227,20 +170,12 @@ export function StudentSearch({
       const maxPrice = parseFloat(filterMaxPrice);
       const tutorPrice = tutor.hourly_rate || 0;
       if (tutorPrice > maxPrice) {
-        console.log(
-          "Rejected by price filter:",
-          tutor.fullName,
-          tutor.hourly_rate
-        );
         return false;
       }
     }
 
-    console.log("Accepted tutor:", tutor.fullName);
     return true;
   });
-
-  console.log("Filtered tutors count:", filteredTutors.length);
 
   // Apply sorting
   let sortedTutors = [...filteredTutors];
@@ -279,6 +214,7 @@ export function StudentSearch({
     });
   }
 
+  // Show loading state
   if (isLoading) {
     return (
       <div className="space-y-6 w-full">
@@ -322,6 +258,13 @@ export function StudentSearch({
           <p className="text-red-600">
             Error loading tutors. Please try again.
           </p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => refetch()}
+          >
+            Retry
+          </Button>
         </CardContent>
       </Card>
     );
@@ -395,7 +338,7 @@ export function StudentSearch({
               <Label>Gender</Label>
               <Select
                 value={filterGender}
-                onValueChange={(v) => setFilterGender(v as FilterGender)}
+                onValueChange={(v) => setFilterGender(v)}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Any Gender" />
@@ -566,286 +509,274 @@ export function StudentSearch({
       </Card>
 
       {/* Results Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900">
-            Available Tutors
-          </h2>
-          <p className="text-sm text-gray-600 mt-1">
-            {sortedTutors.length} tutor{sortedTutors.length !== 1 ? "s" : ""}{" "}
-            found
-          </p>
+      {tutors.length > 0 && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Available Tutors
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              {sortedTutors.length} tutor{sortedTutors.length !== 1 ? "s" : ""}{" "}
+              found
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">View:</span>
+            <Toggle
+              pressed={viewMode === "grid"}
+              onPressedChange={(v) => setViewMode(v ? "grid" : "list")}
+            >
+              Grid
+            </Toggle>
+            <Toggle
+              pressed={viewMode === "list"}
+              onPressedChange={(v) => setViewMode(v ? "list" : "grid")}
+            >
+              List
+            </Toggle>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">View:</span>
-          <Toggle
-            pressed={viewMode === "grid"}
-            onPressedChange={(v) => setViewMode(v ? "grid" : "list")}
-          >
-            Grid
-          </Toggle>
-          <Toggle
-            pressed={viewMode === "list"}
-            onPressedChange={(v) => setViewMode(v ? "list" : "grid")}
-          >
-            List
-          </Toggle>
-        </div>
-      </div>
+      )}
 
       {/* Tutors Display */}
-      {sortedTutors.length > 0 ? (
-        <div
-          className={
-            viewMode === "grid"
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              : "space-y-4"
-          }
-        >
-          {sortedTutors.map((tutor: any) => (
-            <Card
-              key={tutor.id}
-              className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1  flex flex-col h-full border border-green-300"
-            >
-              <CardContent className="p-6 flex flex-col h-full">
-                {/* Tutor Header */}
-                <div className="flex items-start gap-3 mb-4">
-                  {/* Tutor Image */}
-                  <div className="w-16 h-16 rounded-full overflow-hidden bg-green-100 flex items-center justify-center flex-shrink-0">
-                    {tutor.avatar ? (
-                      <img
-                        src={tutor.avatar}
-                        alt={tutor.fullName || "Tutor"}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-green-600 font-semibold text-xl">
-                        {tutor.fullName
-                          ? tutor.fullName.charAt(0).toUpperCase()
-                          : "T"}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex-1 ">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-lg text-gray-900 truncate">
-                        {tutor.fullName || "Tutor Name"}
-                      </h3>
+      {!isLoading && tutors.length > 0 ? (
+        sortedTutors.length > 0 ? (
+          <div
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                : "space-y-4"
+            }
+          >
+            {sortedTutors.map((tutor: any) => (
+              <Card
+                key={tutor.id}
+                className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col h-full border border-green-300"
+              >
+                <CardContent className="p-6 flex flex-col h-full">
+                  {/* Tutor Header */}
+                  <div className="flex items-start gap-3 mb-4">
+                    {/* Tutor Image */}
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-green-100 flex items-center justify-center flex-shrink-0">
+                      {tutor.avatar ? (
+                        <img
+                          src={tutor.avatar}
+                          alt={tutor.fullName || "Tutor"}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-green-600 font-semibold text-xl">
+                          {tutor.fullName
+                            ? tutor.fullName.charAt(0).toUpperCase()
+                            : "T"}
+                        </span>
+                      )}
                     </div>
 
-                    {/* Badges - Only show if tutor has badges */}
-                    {(tutor.premium || isVerified(tutor.verified)) && (
-                      <div className="flex items-center gap-1 mb-3">
-                        {tutor.premium && (
-                          <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs px-2 py-1">
-                            <Award className="h-3 w-3 mr-1" />
-                            Genius
-                          </Badge>
-                        )}
-                        {isVerified(tutor.verified) && (
-                          <Badge className="bg-green-100 text-green-800 border-green-200 text-xs px-2 py-1">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Verified
-                          </Badge>
-                        )}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-lg text-gray-900 truncate">
+                          {tutor.fullName || "Tutor Name"}
+                        </h3>
                       </div>
-                    )}
-                    {/* Status Badge */}
-                    {tutor.tutorStatus && (
-                      <Badge
-                        className={`text-xs px-2 py-1 mb-3 ${
-                          tutor.tutorStatus === "approved"
-                            ? "bg-green-100 text-green-800 border-green-200"
-                            : tutor.tutorStatus === "pending"
-                            ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                            : "bg-red-100 text-red-800 border-red-200"
-                        }`}
-                      >
-                        {tutor.tutorStatus}
-                      </Badge>
-                    )}
 
-                    {/* Institute */}
-                    {tutor.Institute_name && (
-                      <p className="text-sm text-gray-800 mb-1">
-                        Institute Name : {tutor.Institute_name}
+                      {/* Badges */}
+                      {(tutor.premium || isVerified(tutor.verified)) && (
+                        <div className="flex items-center gap-1 mb-3">
+                          {tutor.premium && (
+                            <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs px-2 py-1">
+                              <Award className="h-3 w-3 mr-1" />
+                              Genius
+                            </Badge>
+                          )}
+                          {isVerified(tutor.verified) && (
+                            <Badge className="bg-green-100 text-green-800 border-green-200 text-xs px-2 py-1">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Verified
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                      {/* Status Badge */}
+                      {tutor.tutorStatus && (
+                        <Badge
+                          className={`text-xs px-2 py-1 mb-3 ${
+                            tutor.tutorStatus === "approved"
+                              ? "bg-green-100 text-green-800 border-green-200"
+                              : tutor.tutorStatus === "pending"
+                              ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                              : "bg-red-100 text-red-800 border-red-200"
+                          }`}
+                        >
+                          {tutor.tutorStatus}
+                        </Badge>
+                      )}
+
+                      {/* Institute */}
+                      {tutor.Institute_name && (
+                        <p className="text-sm text-gray-800 mb-1">
+                          Institute Name : {tutor.Institute_name}
+                        </p>
+                      )}
+
+                      {/* Location */}
+                      <p className="text-sm text-gray-500">
+                        {tutor.district || "Location not specified"}
                       </p>
-                    )}
 
-                    {/* Location */}
-                    <p className="text-sm text-gray-500">
-                      {tutor.district || "Location not specified"}
-                    </p>
-
-                    {/* Rating */}
-                    <div className="flex items-center gap-1 mt-1">
-                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                      <span className="text-sm font-medium">
-                        {tutor.rating || 0}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        ({tutor.total_reviews || 0} reviews)
-                      </span>
+                      {/* Rating */}
+                      <div className="flex items-center gap-1 mt-1">
+                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                        <span className="text-sm font-medium">
+                          {tutor.rating || 0}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          ({tutor.total_reviews || 0} reviews)
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Tutor Details */}
-                <div className="space-y-3 flex-1">
-                  {/* Department */}
-
-                  <div className="flex items-center justify-between flex-wrap gap-4">
-                    {tutor.department_name && (
-                      <div>
-                        <span className="text-xs font-medium  text-black uppercase tracking-wide">
-                          Department
-                        </span>
-                        <p className="text-sm text-gray-700 mt-1">
-                          {tutor.department_name}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Year */}
-                    {tutor.year && (
-                      <div>
-                        <span className="text-xs font-medium  text-black uppercase tracking-wide">
-                          Year
-                        </span>
-                        <p className="text-sm text-gray-700 mt-1">
-                          {tutor.year}
-                        </p>
-                      </div>
-                    )}
-
-                    {tutor.experience !== undefined &&
-                      tutor.experience !== null && (
+                  {/* Tutor Details */}
+                  <div className="space-y-3 flex-1">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                      {tutor.department_name && (
                         <div>
-                          <span className="text-xs font-medium  text-black uppercase tracking-wide">
-                            Experience
+                          <span className="text-xs font-medium text-black uppercase tracking-wide">
+                            Department
                           </span>
                           <p className="text-sm text-gray-700 mt-1">
-                            {tutor.experience} years
+                            {tutor.department_name}
                           </p>
                         </div>
                       )}
 
-                    {/* Education */}
-                    {tutor.education && (
+                      {/* Year */}
+                      {tutor.year && (
+                        <div>
+                          <span className="text-xs font-medium text-black uppercase tracking-wide">
+                            Year
+                          </span>
+                          <p className="text-sm text-gray-700 mt-1">
+                            {tutor.year}
+                          </p>
+                        </div>
+                      )}
+
+                      {tutor.experience !== undefined &&
+                        tutor.experience !== null && (
+                          <div>
+                            <span className="text-xs font-medium text-black uppercase tracking-wide">
+                              Experience
+                            </span>
+                            <p className="text-sm text-gray-700 mt-1">
+                              {tutor.experience} years
+                            </p>
+                          </div>
+                        )}
+
+                      {/* Education */}
+                      {tutor.education && (
+                        <div>
+                          <span className="text-xs font-medium text-black uppercase tracking-wide">
+                            Education
+                          </span>
+                          <p className="text-sm text-gray-700 mt-1">
+                            {tutor.education}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Subjects */}
+                    {tutor.subjects && tutor.subjects.length > 0 && (
                       <div>
                         <span className="text-xs font-medium text-black uppercase tracking-wide">
-                          Education
+                          Subjects
                         </span>
-                        <p className="text-sm text-gray-700 mt-1">
-                          {tutor.education}
-                        </p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {tutor.subjects.map(
+                            (subject: string, index: number) => (
+                              <Badge
+                                key={index}
+                                variant="secondary"
+                                className="text-xs"
+                              >
+                                {subject}
+                              </Badge>
+                            )
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
 
-                  {/* Experience */}
-
-                  {/* Availability */}
-                  {/* {tutor.availability && (
-                    <div>
-                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Availability</span>
-                      <p className="text-sm text-gray-700 mt-1">{tutor.availability}</p>
-                    </div>
-                  )} */}
-
-                  {/* Hourly Rate */}
-                  {/* {tutor.hourly_rate !== undefined && tutor.hourly_rate !== null && (
-                    <div>
-                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Hourly Rate</span>
-                      <p className="text-sm text-gray-700 mt-1">৳{tutor.hourly_rate}/hour</p>
-                    </div>
-                  )} */}
-
-                  {/* Preferred Areas */}
-                  {/* {tutor.preferred_areas && tutor.preferred_areas.length > 0 && (
-                    <div>
-                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Preferred Areas</span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {tutor.preferred_areas.map((area: string, index: number) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {area}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}  */}
-
-                  {/* Subjects */}
-                  {tutor.subjects && tutor.subjects.length > 0 && (
-                    <div>
-                      <span className="text-xs font-medium  text-black uppercase tracking-wide">
-                        Subjects
-                      </span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {tutor.subjects.map(
-                          (subject: string, index: number) => (
-                            <Badge
-                              key={index}
-                              variant="secondary"
-                              className="text-xs"
-                            >
-                              {subject}
-                            </Badge>
-                          )
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Action Button - Positioned at bottom */}
-                <div className="mt-4">
-                  <Button
-                    className="bg-green-600 hover:bg-green-700 w-full"
-                    onClick={() =>
-                      window.open(`/tutor/${tutor.tutor_id}`, "_blank")
-                    }
-                  >
-                    View Profile
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
+                  {/* Action Button */}
+                  <div className="mt-4">
+                    <Button
+                      className="bg-green-600 hover:bg-green-700 w-full"
+                      onClick={() =>
+                        window.open(`/tutor/${tutor.tutor_id}`, "_blank")
+                      }
+                    >
+                      View Profile
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="border-dashed border-2 border-gray-200">
+            <CardContent className="p-12 text-center">
+              <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No tutors found
+              </h3>
+              <p className="text-gray-500 mb-4">
+                Try adjusting your search criteria or filters to find more tutors.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchQuery("");
+                  setFilterSubject("any");
+                  setFilterArea("all");
+                  setFilterGender("any");
+                  setFilterRating(0);
+                  setFilterExperience("0");
+                  setFilterEducation("all");
+                  setFilterAvailability("all");
+                  setFilterMaxPrice("");
+                  setFilterSortBy("all");
+                  setFilterSortOrder("desc");
+                  setViewMode("grid");
+                }}
+              >
+                Clear Filters
+              </Button>
+            </CardContent>
+          </Card>
+        )
+      ) : !isLoading && tutors.length === 0 ? (
         <Card className="border-dashed border-2 border-gray-200">
           <CardContent className="p-12 text-center">
             <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No tutors found
+              No tutors available
             </h3>
             <p className="text-gray-500 mb-4">
-              Try adjusting your search criteria or filters to find more tutors.
+              There are currently no tutors available. Please check back later.
             </p>
             <Button
               variant="outline"
-              onClick={() => {
-                setSearchQuery("");
-                setFilterSubject("any");
-                setFilterArea("all");
-                setFilterGender("any");
-                setFilterRating(0);
-                setFilterExperience("0");
-                setFilterEducation("all");
-                setFilterAvailability("all");
-                setFilterMaxPrice("");
-                setFilterSortBy("all");
-                setFilterSortOrder("desc");
-                setViewMode("grid");
-              }}
+              onClick={() => refetch()}
             >
-              Clear Filters
+              Refresh
             </Button>
           </CardContent>
         </Card>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -963,7 +963,7 @@ export function StudentDashboardMain() {
                 setViewMode={(mode: string) =>
                   setViewMode(mode as "grid" | "list")
                 }
-                filteredTutors={tutors}
+                // filteredTutors={tutors}
                 inviteDemo={() => {}}
               />
             )}
