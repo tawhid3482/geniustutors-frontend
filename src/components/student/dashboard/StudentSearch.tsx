@@ -5,11 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Toggle } from "@/components/ui/toggle";
 import { Search, Star, Award, CheckCircle } from "lucide-react";
 import { FilterGender } from "@/types/student";
 import { ALL_DISTRICTS } from "@/data/bangladeshDistricts";
+import { useGetAllTutorPublicQuery } from "@/redux/features/tutorHub/tutorHubApi";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from "react";
 
 interface StudentSearchProps {
   searchQuery: string;
@@ -24,7 +33,6 @@ interface StudentSearchProps {
   setFilterGender: (gender: FilterGender) => void;
   setFilterRating: (rating: number) => void;
   setViewMode: (mode: string) => void;
-  filteredTutors: any[];
   inviteDemo: (tutor: any) => void;
 }
 
@@ -41,34 +49,302 @@ export function StudentSearch({
   setFilterGender,
   setFilterRating,
   setViewMode,
-  filteredTutors,
-  inviteDemo
+  inviteDemo,
 }: StudentSearchProps) {
-  
+  const {
+    data: tutorsResponse,
+    isLoading,
+    error,
+  } = useGetAllTutorPublicQuery(undefined);
+
+  // Extract tutors from the response
+  const tutors = tutorsResponse?.data || [];
+  console.log("All tutors:", tutors);
+
+  // State for additional filters
+  const [filterExperience, setFilterExperience] = useState<string>("0");
+  const [filterEducation, setFilterEducation] = useState<string>("all");
+  const [filterAvailability, setFilterAvailability] = useState<string>("all");
+  const [filterMaxPrice, setFilterMaxPrice] = useState<string>("");
+  const [filterSortBy, setFilterSortBy] = useState<string>("all");
+  const [filterSortOrder, setFilterSortOrder] = useState<string>("desc");
+
   // Helper function to check if tutor is verified
   const isVerified = (verified: any) => {
     if (!verified) return false;
-    if (verified === '0' || verified === 0) return false;
-    if (verified === 'false' || verified === false) return false;
-    if (verified === 'no' || verified === 'No') return false;
+    if (verified === "0" || verified === 0) return false;
+    if (verified === "false" || verified === false) return false;
+    if (verified === "no" || verified === "No") return false;
     return true;
   };
+
+  // Filter tutors based on all criteria
+  const filteredTutors = tutors.filter((tutor: any) => {
+    console.log(
+      "Checking tutor:",
+      tutor.fullName,
+      "Status:",
+      tutor.tutorStatus
+    );
+
+    // Only show approved tutors - REMOVED this filter to show all tutors
+    // if (tutor.tutorStatus !== "approved") {
+    //   console.log("Rejected because not approved:", tutor.fullName);
+    //   return false;
+    // }
+
+    // Search by name, email, institute, department, or subjects
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      const nameMatch = tutor.fullName?.toLowerCase().includes(query) || false;
+      const emailMatch = tutor.email?.toLowerCase().includes(query) || false;
+      const instituteMatch =
+        tutor.Institute_name?.toLowerCase().includes(query) || false;
+      const departmentMatch =
+        tutor.department_name?.toLowerCase().includes(query) || false;
+
+      // Check if any subject matches (case-insensitive)
+      const subjectMatch =
+        tutor.subjects?.some((subject: string) =>
+          subject?.toLowerCase().includes(query)
+        ) || false;
+
+      if (
+        !nameMatch &&
+        !emailMatch &&
+        !instituteMatch &&
+        !departmentMatch &&
+        !subjectMatch
+      ) {
+        console.log("Rejected by search query:", tutor.fullName);
+        return false;
+      }
+    }
+
+    // Filter by subject (case-insensitive)
+    if (filterSubject !== "any") {
+      if (tutor.subjects && tutor.subjects.length > 0) {
+        // Convert subjects to lowercase for comparison
+        const lowerCaseSubjects = tutor.subjects.map(
+          (subject: string) => subject?.toLowerCase() || ""
+        );
+        const filterSubjectLower = filterSubject.toLowerCase();
+        // Check if any subject includes the filter subject (partial match)
+        const hasSubject = lowerCaseSubjects.some((subject: string) =>
+          subject.includes(filterSubjectLower)
+        );
+        if (!hasSubject) {
+          console.log(
+            "Rejected by subject filter:",
+            tutor.fullName,
+            tutor.subjects
+          );
+          return false;
+        }
+      } else {
+        console.log("Rejected - no subjects:", tutor.fullName);
+        return false;
+      }
+    }
+
+    // Filter by area (district)
+    if (filterArea !== "all") {
+      if (
+        !tutor.district ||
+        tutor.district.toLowerCase() !== filterArea.toLowerCase()
+      ) {
+        console.log("Rejected by area filter:", tutor.fullName, tutor.district);
+        return false;
+      }
+    }
+
+    // Filter by gender
+    if (filterGender !== "any") {
+      if (
+        !tutor.gender ||
+        tutor.gender.toLowerCase() !== filterGender.toLowerCase()
+      ) {
+        console.log("Rejected by gender filter:", tutor.fullName, tutor.gender);
+        return false;
+      }
+    }
+
+    // Filter by rating - handle null/undefined ratings
+    if (filterRating > 0) {
+      const tutorRating = tutor.rating || 0;
+      if (tutorRating < filterRating) {
+        console.log("Rejected by rating filter:", tutor.fullName, tutor.rating);
+        return false;
+      }
+    }
+
+    // Filter by experience
+    if (filterExperience !== "0") {
+      const minExperience = parseInt(filterExperience);
+      const tutorExperience = tutor.experience || 0;
+      if (tutorExperience < minExperience) {
+        console.log(
+          "Rejected by experience filter:",
+          tutor.fullName,
+          tutor.experience
+        );
+        return false;
+      }
+    }
+
+    // Filter by education
+    if (filterEducation !== "all") {
+      if (
+        !tutor.education ||
+        tutor.education.toLowerCase() !== filterEducation.toLowerCase()
+      ) {
+        console.log(
+          "Rejected by education filter:",
+          tutor.fullName,
+          tutor.education
+        );
+        return false;
+      }
+    }
+
+    // Filter by availability
+    if (filterAvailability !== "all") {
+      if (
+        !tutor.availability ||
+        tutor.availability.toLowerCase() !== filterAvailability.toLowerCase()
+      ) {
+        console.log(
+          "Rejected by availability filter:",
+          tutor.fullName,
+          tutor.availability
+        );
+        return false;
+      }
+    }
+
+    // Filter by maximum price
+    if (filterMaxPrice.trim()) {
+      const maxPrice = parseFloat(filterMaxPrice);
+      const tutorPrice = tutor.hourly_rate || 0;
+      if (tutorPrice > maxPrice) {
+        console.log(
+          "Rejected by price filter:",
+          tutor.fullName,
+          tutor.hourly_rate
+        );
+        return false;
+      }
+    }
+
+    console.log("Accepted tutor:", tutor.fullName);
+    return true;
+  });
+
+  console.log("Filtered tutors count:", filteredTutors.length);
+
+  // Apply sorting
+  let sortedTutors = [...filteredTutors];
+
+  if (filterSortBy !== "all") {
+    sortedTutors.sort((a: any, b: any) => {
+      let aValue, bValue;
+
+      switch (filterSortBy) {
+        case "rating":
+          aValue = a.rating || 0;
+          bValue = b.rating || 0;
+          break;
+        case "hourly_rate":
+          aValue = a.hourly_rate || 0;
+          bValue = b.hourly_rate || 0;
+          break;
+        case "experience":
+          aValue = a.experience || 0;
+          bValue = b.experience || 0;
+          break;
+        case "total_reviews":
+          aValue = a.total_reviews || 0;
+          bValue = b.total_reviews || 0;
+          break;
+        default:
+          aValue = 0;
+          bValue = 0;
+      }
+
+      if (filterSortOrder === "asc") {
+        return aValue - bValue;
+      } else {
+        return bValue - aValue;
+      }
+    });
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 w-full">
+        <Card className="border-green-100/60">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5 text-green-600" /> Find Tutors
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i}>
+                  <Skeleton className="h-4 w-20 mb-1" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i} className="border-green-100">
+              <CardContent className="p-6">
+                <Skeleton className="h-16 w-16 rounded-full mb-4" />
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2 mb-4" />
+                <Skeleton className="h-10 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border-red-200">
+        <CardContent className="p-8 text-center">
+          <p className="text-red-600">
+            Error loading tutors. Please try again.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6 w-full">
       <Card className="border-green-100/60">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Search className="h-5 w-5 text-green-600" /> Find Tutors</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5 text-green-600" /> Find Tutors
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {/* Search Bar */}
             <div className="lg:col-span-2 xl:col-span-3">
               <Label>Search</Label>
-              <Input 
-                className="mt-1" 
-                value={searchQuery} 
-                onChange={(e) => setSearchQuery(e.target.value)} 
-                placeholder="Search tutors by name or subject..." 
+              <Input
+                className="mt-1"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search tutors by name, email, institute or subjects..."
               />
             </div>
 
@@ -86,7 +362,9 @@ export function StudentSearch({
                   <SelectItem value="Chemistry">Chemistry</SelectItem>
                   <SelectItem value="Biology">Biology</SelectItem>
                   <SelectItem value="English">English</SelectItem>
-                  <SelectItem value="Computer Science">Computer Science</SelectItem>
+                  <SelectItem value="Computer Science">
+                    Computer Science
+                  </SelectItem>
                   <SelectItem value="Programming">Programming</SelectItem>
                   <SelectItem value="Bangla">Bangla</SelectItem>
                   <SelectItem value="Economics">Economics</SelectItem>
@@ -115,7 +393,10 @@ export function StudentSearch({
             {/* Gender Filter */}
             <div>
               <Label>Gender</Label>
-              <Select value={filterGender} onValueChange={(v) => setFilterGender(v as FilterGender)}>
+              <Select
+                value={filterGender}
+                onValueChange={(v) => setFilterGender(v as FilterGender)}
+              >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Any Gender" />
                 </SelectTrigger>
@@ -130,7 +411,10 @@ export function StudentSearch({
             {/* Rating Filter */}
             <div>
               <Label>Minimum Rating</Label>
-              <Select value={String(filterRating)} onValueChange={(v) => setFilterRating(Number(v))}>
+              <Select
+                value={String(filterRating)}
+                onValueChange={(v) => setFilterRating(Number(v))}
+              >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Any Rating" />
                 </SelectTrigger>
@@ -138,7 +422,6 @@ export function StudentSearch({
                   <SelectItem value="0">Any Rating</SelectItem>
                   <SelectItem value="3">3+ Stars</SelectItem>
                   <SelectItem value="4">4+ Stars</SelectItem>
-                  <SelectItem value="4.5">4.5+ Stars</SelectItem>
                   <SelectItem value="5">5 Stars</SelectItem>
                 </SelectContent>
               </Select>
@@ -147,7 +430,10 @@ export function StudentSearch({
             {/* Experience Filter */}
             <div>
               <Label>Minimum Experience (Years)</Label>
-              <Select value="0" onValueChange={() => {}}>
+              <Select
+                value={filterExperience}
+                onValueChange={setFilterExperience}
+              >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Any Experience" />
                 </SelectTrigger>
@@ -165,12 +451,17 @@ export function StudentSearch({
             {/* Education Filter */}
             <div>
               <Label>Education</Label>
-              <Select value="all" onValueChange={() => {}}>
+              <Select
+                value={filterEducation}
+                onValueChange={setFilterEducation}
+              >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Any Education" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Any Education</SelectItem>
+                  <SelectItem value="HSC">HSC</SelectItem>
+                  <SelectItem value="Diploma">Diploma</SelectItem>
                   <SelectItem value="Bachelor">Bachelor's Degree</SelectItem>
                   <SelectItem value="Master">Master's Degree</SelectItem>
                   <SelectItem value="PhD">PhD</SelectItem>
@@ -181,7 +472,10 @@ export function StudentSearch({
             {/* Availability Filter */}
             <div>
               <Label>Availability</Label>
-              <Select value="all" onValueChange={() => {}}>
+              <Select
+                value={filterAvailability}
+                onValueChange={setFilterAvailability}
+              >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Any Availability" />
                 </SelectTrigger>
@@ -203,21 +497,26 @@ export function StudentSearch({
                 placeholder="Any Price"
                 min="0"
                 className="mt-1"
+                value={filterMaxPrice}
+                onChange={(e) => setFilterMaxPrice(e.target.value)}
               />
             </div>
 
             {/* Sort By */}
             <div>
               <Label>Sort By</Label>
-              <Select value="rating" onValueChange={() => {}}>
+              <Select value={filterSortBy} onValueChange={setFilterSortBy}>
                 <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Sort By" />
+                  <SelectValue placeholder="Default" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">Default (No Sorting)</SelectItem>
                   <SelectItem value="rating">Rating</SelectItem>
                   <SelectItem value="hourly_rate">Price</SelectItem>
                   <SelectItem value="experience">Experience</SelectItem>
-                  <SelectItem value="total_reviews">Number of Reviews</SelectItem>
+                  <SelectItem value="total_reviews">
+                    Number of Reviews
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -225,7 +524,10 @@ export function StudentSearch({
             {/* Sort Order */}
             <div>
               <Label>Sort Order</Label>
-              <Select value="desc" onValueChange={() => {}}>
+              <Select
+                value={filterSortOrder}
+                onValueChange={setFilterSortOrder}
+              >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Sort Order" />
                 </SelectTrigger>
@@ -238,15 +540,21 @@ export function StudentSearch({
 
             {/* Reset Filters */}
             <div className="lg:col-span-2 xl:col-span-3 flex justify-end">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   setSearchQuery("");
                   setFilterSubject("any");
                   setFilterArea("all");
                   setFilterGender("any");
                   setFilterRating(0);
+                  setFilterExperience("0");
+                  setFilterEducation("all");
+                  setFilterAvailability("all");
+                  setFilterMaxPrice("");
+                  setFilterSortBy("all");
+                  setFilterSortOrder("desc");
                   setViewMode("grid");
                 }}
               >
@@ -260,109 +568,244 @@ export function StudentSearch({
       {/* Results Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Available Tutors</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            Available Tutors
+          </h2>
           <p className="text-sm text-gray-600 mt-1">
-            {filteredTutors.length} tutor{filteredTutors.length !== 1 ? 's' : ''} found
+            {sortedTutors.length} tutor{sortedTutors.length !== 1 ? "s" : ""}{" "}
+            found
           </p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">View:</span>
-          <Toggle pressed={viewMode === "grid"} onPressedChange={(v) => setViewMode(v ? "grid" : "list")}>
+          <Toggle
+            pressed={viewMode === "grid"}
+            onPressedChange={(v) => setViewMode(v ? "grid" : "list")}
+          >
             Grid
           </Toggle>
-          <Toggle pressed={viewMode === "list"} onPressedChange={(v) => setViewMode(v ? "list" : "grid")}>
+          <Toggle
+            pressed={viewMode === "list"}
+            onPressedChange={(v) => setViewMode(v ? "list" : "grid")}
+          >
             List
           </Toggle>
         </div>
       </div>
 
       {/* Tutors Display */}
-      {filteredTutors.length > 0 ? (
-        <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
-          {filteredTutors.map((tutor) => (
-            <Card key={tutor.id} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-green-100 flex flex-col h-full">
+      {sortedTutors.length > 0 ? (
+        <div
+          className={
+            viewMode === "grid"
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              : "space-y-4"
+          }
+        >
+          {sortedTutors.map((tutor: any) => (
+            <Card
+              key={tutor.id}
+              className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1  flex flex-col h-full border border-green-300"
+            >
               <CardContent className="p-6 flex flex-col h-full">
                 {/* Tutor Header */}
                 <div className="flex items-start gap-3 mb-4">
                   {/* Tutor Image */}
                   <div className="w-16 h-16 rounded-full overflow-hidden bg-green-100 flex items-center justify-center flex-shrink-0">
-                    {tutor.avatar_url ? (
-                      <img 
-                        src={tutor.avatar_url} 
-                        alt={tutor.full_name || tutor.name || 'Tutor'} 
+                    {tutor.avatar ? (
+                      <img
+                        src={tutor.avatar}
+                        alt={tutor.fullName || "Tutor"}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <span className="text-green-600 font-semibold text-xl">
-                        {tutor.full_name ? tutor.full_name.charAt(0).toUpperCase() : tutor.name ? tutor.name.charAt(0).toUpperCase() : 'T'}
+                        {tutor.fullName
+                          ? tutor.fullName.charAt(0).toUpperCase()
+                          : "T"}
                       </span>
                     )}
                   </div>
-                  
-                  <div className="flex-1 min-w-0">
+
+                  <div className="flex-1 ">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold text-lg text-gray-900 truncate">
-                        {tutor.full_name || tutor.name || 'Tutor Name'}
+                        {tutor.fullName || "Tutor Name"}
                       </h3>
-                      {/* Badges - Only show if tutor has badges */}
-                      {(tutor.premium === 'yes' || isVerified(tutor.verified)) && (
-                        <div className="flex items-center gap-1">
-                          {tutor.premium === 'yes' && (
-                            <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs px-2 py-1">
-                              <Award className="h-3 w-3 mr-1" />
-                              Genius
-                            </Badge>
-                          )}
-                          {isVerified(tutor.verified) && (
-                            <Badge className="bg-green-100 text-green-800 border-green-200 text-xs px-2 py-1">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Verified
-                            </Badge>
-                          )}
-                        </div>
-                      )}
                     </div>
-                    
-                    {/* University */}
-                    {tutor.university_name && (
-                      <p className="text-sm text-gray-600 mb-1">
-                        {tutor.university_name}
+
+                    {/* Badges - Only show if tutor has badges */}
+                    {(tutor.premium || isVerified(tutor.verified)) && (
+                      <div className="flex items-center gap-1 mb-3">
+                        {tutor.premium && (
+                          <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-xs px-2 py-1">
+                            <Award className="h-3 w-3 mr-1" />
+                            Genius
+                          </Badge>
+                        )}
+                        {isVerified(tutor.verified) && (
+                          <Badge className="bg-green-100 text-green-800 border-green-200 text-xs px-2 py-1">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Verified
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                    {/* Status Badge */}
+                    {tutor.tutorStatus && (
+                      <Badge
+                        className={`text-xs px-2 py-1 mb-3 ${
+                          tutor.tutorStatus === "approved"
+                            ? "bg-green-100 text-green-800 border-green-200"
+                            : tutor.tutorStatus === "pending"
+                            ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                            : "bg-red-100 text-red-800 border-red-200"
+                        }`}
+                      >
+                        {tutor.tutorStatus}
+                      </Badge>
+                    )}
+
+                    {/* Institute */}
+                    {tutor.Institute_name && (
+                      <p className="text-sm text-gray-800 mb-1">
+                        Institute Name : {tutor.Institute_name}
                       </p>
                     )}
-                    
+
                     {/* Location */}
                     <p className="text-sm text-gray-500">
-                      {tutor.district || tutor.area || tutor.location || 'Location not specified'}
+                      {tutor.district || "Location not specified"}
                     </p>
+
+                    {/* Rating */}
+                    <div className="flex items-center gap-1 mt-1">
+                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                      <span className="text-sm font-medium">
+                        {tutor.rating || 0}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        ({tutor.total_reviews || 0} reviews)
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Tutor Details */}
                 <div className="space-y-3 flex-1">
+                  {/* Department */}
+
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    {tutor.department_name && (
+                      <div>
+                        <span className="text-xs font-medium  text-black uppercase tracking-wide">
+                          Department
+                        </span>
+                        <p className="text-sm text-gray-700 mt-1">
+                          {tutor.department_name}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Year */}
+                    {tutor.year && (
+                      <div>
+                        <span className="text-xs font-medium  text-black uppercase tracking-wide">
+                          Year
+                        </span>
+                        <p className="text-sm text-gray-700 mt-1">
+                          {tutor.year}
+                        </p>
+                      </div>
+                    )}
+
+                    {tutor.experience !== undefined &&
+                      tutor.experience !== null && (
+                        <div>
+                          <span className="text-xs font-medium  text-black uppercase tracking-wide">
+                            Experience
+                          </span>
+                          <p className="text-sm text-gray-700 mt-1">
+                            {tutor.experience} years
+                          </p>
+                        </div>
+                      )}
+
+                    {/* Education */}
+                    {tutor.education && (
+                      <div>
+                        <span className="text-xs font-medium text-black uppercase tracking-wide">
+                          Education
+                        </span>
+                        <p className="text-sm text-gray-700 mt-1">
+                          {tutor.education}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Experience */}
-                  {tutor.experience && (
+
+                  {/* Availability */}
+                  {/* {tutor.availability && (
                     <div>
-                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Experience</span>
-                      <p className="text-sm text-gray-700 mt-1">{tutor.experience} years</p>
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Availability</span>
+                      <p className="text-sm text-gray-700 mt-1">{tutor.availability}</p>
+                    </div>
+                  )} */}
+
+                  {/* Hourly Rate */}
+                  {/* {tutor.hourly_rate !== undefined && tutor.hourly_rate !== null && (
+                    <div>
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Hourly Rate</span>
+                      <p className="text-sm text-gray-700 mt-1">৳{tutor.hourly_rate}/hour</p>
+                    </div>
+                  )} */}
+
+                  {/* Preferred Areas */}
+                  {/* {tutor.preferred_areas && tutor.preferred_areas.length > 0 && (
+                    <div>
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Preferred Areas</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {tutor.preferred_areas.map((area: string, index: number) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {area}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}  */}
+
+                  {/* Subjects */}
+                  {tutor.subjects && tutor.subjects.length > 0 && (
+                    <div>
+                      <span className="text-xs font-medium  text-black uppercase tracking-wide">
+                        Subjects
+                      </span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {tutor.subjects.map(
+                          (subject: string, index: number) => (
+                            <Badge
+                              key={index}
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              {subject}
+                            </Badge>
+                          )
+                        )}
+                      </div>
                     </div>
                   )}
-
-                  {/* Education */}
-                  {tutor.education && (
-                    <div>
-                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Education</span>
-                      <p className="text-sm text-gray-700 mt-1">{tutor.education}</p>
-                    </div>
-                  )}
-
-
                 </div>
 
                 {/* Action Button - Positioned at bottom */}
                 <div className="mt-4">
-                  <Button 
-                    className="bg-green-600 hover:bg-green-700 w-full" 
-                    onClick={() => window.open(`/tutor/${tutor.id}`, '_blank')}
+                  <Button
+                    className="bg-green-600 hover:bg-green-700 w-full"
+                    onClick={() =>
+                      window.open(`/tutor/${tutor.tutor_id}`, "_blank")
+                    }
                   >
                     View Profile
                   </Button>
@@ -375,18 +818,26 @@ export function StudentSearch({
         <Card className="border-dashed border-2 border-gray-200">
           <CardContent className="p-12 text-center">
             <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No tutors found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No tutors found
+            </h3>
             <p className="text-gray-500 mb-4">
               Try adjusting your search criteria or filters to find more tutors.
             </p>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setSearchQuery("");
                 setFilterSubject("any");
                 setFilterArea("all");
                 setFilterGender("any");
                 setFilterRating(0);
+                setFilterExperience("0");
+                setFilterEducation("all");
+                setFilterAvailability("all");
+                setFilterMaxPrice("");
+                setFilterSortBy("all");
+                setFilterSortOrder("desc");
                 setViewMode("grid");
               }}
             >

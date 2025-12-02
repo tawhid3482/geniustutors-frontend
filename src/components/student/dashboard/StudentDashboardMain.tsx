@@ -237,8 +237,8 @@ export function StudentDashboardMain() {
   const { data: AllJobs, isLoading: jobsLoading } = useGetAllTutorRequestsQuery(undefined);
   const { data: allTutor, isLoading: tutorsLoading } = useGetAllTutorsQuery(undefined);
 
-  console.log('All Jobs:', AllJobs);
-  console.log('All Tutors:', allTutor);
+  // console.log('All Jobs:', AllJobs);
+  // console.log('All Tutors:', allTutor);
 
   // Transform AllJobs data for recentPlatformJobs
   const recentPlatformJobs = useMemo(() => {
@@ -579,10 +579,10 @@ export function StudentDashboardMain() {
           return;
         }
       } catch (apiError) {
-        console.warn(
-          "Failed to load profile from API, falling back to user context:",
-          apiError
-        );
+        // console.warn(
+        //   "Failed to load profile from API, falling back to user context:",
+        //   apiError
+        // );
       }
 
       // Fallback to user context data
@@ -721,7 +721,7 @@ export function StudentDashboardMain() {
       const response = await getMyEnrollments();
       setEnrolledCourses(response.enrollments || []);
     } catch (error) {
-      console.error("Error loading enrolled courses:", error);
+      // console.error("Error loading enrolled courses:", error);
       toast({
         title: "Error",
         description: "Failed to load your courses. Please try again.",

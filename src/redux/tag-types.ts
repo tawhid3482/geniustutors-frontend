@@ -14,10 +14,12 @@ export enum tagTypes {
   phoneVerify = "phoneVerify",
   upgradePackages = "upgradePackages",
   notice = "notice",
+  application = "application",
 }
 
 export const tagTypesList = [
   tagTypes.admin,
+  tagTypes.application,
   tagTypes.schedule,
   tagTypes.user,
   tagTypes.area,

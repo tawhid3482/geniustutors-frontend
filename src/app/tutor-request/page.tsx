@@ -100,13 +100,19 @@ export default function TutorRequestPage() {
     refetchOnMountOrArgChange: true 
   });
 
+
+
+
   const [createTutorRequest, { isLoading: creating }] =
     useCreateTutorRequestsMutation();
+
+    // console.log(user?.id)
 
 
   // Form data state
   const [formData, setFormData] = useState<TutorRequestFormData>({
     phoneNumber: "",
+    userId: user?.id || "" as any,
     studentGender: "" as any,
     district: "",
     area: "",
@@ -141,6 +147,10 @@ export default function TutorRequestPage() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [isLoadingTaxonomy, setIsLoadingTaxonomy] = useState(false);
+
+
+    // console.log(categories)
+
 
   // Process ALL districts from districtData - FIXED VERSION
   useEffect(() => {
@@ -374,6 +384,7 @@ export default function TutorRequestPage() {
       // Extract only the name part before submitting (remove the ID part)
       const submitData = {
         ...formData,
+        userId: user?.id || "" as any,
         district: formData.district.split('-')[1] || formData.district, // Get only the district name
         area: formData.area.split('-')[1] || formData.area, // Get only the area name
       };

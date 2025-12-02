@@ -18,7 +18,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Pagination } from "@/components/ui/pagination";
 import { useGetAllDistrictsQuery } from "@/redux/features/district/districtApi";
 import { useGetAllAreaQuery } from "@/redux/features/area/areaApi";
-import { useGetAllTutorRequestsQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
+import { useGetAllTutorRequestsForPublicQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
 import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
 import { SUBJECT_OPTIONS } from "@/data/mockData";
 
@@ -55,7 +55,7 @@ export default function TuitionJobs() {
   // Redux data fetching
   const { data: districtData, isLoading: districtLoading } = useGetAllDistrictsQuery(undefined);
   const { data: areaData, isLoading: areaLoading } = useGetAllAreaQuery(undefined);
-  const { data: jobsData, isLoading: jobsLoading, refetch: refetchJobs } = useGetAllTutorRequestsQuery(undefined);
+  const { data: jobsData, isLoading: jobsLoading, refetch: refetchJobs } = useGetAllTutorRequestsForPublicQuery(undefined);
   const { data: categoryData, isLoading: categoryLoading } = useGetAllCategoryQuery(undefined);
 
 

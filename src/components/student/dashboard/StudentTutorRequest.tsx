@@ -7,8 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, RefreshCw, Eye } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { tutorRequestService, type TutorRequest } from "@/services/tutorRequestService";
-import { tutorApplicationService, type TutorApplication } from "@/services/tutorApplicationService";
+import {
+  tutorRequestService,
+  type TutorRequest,
+} from "@/services/tutorRequestService";
+import {
+  tutorApplicationService,
+  type TutorApplication,
+} from "@/services/tutorApplicationService";
+
 
 interface StudentTutorRequestProps {
   postedRequests?: any[];
@@ -19,22 +26,29 @@ interface StudentTutorRequestProps {
 export function StudentTutorRequest({
   postedRequests: propPostedRequests,
   isLoadingRequests: propIsLoadingRequests,
-  refreshPostedRequests: propRefreshPostedRequests
+  refreshPostedRequests: propRefreshPostedRequests,
 }: StudentTutorRequestProps) {
   const router = useRouter();
   // Internal state management for applications
   const [applications, setApplications] = useState<TutorApplication[]>([]);
   const [isLoadingApplications, setIsLoadingApplications] = useState(false);
-
   // Use props if provided, otherwise use internal state
   const currentApplications = applications;
   const currentIsLoadingApplications = isLoadingApplications;
-  
+ 
   // Filter applications by status
-  const pendingApplications = currentApplications.filter((app: TutorApplication) => app.status === 'pending');
-  const acceptedApplications = currentApplications.filter((app: TutorApplication) => app.status === 'accepted');
-  const approvedApplications = currentApplications.filter((app: TutorApplication) => app.status === 'approved');
-  const rejectedApplications = currentApplications.filter((app: TutorApplication) => app.status === 'rejected');
+  const pendingApplications = currentApplications.filter(
+    (app: TutorApplication) => app.status === "pending"
+  );
+  const acceptedApplications = currentApplications.filter(
+    (app: TutorApplication) => app.status === "accepted"
+  );
+  const approvedApplications = currentApplications.filter(
+    (app: TutorApplication) => app.status === "approved"
+  );
+  const rejectedApplications = currentApplications.filter(
+    (app: TutorApplication) => app.status === "rejected"
+  );
 
   // Fetch student applications
   const fetchApplications = async () => {
@@ -45,17 +59,16 @@ export function StudentTutorRequest({
         setApplications(response.data);
       }
     } catch (error) {
-      console.error('Error fetching applications:', error);
+      console.error("Error fetching applications:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to load your applications',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to load your applications",
+        variant: "destructive",
       });
     } finally {
       setIsLoadingApplications(false);
     }
   };
-
 
   // Refresh function
   const refreshApplications = () => {
@@ -75,18 +88,18 @@ export function StudentTutorRequest({
   // Get status badge color
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'contacted':
-        return 'bg-blue-100 text-blue-800';
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      case 'withdrawn':
-        return 'bg-gray-100 text-gray-800';
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "contacted":
+        return "bg-blue-100 text-blue-800";
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      case "withdrawn":
+        return "bg-gray-100 text-gray-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -99,14 +112,18 @@ export function StudentTutorRequest({
               <BookOpen className="h-5 w-5 text-green-600" />
               My Applications ({currentApplications.length})
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={refreshApplications}
               disabled={currentIsLoadingApplications}
               className="flex items-center gap-2"
             >
-              <RefreshCw className={`h-4 w-4 ${currentIsLoadingApplications ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${
+                  currentIsLoadingApplications ? "animate-spin" : ""
+                }`}
+              />
               Refresh
             </Button>
           </CardTitle>
@@ -122,10 +139,12 @@ export function StudentTutorRequest({
           ) : currentApplications.length === 0 ? (
             <div className="text-center py-8">
               <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-muted-foreground">No applications found. Apply to tutors to get started!</p>
-              <Button 
-                className="mt-4 bg-green-600 hover:bg-green-700" 
-                onClick={() => window.location.href = '/tutors'}
+              <p className="text-muted-foreground">
+                No applications found. Apply to tutors to get started!
+              </p>
+              <Button
+                className="mt-4 bg-green-600 hover:bg-green-700"
+                onClick={() => (window.location.href = "/tutors")}
               >
                 Browse Tutors
               </Button>
@@ -133,32 +152,35 @@ export function StudentTutorRequest({
           ) : (
             <div className="space-y-6">
               {currentApplications.map((application) => (
-                <div key={application.id} className="border rounded-lg p-6 space-y-4">
+                <div
+                  key={application.id}
+                  className="border rounded-lg p-6 space-y-4"
+                >
                   {/* Application Header */}
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="text-lg font-semibold">
-                        {application.applicationType === 'tutor_request'
-                           ? `Application to Tutor (ID: ${application.tutorId})`
-                           : application.job?.title || 'Job Application'
-                         }
+                        {application.applicationType === "tutor_request"
+                          ? `Application to Tutor (ID: ${application.tutorId})`
+                          : application.job?.title || "Job Application"}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        {application.applicationType === 'tutor_request' 
+                        {application.applicationType === "tutor_request"
                           ? `Direct contact application`
-                          : `${application.job?.subject} • ${application.job?.studentClass}`
-                        }
+                          : `${application.job?.subject} • ${application.job?.studentClass}`}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {application.applicationType === 'tutor_request' 
+                        {application.applicationType === "tutor_request"
                           ? `Tutor Application`
-                          : `${application.job?.location}`
-                        }
+                          : `${application.job?.location}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge className={getStatusBadgeColor(application.status)}>
-                        {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                      <Badge
+                        className={getStatusBadgeColor(application.status)}
+                      >
+                        {application.status.charAt(0).toUpperCase() +
+                          application.status.slice(1)}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
                         {new Date(application.createdAt).toLocaleDateString()}
@@ -169,43 +191,60 @@ export function StudentTutorRequest({
                   {/* Application Details */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="font-medium">Application Type:</span> 
-                      <span className="ml-2 capitalize">{application.applicationType}</span>
+                      <span className="font-medium">Application Type:</span>
+                      <span className="ml-2 capitalize">
+                        {application.applicationType}
+                      </span>
                     </div>
                     <div>
-                      <span className="font-medium">Tutor:</span> 
-                      <span className="ml-2">Tutor ID: {application.tutorId}</span>
+                      <span className="font-medium">Tutor:</span>
+                      <span className="ml-2">
+                        Tutor ID: {application.tutorId}
+                      </span>
                     </div>
                     <div>
-                      <span className="font-medium">Your Name:</span> 
+                      <span className="font-medium">Your Name:</span>
                       <span className="ml-2">{application.applicantName}</span>
                     </div>
                     <div>
-                      <span className="font-medium">Phone:</span> 
+                      <span className="font-medium">Phone:</span>
                       <span className="ml-2">{application.applicantPhone}</span>
                     </div>
                     {application.job && (
                       <>
                         <div>
-                          <span className="font-medium">Subject:</span> 
-                          <span className="ml-2">{application.job.subject}</span>
+                          <span className="font-medium">Subject:</span>
+                          <span className="ml-2">
+                            {application.job.subject}
+                          </span>
                         </div>
                         <div>
-                          <span className="font-medium">Budget:</span> 
-                          <span className="ml-2">৳{application.job.salaryRangeMin} - ৳{application.job.salaryRangeMax}</span>
+                          <span className="font-medium">Budget:</span>
+                          <span className="ml-2">
+                            ৳{application.job.salaryRangeMin} - ৳
+                            {application.job.salaryRangeMax}
+                          </span>
                         </div>
                       </>
                     )}
                     {application.contactedAt && (
                       <div>
-                        <span className="font-medium">Contacted:</span> 
-                        <span className="ml-2">{new Date(application.contactedAt).toLocaleDateString()}</span>
+                        <span className="font-medium">Contacted:</span>
+                        <span className="ml-2">
+                          {new Date(
+                            application.contactedAt
+                          ).toLocaleDateString()}
+                        </span>
                       </div>
                     )}
                     {application.completedAt && (
                       <div>
-                        <span className="font-medium">Completed:</span> 
-                        <span className="ml-2">{new Date(application.completedAt).toLocaleDateString()}</span>
+                        <span className="font-medium">Completed:</span>
+                        <span className="ml-2">
+                          {new Date(
+                            application.completedAt
+                          ).toLocaleDateString()}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -213,36 +252,38 @@ export function StudentTutorRequest({
                   {application.message && (
                     <div className="bg-gray-50 p-3 rounded-md">
                       <span className="font-medium text-sm">Your Message:</span>
-                      <p className="text-sm text-gray-700 mt-1">{application.message}</p>
+                      <p className="text-sm text-gray-700 mt-1">
+                        {application.message}
+                      </p>
                     </div>
                   )}
 
                   {application.adminNotes && (
                     <div className="bg-blue-50 p-3 rounded-md">
                       <span className="font-medium text-sm">Admin Notes:</span>
-                      <p className="text-sm text-gray-700 mt-1">{application.adminNotes}</p>
+                      <p className="text-sm text-gray-700 mt-1">
+                        {application.adminNotes}
+                      </p>
                     </div>
                   )}
 
                   {/* Action Buttons */}
                   <div className="flex items-center gap-2 pt-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="flex items-center gap-2"
                       onClick={() => handleViewTutor(application.tutorId)}
                     >
                       <Eye className="h-4 w-4" /> View Tutor Profile
                     </Button>
                   </div>
-
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
-
     </div>
   );
 }

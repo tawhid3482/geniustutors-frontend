@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext.next";
 import { LoginDialog } from "@/components/auth/LoginDialog";
-import { useGetSingleTutorRequestQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
+import { useApplyForTutorRequestsMutation, useGetSingleTutorRequestQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
 
 interface TuitionJobDetailsClientProps {
   jobId: string;
@@ -99,7 +99,7 @@ export default function TuitionJobDetailsClient({
     error: rtkError,
   } = useGetSingleTutorRequestQuery(jobId);
 
-
+const [applyForTutorRequest, { isLoading: applyingForJob }] =useApplyForTutorRequestsMutation()
 
   // Rest of your existing state
   const [job, setJob] = useState<TuitionJob | null>(null);
@@ -144,7 +144,7 @@ export default function TuitionJobDetailsClient({
         locationDetails: apiData.locationDetails || "",
         medium: apiData.medium || "Bangla",
         salaryRangeMin: apiData.salaryRangeMin || 0,
-        salaryRangeMax: apiData.salaryRangeMax || 0, // যদি required থাকে
+        salaryRangeMax: apiData.salaryRangeMax || 0, 
         tutorExperience: apiData.tutorExperience || "Not specified",
         status:apiData.status
       };
@@ -162,7 +162,7 @@ export default function TuitionJobDetailsClient({
 
   const checkExistingApplication = useCallback(
     async (jobId: string) => {
-      if (!user || user.role !== "tutor") return;
+      if (!user || user.role !== "TUTOR") return;
 
       setCheckingApplication(true);
       try {
@@ -183,7 +183,7 @@ export default function TuitionJobDetailsClient({
   );
 
   useEffect(() => {
-    if (user && user.role === "tutor" && job) {
+    if (user && user.role === "TUTOR" && job) {
       checkExistingApplication(job.id);
     }
   }, [user, job, checkExistingApplication]);
@@ -299,78 +299,53 @@ export default function TuitionJobDetailsClient({
     setShowMap(true);
   };
 
-  const handleApplyForJob = async () => {
-    if (!user) {
+ const handleApplyForJob = async () => {
+  if (!user) {
+    toast({
+      title: "Authentication Required",
+      description: "Please log in to apply for tuition jobs.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  if (user.role !== "TUTOR") {
+    toast({
+      title: "Access Denied",
+      description: "Only tutors can apply for tuition jobs.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+    const result = await applyForTutorRequest({ 
+      jobId, 
+      userId: user.id 
+    }).unwrap();
+    console.log("Apply for job result:", result);
+    if (result) {
       toast({
-        title: "Authentication Required",
-        description: "Please log in to apply for tuition jobs.",
-        variant: "destructive",
+        title: "Application Submitted",
+        description: "Your application has been submitted successfully!",
       });
-      return;
+      checkExistingApplication(jobId);
     }
-
-    if (user.role !== "tutor") {
-      toast({
-        title: "Access Denied",
-        description: "Only tutors can apply for tuition jobs.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setApplying(true);
-    try {
-      const response = await tuitionJobsService.applyForJob(jobId);
-      if (response.success) {
-        toast({
-          title: "Application Submitted",
-          description: "Your application has been submitted successfully!",
-        });
-        checkExistingApplication(jobId);
-      } else {
-        toast({
-          title: "Application Failed",
-          description:
-            response.message ||
-            "Failed to submit application. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } catch (error: any) {
-      console.error("Error applying for job:", error);
-
-      // Check if it's the specific "already applied" message
-      const errorMessage =
-        error?.response?.data?.message || error?.message || "";
-
-      if (
-        errorMessage.includes("already applied") &&
-        errorMessage.includes("under review")
-      ) {
-        toast({
-          title: "Application Already Submitted",
-          description:
-            "You have already applied for this request and it is under review. Please wait for admin decision.",
-          variant: "default",
-        });
-        // Refresh the application status to show the current state
-        checkExistingApplication(jobId);
-      } else {
-        toast({
-          title: "Application Error",
-          description:
-            errorMessage ||
-            "An error occurred while submitting your application.",
-          variant: "destructive",
-        });
-      }
-    } finally {
-      setApplying(false);
-    }
-  };
+  } catch (error: any) {
+    console.error("Error applying for job:", error);
+    
+    const errorMessage = error?.data?.message || error?.message || "Failed to submit application";
+    
+    toast({
+      title: "Application Failed",
+      description: errorMessage,
+      variant: "destructive",
+    });
+  }
+};
 
   const handleResetApplication = async () => {
-    if (!user || user.role !== "tutor") return;
+    if (!user || user.role !== "TUTOR") return;
 
     setResettingApplication(true);
     try {
@@ -597,7 +572,7 @@ export default function TuitionJobDetailsClient({
 
                 {/* Apply Button */}
                 <div className="mb-8">
-                  {user && user.role === "tutor" ? (
+                  {user && user.role === "TUTOR" ? (
                     checkingApplication ? (
                       <div className="text-center py-4">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto"></div>
