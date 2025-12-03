@@ -136,14 +136,14 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'demo-classes', label: 'Demo Class', icon: BookOpen },
             { id: 'approval-letter', label: 'Approval Letter', icon: FileCheck },
             { id: 'courses', label: 'My Course', icon: BookCheck },
-            { id: 'reviews', label: 'Reviews', icon: Star },
+            // { id: 'reviews', label: 'Reviews', icon: Star },
           ],
           quick: [
             { id: 'join-community', label: 'Join Our Community', icon: Users2 },
           ],
           account: [
             { id: 'note', label: 'Notes', icon: StickyNote },
-            { id: 'settings', label: 'Settings', icon: Settings },
+            // { id: 'settings', label: 'Settings', icon: Settings },
           ],
         };
       case 'TUTOR':
@@ -254,14 +254,14 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
 
   const resolvedMenuItems = getMenuItems();
 
-  console.log('🎯 Final resolved menu items for', role, ':', {
-    main: resolvedMenuItems.main.length,
-    quick: resolvedMenuItems.quick.length,
-    account: resolvedMenuItems.account.length,
-    allMainItems: resolvedMenuItems.main.map(item => ({ id: item.id, label: item.label })),
-    allQuickItems: resolvedMenuItems.quick.map(item => ({ id: item.id, label: item.label })),
-    allAccountItems: resolvedMenuItems.account.map(item => ({ id: item.id, label: item.label }))
-  });
+  // console.log('🎯 Final resolved menu items for', role, ':', {
+  //   main: resolvedMenuItems.main.length,
+  //   quick: resolvedMenuItems.quick.length,
+  //   account: resolvedMenuItems.account.length,
+  //   allMainItems: resolvedMenuItems.main.map(item => ({ id: item.id, label: item.label })),
+  //   allQuickItems: resolvedMenuItems.quick.map(item => ({ id: item.id, label: item.label })),
+  //   allAccountItems: resolvedMenuItems.account.map(item => ({ id: item.id, label: item.label }))
+  // });
 
   const renderMenuItem = (item: any) => {
     if (!item || !item.id) {
@@ -409,7 +409,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
           {resolvedMenuItems.quick.length > 0 && (
             <div className="border-t border-gray-200 pt-6">
               <h3 className="px-2 sm:px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">
-                Quick Actions ({resolvedMenuItems.quick.length} items)
+                Quick Actions 
               </h3>
               <div className="space-y-1 sm:space-y-2">
                 {resolvedMenuItems.quick.map((item) => renderMenuItem(item))}
@@ -421,7 +421,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
           {resolvedMenuItems.account.length > 0 ? (
             <div className="border-t border-gray-200 pt-6">
               <h3 className="px-2 sm:px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">
-                Account ({resolvedMenuItems.account.length} items)
+                Account 
               </h3>
               <div className="space-y-1 sm:space-y-2">
                 {resolvedMenuItems.account.map((item) => renderMenuItem(item))}

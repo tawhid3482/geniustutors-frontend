@@ -83,8 +83,8 @@ export const DashboardNavbar = ({ user, onLogout, onToggleSidebar, showMobileSid
                 <Image 
                   src={websiteInfo.siteLogo} 
                   alt={websiteInfo.siteName} 
-                  width={200}
-                  height={200}
+                  width={160}
+                  height={160}
                   className="w-auto h-auto max-h-24 sm:max-h-28 md:max-h-36 lg:max-h-44 xl:max-h-52 transition-all duration-300 group-hover:scale-110" 
                 />
               </div>

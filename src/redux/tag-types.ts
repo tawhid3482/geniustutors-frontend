@@ -1,5 +1,6 @@
 export enum tagTypes {
   admin = "admin",
+  Document = "Document",
   Note = "Note",
   schedule = "schedule",
   user = "user",
@@ -36,4 +37,5 @@ export const tagTypesList = [
   tagTypes.upgradePackages,
   tagTypes.notice,
   tagTypes.Note,
+  tagTypes.Document,
 ];

@@ -62,6 +62,15 @@ const authApi = baseApi.injectEndpoints({
       }),
       providesTags: [tagTypes.auth],
     }),
+
+    getMYInfo: builder.query({
+      query: (id: string) => ({
+        url: `/auth/me/${id}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.auth],
+    }),
+
     getSingleAuthData: builder.query({
       query: (id: string) => ({
         url: `/auth/${id}`,
@@ -69,7 +78,6 @@ const authApi = baseApi.injectEndpoints({
       }),
       providesTags: [tagTypes.auth],
     }),
-
 
     deleteAuth: builder.mutation({
       query: (id: string) => ({
@@ -84,7 +92,7 @@ const authApi = baseApi.injectEndpoints({
         return {
           url: `/auth/update/${id}`,
           method: "PATCH",
-          data: data,   
+          data: data,
         };
       },
       invalidatesTags: [tagTypes.auth],
@@ -95,18 +103,18 @@ const authApi = baseApi.injectEndpoints({
         return {
           url: `/auth/change-password/${id}`,
           method: "PATCH",
-          data: data,   
+          data: data,
         };
       },
       invalidatesTags: [tagTypes.auth],
     }),
-    
+
     updateAdminProfile: builder.mutation({
       query: ({ id, data }) => {
         return {
           url: `/auth/update-admin-profile/${id}`,
           method: "PATCH",
-          data: data,   
+          data: data,
         };
       },
       invalidatesTags: [tagTypes.auth],
@@ -116,27 +124,26 @@ const authApi = baseApi.injectEndpoints({
         return {
           url: `/auth/update-user-profile/${id}`,
           method: "PATCH",
-          data: data,   
+          data: data,
         };
       },
       invalidatesTags: [tagTypes.auth],
     }),
-    
-
   }),
 });
 
 export const {
-useCreateAuthMutation,
-useDeleteAuthMutation,
-useGetAllUsersQuery,
-useGetSingleAuthDataQuery,
-useCheckPhoneNumberMutation,
-useCreateStudentOrGuardianMutation,
-useLoginAdminMutation,
-useLoginUserMutation,
-useUpdateUserMutation,
-useChangePasswordMutation,
-useUpdateAdminProfileMutation,
-useUpdateUserProfileMutation,
+  useCreateAuthMutation,
+  useDeleteAuthMutation,
+  useGetAllUsersQuery,
+  useGetSingleAuthDataQuery,
+  useCheckPhoneNumberMutation,
+  useCreateStudentOrGuardianMutation,
+  useLoginAdminMutation,
+  useLoginUserMutation,
+  useUpdateUserMutation,
+  useChangePasswordMutation,
+  useUpdateAdminProfileMutation,
+  useUpdateUserProfileMutation,
+  useGetMYInfoQuery,
 } = authApi;
