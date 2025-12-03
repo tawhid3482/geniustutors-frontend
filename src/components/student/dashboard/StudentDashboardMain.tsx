@@ -949,35 +949,35 @@ export function StudentDashboardMain() {
             )}
             {activeTab === "search" && (
               <StudentSearch
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                filterSubject={selectedSubject}
-                setFilterSubject={setSelectedSubject}
-                filterArea={selectedDistrict}
-                setFilterArea={setSelectedDistrict}
-                filterGender={selectedGender as FilterGender}
-                setFilterGender={setSelectedGender}
-                filterRating={ratingFilter}
-                setFilterRating={setRatingFilter}
-                viewMode={viewMode}
-                setViewMode={(mode: string) =>
-                  setViewMode(mode as "grid" | "list")
-                }
+                // searchQuery={searchQuery}
+                // setSearchQuery={setSearchQuery}
+                // filterSubject={selectedSubject}
+                // setFilterSubject={setSelectedSubject}
+                // filterArea={selectedDistrict}
+                // setFilterArea={setSelectedDistrict}
+                // filterGender={selectedGender as FilterGender}
+                // setFilterGender={setSelectedGender}
+                // filterRating={ratingFilter}
+                // setFilterRating={setRatingFilter}
+                // viewMode={viewMode}
+                // setViewMode={(mode: string) =>
+                //   setViewMode(mode as "grid" | "list")
+                // }
                 // filteredTutors={tutors}
-                inviteDemo={() => {}}
+                // inviteDemo={() => {}}
               />
             )}
             {activeTab === "profile" && (
               <StudentProfile
                 profile={profileData}
-                paymentMethods={[]}
-                isLoadingPaymentMethods={false}
-                handleProfileUpdate={handleProfileUpdate}
-                handlePasswordChange={handlePasswordChange}
-                handleAddPaymentMethod={async () => false}
-                handleUpdatePaymentMethod={async () => false}
-                handleDeletePaymentMethod={async () => false}
-                handleSetDefaultPaymentMethod={async () => false}
+                // paymentMethods={[]}
+                // isLoadingPaymentMethods={false}
+                // handleProfileUpdate={handleProfileUpdate}
+                // handlePasswordChange={handlePasswordChange}
+                // handleAddPaymentMethod={async () => false}
+                // handleUpdatePaymentMethod={async () => false}
+                // handleDeletePaymentMethod={async () => false}
+                // handleSetDefaultPaymentMethod={async () => false}
               />
             )}
             {activeTab === "courses" && (

@@ -7,8 +7,8 @@ export interface TutorNote {
   tags: string[];
   is_important: boolean;
   is_archived: boolean;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateNoteData {

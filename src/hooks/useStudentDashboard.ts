@@ -58,7 +58,7 @@ export function useStudentDashboard() {
   const [enrollments, setEnrollments] = useState<CourseEnrollment[]>([]);
   const [isLoadingEnrollments, setIsLoadingEnrollments] = useState<boolean>(false);
 
-  const [tutorRequestForm, setTutorRequestForm] = useState<TutorRequestFormData>({
+  const [tutorRequestForm, setTutorRequestForm] = useState<any>({
     phoneNumber: user?.phone || '',
     numberOfStudents: 1,
     studentGender: 'male',
@@ -664,7 +664,7 @@ export function useStudentDashboard() {
 
   // Enhanced Tutor Request functions
   function updateTutorRequestForm(field: keyof TutorRequestFormData, value: any) {
-    setTutorRequestForm(prev => ({
+    setTutorRequestForm((prev:any) => ({
       ...prev,
       [field]: value
     }));
@@ -700,7 +700,7 @@ export function useStudentDashboard() {
     // Find matched tutors based on criteria
     const matchedTutors = tutors.filter((tutor) => {
       // Check if any of the tutor's subjects match any of the selected subjects
-      const subjectMatch = (tutorRequestForm.selectedSubjects || []).some(subject => 
+      const subjectMatch = (tutorRequestForm.selectedSubjects || []).some((subject:any) => 
         tutor.subject.toLowerCase().includes(subject.toLowerCase()));
       const areaMatch = tutor.area.toLowerCase().includes(tutorRequestForm.area.toLowerCase());
       const genderMatch = tutorRequestForm.tutorGenderPreference.toLowerCase() === 'any' || 
@@ -775,7 +775,7 @@ export function useStudentDashboard() {
         // Find matched tutors based on criteria
         const matchedTutors = tutors.filter((tutor) => {
           // Check if any of the tutor's subjects match any of the selected subjects
-          const subjectMatch = (tutorRequestForm.selectedSubjects || []).some(subject => 
+          const subjectMatch = (tutorRequestForm.selectedSubjects || []).some((subject:any) => 
             tutor.subject.toLowerCase().includes(subject.toLowerCase()));
           const areaMatch = tutor.area.toLowerCase().includes(tutorRequestForm.area.toLowerCase());
           const genderMatch = tutorRequestForm.tutorGenderPreference.toLowerCase() === 'any' || 

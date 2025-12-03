@@ -70,7 +70,7 @@ export default function ContactForm({ tutorId, tutorName, onContactSubmitted }: 
       const district = BANGLADESH_DISTRICTS_WITH_POST_OFFICES.find(d => d.id === formData.district);
       if (district) {
         setAvailableAreas(district.areas.map(area => area.name));
-        setFormData(prev => ({
+        setFormData((prev:any) => ({
           ...prev,
           area: ''
         }));
@@ -176,7 +176,7 @@ export default function ContactForm({ tutorId, tutorName, onContactSubmitted }: 
 
   // Handle form field changes
   const handleChange = (field: keyof TutorRequestFormData, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev:any) => ({
       ...prev,
       [field]: value
     }));
@@ -184,10 +184,10 @@ export default function ContactForm({ tutorId, tutorName, onContactSubmitted }: 
 
   // Handle subject selection
   const handleSubjectSelection = (subjectName: string) => {
-    setFormData(prev => {
+    setFormData((prev:any) => {
       const currentSubjects = prev.selectedSubjects || [];
       const subjects = currentSubjects.includes(subjectName)
-        ? currentSubjects.filter(s => s !== subjectName)
+        ? currentSubjects.filter((s:any) => s !== subjectName)
         : [...currentSubjects, subjectName];
       
       return {
@@ -199,10 +199,10 @@ export default function ContactForm({ tutorId, tutorName, onContactSubmitted }: 
 
   // Handle category selection
   const handleCategorySelection = (categoryName: string) => {
-    setFormData(prev => {
+    setFormData((prev:any) => {
       const currentCategories = prev.selectedCategories || [];
       const categories = currentCategories.includes(categoryName)
-        ? currentCategories.filter(c => c !== categoryName)
+        ? currentCategories.filter((c:any) => c !== categoryName)
         : [...currentCategories, categoryName];
       
       return {
@@ -214,10 +214,10 @@ export default function ContactForm({ tutorId, tutorName, onContactSubmitted }: 
 
   // Handle class selection
   const handleClassSelection = (className: string) => {
-    setFormData(prev => {
+    setFormData((prev:any) => {
       const currentClasses = prev.selectedClasses || [];
       const classes = currentClasses.includes(className)
-        ? currentClasses.filter(c => c !== className)
+        ? currentClasses.filter((c:any) => c !== className)
         : [...currentClasses, className];
       
       return {
@@ -471,7 +471,7 @@ export default function ContactForm({ tutorId, tutorName, onContactSubmitted }: 
           )}
           {formData.selectedCategories.length > 0 && (
             <div className="mt-2 space-y-1">
-              {formData.selectedCategories.map((category, index) => (
+              {formData.selectedCategories.map((category:any, index:any) => (
                 <div key={index} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm">
                   <span>{category}</span>
                   <button
@@ -515,7 +515,7 @@ export default function ContactForm({ tutorId, tutorName, onContactSubmitted }: 
           )}
           {formData.selectedSubjects.length > 0 && (
             <div className="mt-2 space-y-1">
-              {formData.selectedSubjects.map((subject, index) => (
+              {formData.selectedSubjects.map((subject:any, index:any) => (
                 <div key={index} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm">
                   <span>{subject}</span>
                   <button
@@ -559,7 +559,7 @@ export default function ContactForm({ tutorId, tutorName, onContactSubmitted }: 
           )}
           {formData.selectedClasses.length > 0 && (
             <div className="mt-2 space-y-1">
-              {formData.selectedClasses.map((className, index) => (
+              {formData.selectedClasses.map((className:any, index:any) => (
                 <div key={index} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm">
                   <span>{className}</span>
                   <button
