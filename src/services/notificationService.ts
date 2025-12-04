@@ -2,12 +2,12 @@ import { api } from '@/config/api';
 
 export interface Notification {
   id: string;
-  user_id: string;
+  userId: string;
   title: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';
-  read_status: boolean;
-  created_at: string;
+  readStatus: boolean;
+  createdAt: string;
 }
 
 export interface NotificationResponse {

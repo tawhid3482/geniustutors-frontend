@@ -64,25 +64,13 @@ export function ReviewsSection() {
 
   const fetchReviews = async () => {
     try {
-      console.log('=== FRONTEND DEBUG: Fetching Reviews ===');
-      console.log('User:', user);
-      console.log('API Endpoint: /reviews/my-reviews');
-      console.log('Making API call...');
+      
       
       const data = await api.get('/reviews/my-reviews');
-      
-      console.log('=== FRONTEND DEBUG: Reviews Response ===');
-      console.log('Full response:', data);
-      console.log('Reviews data:', data.data);
-      console.log('Reviews count:', data.data?.length || 0);
+     
       
       setReviews(data.data || []);
     } catch (error: any) {
-      console.log('=== FRONTEND DEBUG: Reviews Error ===');
-      console.error('Error fetching reviews:', error);
-      console.log('Error response:', error.response?.data);
-      console.log('Error status:', error.response?.status);
-      console.log('Error message:', error.message);
       
       toast({
         title: "Error",
@@ -94,24 +82,13 @@ export function ReviewsSection() {
 
   const fetchStats = async () => {
     try {
-      console.log('=== FRONTEND DEBUG: Fetching Stats ===');
-      console.log('User:', user);
-      console.log('API Endpoint: /reviews/my-stats');
-      console.log('Making API call...');
-      
+     
       const data = await api.get('/reviews/my-stats');
       
-      console.log('=== FRONTEND DEBUG: Stats Response ===');
-      console.log('Full response:', data);
-      console.log('Stats data:', data.data);
-      
+    
       setStats(data.data);
     } catch (error: any) {
-      console.log('=== FRONTEND DEBUG: Stats Error ===');
-      console.error('Error fetching review stats:', error);
-      console.log('Error response:', error.response?.data);
-      console.log('Error status:', error.response?.status);
-      console.log('Error message:', error.message);
+     
     } finally {
       setLoading(false);
     }
@@ -129,17 +106,10 @@ export function ReviewsSection() {
 
     setSubmittingResponse(true);
     try {
-      console.log('=== FRONTEND DEBUG: Responding to Review ===');
-      console.log('Review ID:', reviewId);
-      console.log('Response text:', responseText.trim());
-      console.log('User:', user);
-      console.log('API Endpoint:', `/reviews/respond/${reviewId}`);
-      console.log('Making API call...');
-      
+     
       await api.post(`/reviews/respond/${reviewId}`, { response: responseText.trim() });
 
-      console.log('=== FRONTEND DEBUG: Response Success ===');
-      console.log('Response submitted successfully');
+      
 
       toast({
         title: "Response Submitted",
@@ -150,11 +120,7 @@ export function ReviewsSection() {
       setRespondingToReview(null);
       fetchReviews(); // Refresh reviews to show the new response
     } catch (error: any) {
-      console.log('=== FRONTEND DEBUG: Response Error ===');
-      console.error('Error submitting response:', error);
-      console.log('Error response:', error.response?.data);
-      console.log('Error status:', error.response?.status);
-      console.log('Error message:', error.message);
+      
       
       toast({
         title: "Error",
@@ -211,7 +177,7 @@ export function ReviewsSection() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reviews & Ratings</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Reviews & Ratingssss</h1>
           <p className="text-gray-600 mt-1">View feedback from your students</p>
         </div>
       </div>

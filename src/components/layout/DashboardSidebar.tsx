@@ -136,7 +136,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'demo-classes', label: 'Demo Class', icon: BookOpen },
             { id: 'approval-letter', label: 'Approval Letter', icon: FileCheck },
             { id: 'courses', label: 'My Course', icon: BookCheck },
-            // { id: 'reviews', label: 'Reviews', icon: Star },
+            { id: 'reviews', label: 'Reviews', icon: Star },
           ],
           quick: [
             { id: 'join-community', label: 'Join Our Community', icon: Users2 },
@@ -360,7 +360,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
                 Support Team
               </CardTitle>
               <p className="text-sm text-green-100">
-                +8801768242678
+                +8801516-528101
               </p>
             </div>
           )}

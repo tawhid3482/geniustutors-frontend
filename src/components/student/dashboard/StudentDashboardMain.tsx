@@ -111,6 +111,7 @@ import { FloatingStudentChat } from "../components/FloatingStudentChat";
 import { useStudentChat } from "@/hooks/useStudentChat";
 import { useGetAllTutorRequestsQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
 import { useGetAllTutorsQuery } from "@/redux/features/tutorHub/tutorHubApi";
+import StudentReviews from "./StudentReviews";
 
 export function StudentDashboardMain() {
   const { user, signOut, updateUserProfile } = useAuth();
@@ -993,6 +994,7 @@ export function StudentDashboardMain() {
             {activeTab === "approval-letter" && user?.id && (
               <ApprovalLetterSection studentId={user.id} />
             )}
+            {activeTab === "reviews" && <StudentReviews />}
             {activeTab === "note" && <GuardianNotesSection />}
           </div>
         </main>
