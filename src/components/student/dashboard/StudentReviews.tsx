@@ -19,9 +19,7 @@ import {
   Book,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-// Assuming you have this hook - if not, create it
-// import { useGetAllTutorsQuery } from "@/redux/features/tutor/tutorApi";
+import { useGetAllTutorPublicQuery } from "@/redux/features/tutorHub/tutorHubApi";
 
 interface Tutor {
   id: string;
@@ -56,96 +54,20 @@ interface Tutor {
 
 const StudentReviews = () => {
   const [mounted, setMounted] = useState(false);
-  const [tutors, setTutors] = useState<Tutor[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // If you have RTK Query hook, use it like this:
-  // const { data: tutorsData, isLoading, isError } = useGetAllTutorsQuery(undefined);
+  // Use RTK Query hook
+  const { data: tutorData, isLoading, error } = useGetAllTutorPublicQuery(undefined);
+  
+  // Get tutors from the response data structure
+  const tutors = tutorData?.data || [];
+  
+  console.log("Tutors data:", tutors);
+  console.log("Loading:", isLoading);
+  console.log("Error:", error);
 
-  // For now, let's create mock data from your backend response
   useEffect(() => {
     setMounted(true);
-
-    // Simulating API call
-    setTimeout(() => {
-      const mockTutors: Tutor[] = [
-        {
-          id: "692291e4f28297f2076e8445",
-          tutor_id: 8,
-          fullName: "Tawhidul Islam",
-          email: "tawhidulislam3482@gmail.com",
-          phone: "01826853369",
-          avatar:
-            "http://localhost:5000/images/1764753460914_istockphoto-1403500817-612x612.jpg",
-          verified: true,
-          premium: false,
-          genius: true,
-          tutorStatus: "rejected",
-          status: "active",
-          rating: null,
-          total_reviews: 5,
-          hourly_rate: 25000,
-          experience: 1,
-          education: null,
-          qualification: "diploma",
-          district: "dhaka",
-          present_location: "Dhanmondi",
-          preferred_areas: [
-            "Gazipu",
-            "Dhaka",
-            "Mirpur",
-            "Tangail",
-            "Mirpur",
-            "Madhupur",
-            "mirzabari",
-          ],
-          subjects: [],
-          educational_qualifications:
-            '[{"examTitle":"SSC","institute":"madhupur higher scholel","board":"Dhaka","group":"Science","year":"2021","gpa":"5.00"},{"examTitle":"Diploma","institute":"Spi","board":"Sylhet","group":"Computer","year":"2025","gpa":"3.30"}]',
-          other_skills: ["Painting", "UI/UX Design", "Mediation"],
-          preferred_tutoring_style: ["Home Tutoring"],
-          preferred_time: ["afternoon"],
-          bio: "about me",
-          gender: "Female",
-          createdAt: "2025-11-23T04:47:32.900Z",
-        },
-        {
-          id: "6922ec8c3a17335885c9dd0c",
-          tutor_id: 6,
-          fullName: "Jamal Islam",
-          email: "kamal@gmail.com",
-          phone: "01826853372",
-          avatar:
-            "https://www.bigfootdigital.co.uk/wp-content/uploads/2020/07/image-optimisation-scaled.jpg",
-          verified: true,
-          premium: true,
-          genius: false,
-          tutorStatus: "approved",
-          status: "active",
-          rating: 5,
-          total_reviews: 0,
-          hourly_rate: 0,
-          experience: 4,
-          education: "Diploma",
-          qualification: null,
-          district: "Dhaka",
-          present_location: null,
-          preferred_areas: ["Gazipur", "Dhaka"],
-          subjects: ["bangla", "English"],
-          educational_qualifications: null,
-          other_skills: [],
-          preferred_tutoring_style: [],
-          preferred_time: [],
-          bio: null,
-          gender: "Male",
-          createdAt: "2025-11-23T11:14:20.970Z",
-        },
-      ];
-
-      setTutors(mockTutors);
-      setIsLoading(false);
-    }, 1000);
   }, []);
 
   // Get initials from full name
@@ -203,43 +125,27 @@ const StudentReviews = () => {
 
   // Handle view profile
   const handleViewProfile = (tutorId: string) => {
-    router.push(`/tutors/${tutorId}`);
+    router.push(`/tutor/${tutorId}`);
   };
 
-  // Wait for component to mount to avoid hydration issues
-  if (!mounted) {
+  // Handle errors
+  if (error) {
     return (
-      <div className=" bg-gray-50 p-4 md:p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <Card
-              key={i}
-              className="bg-white rounded-xl shadow-lg border border-gray-200 animate-pulse"
-            >
-              <CardContent className="p-5">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-16 w-16 bg-gray-200 rounded-full"></div>
-                    <div className="space-y-2">
-                      <div className="h-4 bg-gray-200 rounded w-32"></div>
-                      <div className="h-3 bg-gray-200 rounded w-24"></div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-3 bg-gray-200 rounded w-full"></div>
-                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                  </div>
-                  <div className="h-10 bg-gray-200 rounded"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      <div className="min-h-screen bg-gray-50 p-4 md:p-6 flex flex-col items-center justify-center">
+        <div className="text-center">
+          <h3 className="text-lg font-medium text-red-600 mb-2">
+            Error loading tutors
+          </h3>
+          <p className="text-gray-600">
+            Please try again later or contact support.
+          </p>
         </div>
       </div>
     );
   }
 
-  if (isLoading) {
+  // Loading states
+  if (!mounted || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-4 md:p-6">
         <div className="mb-8">
@@ -275,7 +181,8 @@ const StudentReviews = () => {
     );
   }
 
-  if (tutors.length === 0) {
+  // Empty state
+  if (!tutors || tutors.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 p-4 md:p-6 flex flex-col items-center justify-center">
         <BookOpen className="h-16 w-16 text-gray-400 mb-4" />
@@ -302,9 +209,9 @@ const StudentReviews = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-        {tutors.map((tutor) => (
+        {tutors.map((tutor: any) => (
           <Card
-            key={tutor.id}
+            key={tutor.id || tutor.tutor_id}
             className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-green-300 overflow-hidden"
           >
             <CardContent className="p-5">
@@ -368,7 +275,7 @@ const StudentReviews = () => {
                         {tutor.tutorStatus || "Unknown"}
                       </span>
                       <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                        ID: {tutor.tutor_id}
+                        ID: {tutor.tutor_id || tutor.id?.slice(-4)}
                       </span>
                     </div>
                   </div>
@@ -390,7 +297,7 @@ const StudentReviews = () => {
                   ))}
                 </div>
                 <span className="text-sm text-gray-700">
-                  ({tutor.rating || "No"} rating • {tutor.total_reviews}{" "}
+                  ({tutor.rating || "No"} rating • {tutor.total_reviews || 0}{" "}
                   reviews)
                 </span>
               </div>
@@ -412,16 +319,14 @@ const StudentReviews = () => {
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {tutor.subjects
-                    ?.slice(0, 3)
-                    .map((subject: string, index: number) => (
-                      <span
-                        key={index}
-                        className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-100"
-                      >
-                        {subject}
-                      </span>
-                    ))}
+                  {tutor.subjects?.slice(0, 3).map((subject: string, index: number) => (
+                    <span
+                      key={index}
+                      className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-100"
+                    >
+                      {subject}
+                    </span>
+                  ))}
                   {tutor.subjects?.length > 3 && (
                     <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 border border-gray-200">
                       +{tutor.subjects.length - 3} more
@@ -486,16 +391,14 @@ const StudentReviews = () => {
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {tutor.preferred_areas
-                      .slice(0, 2)
-                      .map((area: string, index: number) => (
-                        <span
-                          key={index}
-                          className="text-xs px-2 py-1 rounded bg-green-50 text-green-700 border border-green-200"
-                        >
-                          {area}
-                        </span>
-                      ))}
+                    {tutor.preferred_areas.slice(0, 2).map((area: string, index: number) => (
+                      <span
+                        key={index}
+                        className="text-xs px-2 py-1 rounded bg-green-50 text-green-700 border border-green-200"
+                      >
+                        {area}
+                      </span>
+                    ))}
                     {tutor.preferred_areas.length > 2 && (
                       <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 border border-gray-200">
                         +{tutor.preferred_areas.length - 2} more
@@ -508,7 +411,7 @@ const StudentReviews = () => {
               {/* View Button */}
               <Button
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium py-2.5 rounded-lg transition-all duration-300 hover:shadow-lg"
-                onClick={() => handleViewProfile(tutor.id)}
+                onClick={() => handleViewProfile(tutor.tutor_id?.toString() || tutor.id)}
               >
                 View Profile
               </Button>

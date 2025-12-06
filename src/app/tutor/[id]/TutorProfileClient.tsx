@@ -1,1361 +1,11 @@
-// 'use client';
-
-// import { useState, useEffect, useCallback } from 'react';
-// import { useAuth } from '@/contexts/AuthContext.next';
-// import tutorService from '@/services/tutorService';
-// import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-// import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-// import { Button } from '@/components/ui/button';
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { Input } from '@/components/ui/input';
-// import { Label } from '@/components/ui/label';
-// import { Textarea } from '@/components/ui/textarea';
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-// import { Switch } from '@/components/ui/switch';
-// import { SearchableSelect } from '@/components/ui/searchable-select';
-// import { Star, MapPin, GraduationCap, Clock, Eye, Users, BookOpen, Phone, MessageCircle, Calendar, User, CheckCircle2 } from 'lucide-react';
-// import { Skeleton } from '@/components/ui/skeleton';
-// import { useToast } from '@/components/ui/use-toast';
-// import { reviewService, TutorReview, ReviewStats } from '@/services/reviewService';
-// import ReviewForm from '@/components/tutor/ReviewForm';
-// import { Badge } from '@/components/ui/badge';
-// import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-// import { tutorApplicationService } from '@/services/tutorApplicationService';
-// import { tutorRequestService, TutorRequestFormData } from '@/services/tutorRequestService';
-// import { BANGLADESH_DISTRICTS_WITH_POST_OFFICES } from '@/data/bangladeshDistricts';
-// import mediumOptions from '@/data/mediumOptions.json';
-// import { taxonomyService, Category } from '@/services/taxonomyService';
-// import { useGetSingleTutorHubQuery } from '@/redux/features/tutorHub/tutorHubApi';
-
-// interface TutorProfileClientProps {
-//   tutorId: string;
-// }
-
-// export default function TutorProfileClient({ tutorId }: TutorProfileClientProps) {
-
-//   console.log(tutorId)
-
-//   const { user } = useAuth();
-//   const { toast } = useToast();
-//   const [tutor, setTutor] = useState<any>(null);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-//   const [contactForm, setContactForm] = useState({
-//     name: '',
-//     phone: '',
-//     details: ''
-//   });
-//   const [reviews, setReviews] = useState<TutorReview[]>([]);
-//   const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
-//   const [reviewsLoading, setReviewsLoading] = useState(false);
-//   const [hasUserReviewed, setHasUserReviewed] = useState<boolean>(false);
-
-//   const {data:SingleTutorData}=useGetSingleTutorHubQuery(undefined)
-
-//   console.log
-
-//   // Tuition job posting form state
-//   const [tuitionFormData, setTuitionFormData] = useState<TutorRequestFormData>({
-//     phoneNumber: '',
-//     studentGender: '' as any,
-//     district: '',
-//     area: '',
-//     detailedLocation: '',
-//     selectedCategories: [],
-//     selectedSubjects: [],
-//     selectedClasses: [],
-//     tutorGenderPreference: '' as any,
-//     isSalaryNegotiable: true,
-//     salaryRange: {
-//       min: '' as any,
-//       max: '' as any
-//     },
-//     extraInformation: '',
-//     medium: '' as any,
-//     numberOfStudents: '' as any,
-//     tutoringDays: '' as any,
-//     tutoringTime: '',
-//     tutoringDuration: '' as any,
-//     tutoringType: '' as any
-//   });
-//   const [availableAreas, setAvailableAreas] = useState<string[]>([]);
-//   const [categories, setCategories] = useState<Category[]>([]);
-//   const [subjects, setSubjects] = useState<any[]>([]);
-//   const [classLevels, setClassLevels] = useState<any[]>([]);
-//   const [isLoadingTaxonomy, setIsLoadingTaxonomy] = useState(false);
-//   const [isSubmittingTuition, setIsSubmittingTuition] = useState(false);
-//   const [showTuitionSuccess, setShowTuitionSuccess] = useState(false);
-
-//   // Check if current user has already reviewed this tutor
-//   const checkUserReview = () => {
-//     if (!user || !reviews || !Array.isArray(reviews)) {
-//       setHasUserReviewed(false);
-//       return;
-//     }
-
-//     const userReview = reviews.find(review => review && review.reviewer_id === user.id);
-//     setHasUserReviewed(!!userReview);
-//   };
-
-//   // Fetch reviews for the tutor
-//   const fetchReviews = async () => {
-//     if (!tutorId) return;
-
-//     setReviewsLoading(true);
-//     try {
-//       const [reviewsData, statsData] = await Promise.all([
-//         reviewService.getReviewsByTutorId(tutorId),
-//         reviewService.getReviewStatsByTutorId(tutorId)
-//       ]);
-
-//       // Check if reviewsData is undefined or null
-//       if (!reviewsData) {
-//         setReviews([]);
-//       } else if (!Array.isArray(reviewsData)) {
-//         console.warn('Reviews data is not an array:', reviewsData);
-//         setReviews([]);
-//       } else {
-//         // Filter out any invalid review objects and ensure they have required properties
-//         const validReviews = reviewsData.filter(review =>
-//           review &&
-//           typeof review === 'object' &&
-//           review.reviewer_id &&
-//           review.id
-//         );
-//         setReviews(validReviews);
-//       }
-
-//       setReviewStats(statsData || null);
-//     } catch (err) {
-//       console.error('Error fetching reviews:', err);
-//       // Set empty arrays/objects on error to prevent undefined issues
-//       setReviews([]);
-//       setReviewStats(null);
-//     } finally {
-//       setReviewsLoading(false);
-//     }
-//   };
-
-//   // Check if user has reviewed whenever reviews or user changes
-//   useEffect(() => {
-//     checkUserReview();
-//   }, [reviews, user]);
-
-//   // Fetch taxonomy data for tuition form
-//   const fetchTaxonomyData = useCallback(async () => {
-//     setIsLoadingTaxonomy(true);
-//     try {
-//       const taxonomy = await taxonomyService.getTaxonomyData();
-//       // setCategories(taxonomy.categories);
-//     } catch (error) {
-//       console.error('Error fetching taxonomy:', error);
-//       toast({
-//         title: 'Error',
-//         description: 'Failed to load categories',
-//         variant: 'destructive'
-//       });
-//       setCategories([]);
-//     } finally {
-//       setIsLoadingTaxonomy(false);
-//     }
-//   }, [toast]);
-
-//   // Fetch category-specific subjects and class levels
-//   const fetchMultiCategoryTaxonomy = useCallback(async (categoryNames: string[]) => {
-//     setIsLoadingTaxonomy(true);
-//     try {
-//       const allSubjects: any[] = [];
-//       const allClassLevels: any[] = [];
-//       const processedSubjects = new Set<string>();
-//       const processedClassLevels = new Set<string>();
-
-//       for (const categoryName of categoryNames) {
-//         const category = categories.find(cat => cat.name === categoryName);
-
-//         if (category) {
-//           if (category.subjects) {
-//             category.subjects.forEach((subject: any) => {
-//               if (subject && typeof subject === 'object' && subject.id !== undefined && !processedSubjects.has(subject.name)) {
-//                 allSubjects.push(subject);
-//                 processedSubjects.add(subject.name);
-//               }
-//             });
-//           }
-
-//           if (category.classLevels) {
-//             category.classLevels.forEach((classLevel: any) => {
-//               if (classLevel && typeof classLevel === 'object' && classLevel.id !== undefined && !processedClassLevels.has(classLevel.name)) {
-//                 allClassLevels.push(classLevel);
-//                 processedClassLevels.add(classLevel.name);
-//               }
-//             });
-//           }
-//         }
-//       }
-
-//       setSubjects(allSubjects);
-//       setClassLevels(allClassLevels);
-//     } catch (error) {
-//       console.error('Error fetching multi-category taxonomy:', error);
-//       toast({
-//         title: 'Error',
-//         description: 'Failed to load subjects and class levels',
-//         variant: 'destructive'
-//       });
-//     } finally {
-//       setIsLoadingTaxonomy(false);
-//     }
-//   }, [categories, toast]);
-
-//   // Update available areas when district changes
-//   useEffect(() => {
-//     if (tuitionFormData.district) {
-//       const district = BANGLADESH_DISTRICTS_WITH_POST_OFFICES.find(d => d.id === tuitionFormData.district);
-//       if (district) {
-//         setAvailableAreas(district.areas.map(area => area.name));
-//         setTuitionFormData(prev => ({
-//           ...prev,
-//           area: ''
-//         }));
-//       } else {
-//         setAvailableAreas([]);
-//       }
-//     } else {
-//       setAvailableAreas([]);
-//     }
-//   }, [tuitionFormData.district]);
-
-//   // Fetch taxonomy data on component mount
-//   useEffect(() => {
-//     fetchTaxonomyData();
-//   }, [fetchTaxonomyData]);
-
-//   // Fetch category-specific subjects and class levels when selected categories change
-//   useEffect(() => {
-//     if (tuitionFormData.selectedCategories && tuitionFormData.selectedCategories.length > 0) {
-//       fetchMultiCategoryTaxonomy(tuitionFormData.selectedCategories);
-//       setTuitionFormData(prev => ({
-//         ...prev,
-//         selectedSubjects: [],
-//         selectedClasses: []
-//       }));
-//     } else {
-//       setSubjects([]);
-//       setClassLevels([]);
-//     }
-//   }, [tuitionFormData.selectedCategories, fetchMultiCategoryTaxonomy]);
-
-//   // Handle tuition form field changes
-//   const handleTuitionFormChange = (field: keyof TutorRequestFormData, value: any) => {
-//     setTuitionFormData(prev => ({
-//       ...prev,
-//       [field]: value
-//     }));
-//   };
-
-//   // Handle subject selection
-//   const handleSubjectSelection = (subjectName: string) => {
-//     setTuitionFormData(prev => {
-//       const currentSubjects = prev.selectedSubjects || [];
-//       const subjects = currentSubjects.includes(subjectName)
-//         ? currentSubjects.filter(s => s !== subjectName)
-//         : [...currentSubjects, subjectName];
-
-//       return {
-//         ...prev,
-//         selectedSubjects: subjects
-//       };
-//     });
-//   };
-
-//   // Handle category selection
-//   const handleCategorySelection = (categoryName: string) => {
-//     setTuitionFormData(prev => {
-//       const currentCategories = prev.selectedCategories || [];
-//       const categories = currentCategories.includes(categoryName)
-//         ? currentCategories.filter(c => c !== categoryName)
-//         : [...currentCategories, categoryName];
-
-//       return {
-//         ...prev,
-//         selectedCategories: categories
-//       };
-//     });
-//   };
-
-//   // Handle class selection
-//   const handleClassSelection = (className: string) => {
-//     setTuitionFormData(prev => {
-//       const currentClasses = prev.selectedClasses || [];
-//       const classes = currentClasses.includes(className)
-//         ? currentClasses.filter(c => c !== className)
-//         : [...currentClasses, className];
-
-//       return {
-//         ...prev,
-//         selectedClasses: classes
-//       };
-//     });
-//   };
-
-//   // Submit tuition form
-//   const handleTuitionSubmit = async () => {
-//     try {
-//       setIsSubmittingTuition(true);
-
-//       // Validate form data
-//       if (!tuitionFormData.phoneNumber || !tuitionFormData.studentGender || !tuitionFormData.district || !tuitionFormData.area ||
-//           !tuitionFormData.tutorGenderPreference || !tuitionFormData.medium || !tuitionFormData.tutoringType ||
-//           !tuitionFormData.tutoringDuration || !tuitionFormData.tutoringDays || !tuitionFormData.numberOfStudents) {
-//         toast({
-//           title: 'Missing Information',
-//           description: 'Please fill in all required fields',
-//           variant: 'destructive'
-//         });
-//         setIsSubmittingTuition(false);
-//         return;
-//       }
-
-//       if ((tuitionFormData.selectedCategories || []).length === 0) {
-//         toast({
-//           title: 'Missing Information',
-//           description: 'Please select at least one category',
-//           variant: 'destructive'
-//         });
-//         setIsSubmittingTuition(false);
-//         return;
-//       }
-
-//       if ((tuitionFormData.selectedSubjects || []).length === 0 || (tuitionFormData.selectedClasses || []).length === 0) {
-//         toast({
-//           title: 'Missing Information',
-//           description: 'Please select at least one subject and class',
-//           variant: 'destructive'
-//         });
-//         setIsSubmittingTuition(false);
-//         return;
-//       }
-
-//       if (!tuitionFormData.tutoringTime) {
-//         toast({
-//           title: 'Missing Information',
-//           description: 'Please select tutoring time',
-//           variant: 'destructive'
-//         });
-//         setIsSubmittingTuition(false);
-//         return;
-//       }
-
-//       if (!tuitionFormData.salaryRange.min || !tuitionFormData.salaryRange.max ||
-//           tuitionFormData.salaryRange.min === '' || tuitionFormData.salaryRange.max === '') {
-//         toast({
-//           title: 'Missing Information',
-//           description: 'Please enter salary range',
-//           variant: 'destructive'
-//         });
-//         setIsSubmittingTuition(false);
-//         return;
-//       }
-
-//       if (parseInt(tuitionFormData.salaryRange.min.toString()) > parseInt(tuitionFormData.salaryRange.max.toString())) {
-//         toast({
-//           title: 'Invalid Salary Range',
-//           description: 'Minimum salary cannot be greater than maximum salary',
-//           variant: 'destructive'
-//         });
-//         setIsSubmittingTuition(false);
-//         return;
-//       }
-
-//       // Submit the tuition request with tutor ID
-//       const response = await tutorRequestService.createPublicTutorRequestFromTutor(tutorId, tuitionFormData);
-
-//       if (response.success) {
-//         setShowTuitionSuccess(true);
-//         toast({
-//           title: 'Tuition Request Submitted',
-//           description: 'Your tuition request has been submitted successfully!',
-//         });
-//       } else {
-//         toast({
-//           title: 'Submission Failed',
-//           description: response.message || 'Failed to submit tuition request',
-//           variant: 'destructive'
-//         });
-//       }
-//     } catch (error) {
-//       console.error('Error submitting tuition request:', error);
-//       toast({
-//         title: 'Submission Error',
-//         description: 'An error occurred while submitting your request. Please try again.',
-//         variant: 'destructive'
-//       });
-//     } finally {
-//       setIsSubmittingTuition(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     const fetchTutorData = async () => {
-//       setLoading(true);
-//       setError(null);
-//       try {
-//         const tutorResponse = await tutorService.getTutorById(tutorId);
-//         if (tutorResponse.success) {
-//           setTutor(tutorResponse.data);
-//           // Fetch reviews after tutor data is loaded
-//           await fetchReviews();
-//         } else {
-//           setError('Failed to fetch tutor profile');
-//         }
-//       } catch (err) {
-//         console.error('Error fetching tutor profile:', err);
-//         setError('Failed to fetch tutor profile. Please try again later.');
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     if (tutorId) {
-//       fetchTutorData();
-//     }
-//   }, [tutorId]);
-
-//   if (loading) {
-//     return (
-//       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 hide-scrollbar">
-//         <div className="space-y-6">
-//           <Skeleton className="h-12 w-96" />
-//           <Skeleton className="h-4 w-full" />
-//           <Skeleton className="h-4 w-3/4" />
-//           <Skeleton className="h-64 w-full" />
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   if (error || !tutor) {
-//     return (
-//       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 hide-scrollbar">
-//         <div className="text-center">
-//           <h1 className="text-2xl font-bold text-gray-900 mb-4">Tutor Not Found</h1>
-//           <p className="text-gray-600 mb-6">{error || 'The tutor profile you\'re looking for doesn\'t exist.'}</p>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   interface EducationalQualification {
-//     exam_title: string;
-//     institute: string;
-//     board: string;
-//     group: string;
-//     year: string;
-//     gpa: string;
-//   }
-
-//   // Parse educational qualifications
-//   let educationalQualifications: EducationalQualification[] = [];
-//   if (tutor.educational_qualifications && typeof tutor.educational_qualifications === 'string') {
-//     try {
-//       educationalQualifications = JSON.parse(tutor.educational_qualifications);
-//       if (!Array.isArray(educationalQualifications)) {
-//         educationalQualifications = []; // Ensure it's an array
-//       }
-//     } catch (e) {
-//       console.error('Failed to parse educational qualifications:', e);
-//       educationalQualifications = [];
-//     }
-//   }
-
-//   // Parse other skills
-//   let otherSkills: string[] = [];
-//   if (tutor.other_skills && typeof tutor.other_skills === 'string') {
-//     try {
-//       // Try parsing as JSON array first
-//       const parsedSkills = JSON.parse(tutor.other_skills);
-//       if (Array.isArray(parsedSkills) && parsedSkills.every((s: any) => typeof s === 'string')) {
-//         otherSkills = parsedSkills;
-//       } else {
-//         // Fallback to comma-separated string
-//         otherSkills = tutor.other_skills.split(',').map((s: string) => s.trim()).filter(Boolean);
-//       }
-//     } catch (e) {
-//       // If JSON parsing fails, assume comma-separated string
-//       otherSkills = tutor.other_skills.split(',').map((s: string) => s.trim()).filter(Boolean);
-//     }
-//   }
-
-//   const handleContactSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-
-//     try {
-//       const response = await tutorApplicationService.createTutorApplication({
-//         tutorId,
-//         applicantName: contactForm.name,
-//         applicantPhone: contactForm.phone,
-//         applicantEmail: user?.email || '',
-//         message: contactForm.details
-//       });
-
-//       if (response.success) {
-//         toast({
-//           title: "Application Submitted",
-//           description: "Your application has been submitted successfully. The tutor will contact you soon.",
-//         });
-//         setContactForm({ name: '', phone: '', details: '' });
-//       } else {
-//         throw new Error(response.message || 'Failed to submit application');
-//       }
-//     } catch (error: any) {
-//       console.error('Error submitting application:', error);
-
-//       // Check if the error is about already reviewing the tutor
-//       if (error.message && error.message.includes('You have already reviewed this tutor')) {
-//         toast({
-//           title: "Already Reviewed",
-//           description: "You have already reviewed this tutor. If you want to contact them, please use the contact form below.",
-//           variant: "destructive"
-//         });
-//       } else {
-//         toast({
-//           title: "Error",
-//           description: error.message || "Failed to submit application. Please try again.",
-//           variant: "destructive"
-//         });
-//       }
-//     }
-//   };
-
-//   const handleReviewSubmitted = (newReview: TutorReview) => {
-//     // Add the new review to the list and refresh reviews
-//     setReviews(prev => prev ? [newReview, ...prev] : [newReview]);
-//     fetchReviews(); // Refresh to get updated stats
-//     // The useEffect will automatically check if user has reviewed after reviews update
-//   };
-
-//   const formatMemberSince = (dateString: string) => {
-//     const date = new Date(dateString);
-//     return date.toLocaleDateString('en-US', {
-//       year: 'numeric',
-//       month: 'long',
-//       day: 'numeric'
-//     });
-//   };
-
-//   const renderStars = (rating: number) => {
-//     return (
-//       <div className="flex items-center">
-//         {[1, 2, 3, 4, 5].map((star) => (
-//           <Star
-//             key={star}
-//             className={`h-4 w-4 ${
-//               star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-//             }`}
-//           />
-//         ))}
-//       </div>
-//     );
-//   };
-
-//   const formatDate = (dateString: string) => {
-//     const date = new Date(dateString);
-//     return date.toLocaleDateString('en-US', {
-//       year: 'numeric',
-//       month: 'short',
-//       day: 'numeric'
-//     });
-//   };
-
-//   return (
-//     <div className="bg-white py-8">
-//       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-//         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-//             {/* Left Section - Personal Profile Card */}
-//             <div className="lg:col-span-3">
-//               <Card className="bg-white rounded-lg shadow-lg overflow-hidden">
-//                 <CardContent className="p-6">
-//                   {/* Tutor Image */}
-//                   <div className="flex justify-center mb-6">
-//                     <Avatar className="w-32 h-32">
-//                 <AvatarImage src={tutor.avatar_url} alt={tutor.full_name} />
-//                 <AvatarFallback className="text-2xl">
-//                   {tutor.full_name?.split(' ').map((n: string) => n[0]).join('') || 'T'}
-//                 </AvatarFallback>
-//               </Avatar>
-//                   </div>
-
-//                   {/* Tutor Name */}
-//                   <h1 className="text-2xl font-bold text-green-900 text-center mb-6">
-//                     {tutor.full_name?.toUpperCase() || 'TUTOR NAME'}
-//                   </h1>
-
-//                   {/* Rating */}
-//                   <div className="text-center mb-6">
-//                     <div className="flex items-center justify-center gap-1 mb-2">
-//                       <Star className="h-4 w-4 text-yellow-500 fill-current" />
-//                       <span className="text-sm text-gray-600">
-//                         {tutor.rating || '0.00'} ({tutor.total_reviews || 0} Review)
-//                       </span>
-//                     </div>
-//                   </div>
-
-//                   {/* Personal Details */}
-//                   <div className="space-y-3 mb-8">
-//                     <div className="flex justify-between text-sm">
-//                       <span className="text-gray-600">University:</span>
-//                       <span className="font-semibold text-right max-w-32 break-words">
-//                         {tutor.university_name || 'N/A'}
-//                       </span>
-//                     </div>
-//                     <div className="flex justify-between text-sm">
-//                       <span className="text-gray-600">Department:</span>
-//                       <span className="font-semibold text-right max-w-32 break-words">
-//                         {tutor.department_name || 'N/A'}
-//                       </span>
-//                     </div>
-//                     <div className="flex justify-between text-sm">
-//                       <span className="text-gray-600">Gender:</span>
-//                       <span className="font-semibold">{tutor.gender || 'N/A'}</span>
-//                     </div>
-//                     <div className="flex justify-between text-sm">
-//                       <span className="text-gray-600">ID:</span>
-//                       <span className="font-semibold">{tutor.tutor_id || 'N/A'}</span>
-//                     </div>
-//                     <div className="flex justify-between text-sm">
-//                       <span className="text-gray-600">Coverage Location:</span>
-//                       <span className="font-semibold text-right max-w-32 break-words">
-//                         {tutor.area || 'N/A'}
-//                       </span>
-//                     </div>
-//                     <div className="flex justify-between text-sm">
-//                       <span className="text-gray-600">Experience:</span>
-//                       <span className="font-semibold">{tutor.tutoring_experience || 'N/A'} Years</span>
-//                     </div>
-//                   </div>
-
-//                   {/* Member Since */}
-//                   <div className="bg-green-500 text-white p-3 rounded-b-lg -mx-6 -mb-6">
-//                     <p className="text-sm text-center">
-//                       Member Since: {formatMemberSince(tutor.created_at)}
-//                     </p>
-//                   </div>
-//                 </CardContent>
-//               </Card>
-//             </div>
-
-//             {/* Middle Section - Detailed Information */}
-//             <div className="lg:col-span-6">
-//               <Card className="bg-white rounded-lg shadow-lg h-full">
-//                 <CardContent className="p-0">
-//                   {/* Navigation Tabs */}
-//                   <Tabs defaultValue="personal-info" className="w-full">
-//                     <TabsList className="flex flex-wrap w-full rounded-none border-b bg-transparent h-auto p-0">
-//                         <TabsTrigger
-//                           value="personal-info"
-//                           className="flex-grow rounded-none border-b-2 border-transparent data-[state=active]:border-green-600 data-[state=active]:bg-transparent data-[state=active]:text-green-600 py-3 px-4 text-sm font-medium text-center"
-//                         >
-//                           Personal Info
-//                         </TabsTrigger>
-//                         <TabsTrigger
-//                           value="tutoring-info"
-//                           className="flex-grow rounded-none border-b-2 border-transparent data-[state=active]:border-green-600 data-[state=active]:bg-transparent data-[state=active]:text-green-600 py-3 px-4 text-sm font-medium text-center"
-//                         >
-//                           Tutoring Info
-//                         </TabsTrigger>
-//                         <TabsTrigger
-//                           value="education"
-//                           className="flex-grow rounded-none border-b-2 border-transparent data-[state=active]:border-green-600 data-[state=active]:bg-transparent data-[state=active]:text-green-600 py-3 px-4 text-sm font-medium text-center"
-//                         >
-//                           Educational Info
-//                         </TabsTrigger>
-//                         <TabsTrigger
-//                           value="reviews"
-//                           className="flex-grow rounded-none border-b-2 border-transparent data-[state=active]:border-green-600 data-[state=active]:bg-transparent data-[state=active]:text-green-600 py-3 px-4 text-sm font-medium text-center"
-//                         >
-//                           Reviews
-//                         </TabsTrigger>
-//                     </TabsList>
-
-//                     <TabsContent value="personal-info" className="p-6 space-y-4">
-//                       <div className="space-y-4">
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Running Year:</span>
-//                           <span className="font-semibold">{tutor.university_year || 'N/A'}</span>
-//                         </div>
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Gender:</span>
-//                           <span className="font-semibold">{tutor.gender || 'N/A'}</span>
-//                         </div>
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Religion:</span>
-//                           <span className="font-semibold">{tutor.religion || 'N/A'}</span>
-//                         </div>
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Nationality:</span>
-//                           <span className="font-semibold">{tutor.nationality || 'N/A'}</span>
-//                         </div>
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Blood Group:</span>
-//                           <span className="font-semibold">{tutor.blood_group || 'N/A'}</span>
-//                         </div>
-//                       </div>
-//                     </TabsContent>
-
-//                     <TabsContent value="tutoring-info" className="p-6 space-y-4">
-//                       <div className="space-y-4">
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Preferred Tutoring Class:</span>
-//                           <span className="font-semibold">{tutor.preferred_class || 'N/A'}</span>
-//                         </div>
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Preferred Tutoring Category:</span>
-//                           <span className="font-semibold">
-//                             {tutor.preferred_tutoring_style ?
-//                               (typeof tutor.preferred_tutoring_style === 'string' ?
-//                                 tutor.preferred_tutoring_style.replace(/[{}'"]/g, '').split(',').join(', ') :
-//                                 tutor.preferred_tutoring_style) : 'N/A'}
-//                           </span>
-//                         </div>
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Preferred Tutoring Subject:</span>
-//                           <span className="font-semibold text-right max-w-48">
-//                             {tutor.preferred_subjects || 'N/A'}
-//                           </span>
-//                         </div>
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Preferred Tutoring Method:</span>
-//                           <span className="font-semibold">
-//                             {tutor.preferred_medium ?
-//                               (typeof tutor.preferred_medium === 'string' ?
-//                                 tutor.preferred_medium.replace(/[{}'"]/g, '').split(',').join(', ') :
-//                                 tutor.preferred_medium) : 'N/A'}
-//                           </span>
-//                         </div>
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Tutor Present Location:</span>
-//                           <span className="font-semibold">
-//                             {tutor.district || tutor.location || 'N/A'}
-//                             {tutor.area && `, ${tutor.area}`}
-//                           </span>
-//                         </div>
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Available Days:</span>
-//                           <span className="font-semibold">{tutor.days_per_week || 'N/A'} Day/Week</span>
-//                         </div>
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Available Time:</span>
-//                           <span className="font-semibold">
-//                             {tutor.preferred_time ?
-//                               (typeof tutor.preferred_time === 'string' ?
-//                                 tutor.preferred_time.replace(/[{}'"]/g, '').split(',').join(', ') :
-//                                 tutor.preferred_time) : 'N/A'}
-//                           </span>
-//                         </div>
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Tutoring Experience:</span>
-//                           <span className="font-semibold">{tutor.tutoring_experience || 'N/A'} Years</span>
-//                         </div>
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Preferable Area:</span>
-//                           <span className="font-semibold text-right max-w-48">
-//                             {tutor.area || 'N/A'}
-//                           </span>
-//                         </div>
-//                         <div className="flex justify-between text-sm">
-//                           <span className="text-gray-600">Expected Salary:</span>
-//                           <span className="font-semibold">{tutor.expected_salary || 'N/A'}</span>
-//                         </div>
-//                       </div>
-//                     </TabsContent>
-
-//                     <TabsContent value="education" className="p-6">
-//                       <div className="space-y-6">
-//                         <h3 className="text-lg font-semibold mb-4">Educational Qualifications</h3>
-//                         {educationalQualifications.length > 0 ? (
-//                           <div className="overflow-x-auto">
-//                             <Table className="min-w-full bg-white border border-gray-200 rounded-lg">
-//                               <TableHeader className="bg-gray-800 text-white">
-//                                 <TableRow className="hover:bg-gray-800">
-//                                   <TableHead className="px-4 py-2 text-left text-sm text-white font-medium">Exam</TableHead>
-//                                   <TableHead className="px-4 py-2 text-left text-sm text-white font-medium">Institute</TableHead>
-//                                   <TableHead className="px-4 py-2 text-left text-sm text-white font-medium">Board</TableHead>
-//                                   <TableHead className="px-4 py-2 text-left text-sm text-white font-medium">Group</TableHead>
-//                                   <TableHead className="px-4 py-2 text-left text-sm text-white font-medium">Year</TableHead>
-//                                   <TableHead className="px-4 py-2 text-left text-sm text-white font-medium">GPA</TableHead>
-//                                 </TableRow>
-//                               </TableHeader>
-//                               <TableBody>
-//                                 {educationalQualifications.map((edu, index) => (
-//                                   <TableRow key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-//                                     <TableCell className="px-4 py-2 text-sm text-gray-800">{edu.exam_title || 'N/A'}</TableCell>
-//                                     <TableCell className="px-4 py-2 text-sm text-gray-800">{edu.institute || 'N/A'}</TableCell>
-//                                     <TableCell className="px-4 py-2 text-sm text-gray-800">{edu.board || 'N/A'}</TableCell>
-//                                     <TableCell className="px-4 py-2 text-sm text-gray-800">{edu.group || 'N/A'}</TableCell>
-//                                     <TableCell className="px-4 py-2 text-sm text-gray-800">{edu.year || 'N/A'}</TableCell>
-//                                     <TableCell className="px-4 py-2 text-sm text-gray-800">{edu.gpa || 'N/A'}</TableCell>
-//                                   </TableRow>
-//                                 ))}
-//                               </TableBody>
-//                             </Table>
-//                           </div>
-//                         ) : (
-//                           <p className="text-gray-600">No educational qualifications available.</p>
-//                         )}
-
-//                         {otherSkills.length > 0 && (
-//                           <div className="mt-6">
-//                             <h3 className="text-lg font-semibold mb-4">Tutor Skills</h3>
-//                             <div className="flex flex-wrap gap-2">
-//                               {otherSkills.map((skill, index) => (
-//                                 <Badge key={index} variant="secondary" className="px-3 py-1 text-sm">
-//                                   {skill}
-//                                 </Badge>
-//                               ))}
-//                             </div>
-//                           </div>
-//                         )}
-//                       </div>
-//                     </TabsContent>
-
-//                     <TabsContent value="reviews" className="p-6">
-//                       <div className="space-y-6">
-//                         {/* Review Stats */}
-//                         {reviewStats && (
-//                           <div className="bg-gray-50 rounded-lg p-4">
-//                             <div className="flex items-center justify-between mb-4">
-//                               <h3 className="text-lg font-semibold">Review Summary</h3>
-//                               <div className="flex items-center gap-2">
-//                                 {renderStars(Math.round(reviewStats.average_rating || 0))}
-//                                 <span className="text-sm text-gray-600">
-//                                   {reviewStats.average_rating?.toFixed(1) || '0.0'} ({reviewStats.approved_reviews || 0} reviews)
-//                                 </span>
-//                               </div>
-//                             </div>
-//                             <div className="grid grid-cols-1 gap-4 text-center">
-//                               <div>
-//                                 <div className="text-2xl font-bold text-green-600">{reviewStats.approved_reviews || 0}</div>
-//                                 <div className="text-sm text-gray-600">Approved Reviews</div>
-//                               </div>
-//                             </div>
-//                           </div>
-//                         )}
-
-//                         {/* Review Form - Only for logged-in students who haven't reviewed */}
-//                         {user && user.role === 'student' && !hasUserReviewed && (
-//                           <div className="border rounded-lg p-4 bg-green-50">
-//                             <ReviewForm
-//                               tutorId={tutorId}
-//                               onReviewSubmitted={handleReviewSubmitted}
-//                             />
-//                           </div>
-//                         )}
-
-//                         {/* Login prompt for non-students */}
-//                         {!user && (
-//                           <div className="border rounded-lg p-4 bg-blue-50 text-center">
-//                             <p className="text-blue-800 mb-2">Want to leave a review?</p>
-//                             <p className="text-sm text-blue-600">Please log in as a student to submit a review for this tutor.</p>
-//                           </div>
-//                         )}
-
-//                         {/* Message for students who have already reviewed */}
-//                         {user && user.role === 'student' && hasUserReviewed && (
-//                           <div className="border rounded-lg p-4 bg-blue-50 text-center">
-//                             <p className="text-blue-800 mb-2">You have already reviewed this tutor.</p>
-//                             <p className="text-sm text-blue-600">Thank you for your feedback!</p>
-//                           </div>
-//                         )}
-
-//                         {user && user.role !== 'student' && (
-//                           <div className="border rounded-lg p-4 bg-yellow-50 text-center">
-//                             <p className="text-yellow-800">Only students can leave reviews for tutors.</p>
-//                           </div>
-//                         )}
-
-//                         {/* Reviews List */}
-//                         <div className="space-y-4">
-//                           <h3 className="text-lg font-semibold">Reviews</h3>
-
-//                           {reviewsLoading ? (
-//                             <div className="space-y-4">
-//                               {[1, 2, 3].map((i) => (
-//                                 <div key={i} className="border rounded-lg p-4">
-//                                   <Skeleton className="h-4 w-1/4 mb-2" />
-//                                   <Skeleton className="h-4 w-1/6 mb-3" />
-//                                   <Skeleton className="h-16 w-full" />
-//                                 </div>
-//                               ))}
-//                             </div>
-//                           ) : reviews && reviews.length > 0 ? (
-//                             <div className="space-y-4">
-//                               {reviews.map((review) => {
-//                                 // Skip rendering if review is invalid
-//                                 if (!review || !review.id) {
-//                                   return null;
-//                                 }
-
-//                                 return (
-//                                   <div key={review.id} className="border rounded-lg p-4 bg-white">
-//                                     <div className="flex items-start justify-between mb-3">
-//                                       <div className="flex items-center gap-3">
-//                                         <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-//                                           <User className="h-4 w-4 text-gray-600" />
-//                                         </div>
-//                                         <div>
-//                                           <div className="font-medium text-sm">{review.reviewer_name || 'Anonymous'}</div>
-//                                           <div className="flex items-center gap-2">
-//                                             {renderStars(review.rating || 0)}
-//                                             <span className="text-xs text-gray-500">
-//                                               {review.created_at ? formatDate(review.created_at) : 'Unknown date'}
-//                                             </span>
-//                                           </div>
-//                                         </div>
-//                                       </div>
-//                                     </div>
-
-//                                     <p className="text-gray-700 text-sm leading-relaxed mb-3">
-//                                       {review.comment || 'No comment provided'}
-//                                     </p>
-
-//                                     {review.response && (
-//                                       <div className="bg-gray-50 rounded-lg p-3 mt-3">
-//                                         <div className="flex items-center gap-2 mb-2">
-//                                           <MessageCircle className="h-4 w-4 text-gray-600" />
-//                                           <span className="text-sm font-medium text-gray-700">Tutor Response</span>
-//                                           <span className="text-xs text-gray-500">
-//                                             {review.response_created_at && formatDate(review.response_created_at)}
-//                                           </span>
-//                                         </div>
-//                                         <p className="text-sm text-gray-600">{review.response}</p>
-//                                       </div>
-//                                     )}
-//                                   </div>
-//                                 );
-//                               })}
-//                             </div>
-//                           ) : (
-//                             <div className="text-center py-8 text-gray-600">
-//                               <MessageCircle className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-//                               <p>No reviews yet.</p>
-//                               <p className="text-sm">Be the first to review this tutor!</p>
-//                             </div>
-//                           )}
-//                         </div>
-//                       </div>
-//                     </TabsContent>
-//                   </Tabs>
-//                 </CardContent>
-//               </Card>
-//             </div>
-
-//             {/* Right Section - Tuition Job Posting */}
-//             <div className="lg:col-span-3 relative">
-//               <Card className="bg-white rounded-lg shadow-lg">
-//                 <CardContent className="p-6 flex flex-col">
-//                   <h3 className="text-lg font-bold text-gray-800 mb-6">Post a Tuition Job</h3>
-
-//                   <div className="space-y-4 flex-1 overflow-y-auto scrollbar-hide" style={{ maxHeight: 'calc(100vh - 300px)' }}>
-//                     {/* Personal Information */}
-//                     <div className="space-y-4">
-//                       <div>
-//                         <Label className="text-sm font-medium text-gray-700">Phone Number *</Label>
-//                         <Input
-//                           value={tuitionFormData.phoneNumber}
-//                           onChange={(e) => handleTuitionFormChange('phoneNumber', e.target.value)}
-//                           placeholder="Phone Number"
-//                           className="mt-1"
-//                         />
-//                       </div>
-
-//                       <div>
-//                         <Label className="text-sm font-medium text-gray-700">Student Gender *</Label>
-//                         <Select
-//                           value={tuitionFormData.studentGender || ''}
-//                           onValueChange={(value) => handleTuitionFormChange('studentGender', value)}
-//                         >
-//                           <SelectTrigger className="mt-1">
-//                             <SelectValue placeholder="Select Gender" />
-//                           </SelectTrigger>
-//                           <SelectContent>
-//                             <SelectItem value="male">Male</SelectItem>
-//                             <SelectItem value="female">Female</SelectItem>
-//                             <SelectItem value="both">Both</SelectItem>
-//                           </SelectContent>
-//                         </Select>
-//                       </div>
-//                     </div>
-
-//                     {/* Location Information */}
-//                     <div className="space-y-4">
-//                       <div>
-//                         <Label className="text-sm font-medium text-gray-700">District *</Label>
-//                         <SearchableSelect
-//                           value={tuitionFormData.district}
-//                           onValueChange={(value) => handleTuitionFormChange('district', value)}
-//                           placeholder="Select District"
-//                           options={BANGLADESH_DISTRICTS_WITH_POST_OFFICES.map((district) => ({
-//                             value: district.id,
-//                             label: district.name
-//                           }))}
-//                         />
-//                       </div>
-
-//                       <div>
-//                         <Label className="text-sm font-medium text-gray-700">Area *</Label>
-//                         <SearchableSelect
-//                           value={tuitionFormData.area}
-//                           onValueChange={(value) => handleTuitionFormChange('area', value)}
-//                           placeholder="Select Area"
-//                           options={availableAreas.map((area) => ({
-//                             value: area,
-//                             label: area
-//                           }))}
-//                           disabled={!tuitionFormData.district}
-//                         />
-//                       </div>
-
-//                       <div>
-//                         <Label className="text-sm font-medium text-gray-700">Detailed Location</Label>
-//                         <Input
-//                           value={tuitionFormData.detailedLocation}
-//                           onChange={(e) => handleTuitionFormChange('detailedLocation', e.target.value)}
-//                           placeholder="Enter detailed location"
-//                           className="mt-1"
-//                         />
-//                       </div>
-//                     </div>
-
-//                     {/* Academic Information */}
-//                     <div className="space-y-4">
-//                       <div>
-//                         <Label className="text-sm font-medium text-gray-700">Medium *</Label>
-//                         <Select
-//                           value={tuitionFormData.medium || ''}
-//                           onValueChange={(value) => handleTuitionFormChange('medium', value)}
-//                         >
-//                           <SelectTrigger className="mt-1">
-//                             <SelectValue placeholder="Select Medium" />
-//                           </SelectTrigger>
-//                           <SelectContent>
-//                             {mediumOptions.mediums.map((medium) => (
-//                               <SelectItem key={medium.value} value={medium.value}>
-//                                 {medium.label}
-//                               </SelectItem>
-//                             ))}
-//                           </SelectContent>
-//                         </Select>
-//                       </div>
-
-//                       <div>
-//                         <Label className="text-sm font-medium text-gray-700">Tutoring Type *</Label>
-//                         <Select
-//                           value={tuitionFormData.tutoringType || ''}
-//                           onValueChange={(value) => handleTuitionFormChange('tutoringType', value)}
-//                         >
-//                           <SelectTrigger className="mt-1">
-//                             <SelectValue placeholder="Select Type" />
-//                           </SelectTrigger>
-//                           <SelectContent>
-//                             <SelectItem value="Home Tutoring">Home Tutoring</SelectItem>
-//                             <SelectItem value="Online Tutoring">Online Tutoring</SelectItem>
-//                             <SelectItem value="Both">Both</SelectItem>
-//                           </SelectContent>
-//                         </Select>
-//                       </div>
-//                     </div>
-
-//                     {/* Categories */}
-//                     <div>
-//                       <Label className="text-sm font-medium text-gray-700">Categories *</Label>
-//                       <Select
-//                         value=""
-//                         onValueChange={(value) => {
-//                           if (value && !tuitionFormData.selectedCategories.includes(value)) {
-//                             handleCategorySelection(value);
-//                           }
-//                         }}
-//                         disabled={isLoadingTaxonomy}
-//                       >
-//                         <SelectTrigger className="mt-1">
-//                           <SelectValue placeholder="Select Category" />
-//                         </SelectTrigger>
-//                         <SelectContent>
-//                           {categories.filter(category => category && category.id).map((category) => (
-//                             <SelectItem key={category.id} value={category.name}>
-//                               {category.name}
-//                             </SelectItem>
-//                           ))}
-//                         </SelectContent>
-//                       </Select>
-//                       {tuitionFormData.selectedCategories.length > 0 && (
-//                         <div className="mt-2 space-y-1">
-//                           {tuitionFormData.selectedCategories.map((category, index) => (
-//                             <div key={index} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm">
-//                               <span>{category}</span>
-//                               <button
-//                                 type="button"
-//                                 onClick={() => handleCategorySelection(category)}
-//                                 className="text-red-500 hover:text-red-700 text-sm"
-//                               >
-//                                 ×
-//                               </button>
-//                             </div>
-//                           ))}
-//                         </div>
-//                       )}
-//                     </div>
-
-//                     {/* Subjects */}
-//                     <div>
-//                       <Label className="text-sm font-medium text-gray-700">Subjects *</Label>
-//                       {isLoadingTaxonomy ? (
-//                         <div className="text-center py-4 text-sm">Loading subjects...</div>
-//                       ) : (
-//                         <Select
-//                           value=""
-//                           onValueChange={(value) => {
-//                             if (value && !tuitionFormData.selectedSubjects.includes(value)) {
-//                               handleSubjectSelection(value);
-//                             }
-//                           }}
-//                           disabled={!tuitionFormData.selectedCategories.length}
-//                         >
-//                           <SelectTrigger className="mt-1">
-//                             <SelectValue placeholder="Select Subject" />
-//                           </SelectTrigger>
-//                           <SelectContent>
-//                             {subjects.filter(subject => subject && subject.id).map((subject) => (
-//                               <SelectItem key={subject.id} value={subject.name}>
-//                                 {subject.name}
-//                               </SelectItem>
-//                             ))}
-//                           </SelectContent>
-//                         </Select>
-//                       )}
-//                       {tuitionFormData.selectedSubjects.length > 0 && (
-//                         <div className="mt-2 space-y-1">
-//                           {tuitionFormData.selectedSubjects.map((subject, index) => (
-//                             <div key={index} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm">
-//                               <span>{subject}</span>
-//                               <button
-//                                 type="button"
-//                                 onClick={() => handleSubjectSelection(subject)}
-//                                 className="text-red-500 hover:text-red-700 text-sm"
-//                               >
-//                                 ×
-//                               </button>
-//                             </div>
-//                           ))}
-//                         </div>
-//                       )}
-//                     </div>
-
-//                     {/* Classes */}
-//                     <div>
-//                       <Label className="text-sm font-medium text-gray-700">Class Levels *</Label>
-//                       {isLoadingTaxonomy ? (
-//                         <div className="text-center py-4 text-sm">Loading class levels...</div>
-//                       ) : (
-//                         <Select
-//                           value=""
-//                           onValueChange={(value) => {
-//                             if (value && !tuitionFormData.selectedClasses.includes(value)) {
-//                               handleClassSelection(value);
-//                             }
-//                           }}
-//                           disabled={!tuitionFormData.selectedCategories.length}
-//                         >
-//                           <SelectTrigger className="mt-1">
-//                             <SelectValue placeholder="Select Class" />
-//                           </SelectTrigger>
-//                           <SelectContent>
-//                             {classLevels.filter(classLevel => classLevel && classLevel.id).map((classLevel) => (
-//                               <SelectItem key={classLevel.id} value={classLevel.name}>
-//                                 {classLevel.name}
-//                               </SelectItem>
-//                             ))}
-//                           </SelectContent>
-//                         </Select>
-//                       )}
-//                       {tuitionFormData.selectedClasses.length > 0 && (
-//                         <div className="mt-2 space-y-1">
-//                           {tuitionFormData.selectedClasses.map((className, index) => (
-//                             <div key={index} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm">
-//                               <span>{className}</span>
-//                               <button
-//                                 type="button"
-//                                 onClick={() => handleClassSelection(className)}
-//                                 className="text-red-500 hover:text-red-700 text-sm"
-//                               >
-//                                 ×
-//                               </button>
-//                             </div>
-//                           ))}
-//                         </div>
-//                       )}
-//                     </div>
-
-//                     {/* Tutoring Details */}
-//                     <div className="space-y-4">
-//                       <div>
-//                         <Label className="text-sm font-medium text-gray-700">Number of Students *</Label>
-//                         <Input
-//                           type="number"
-//                           min="1"
-//                           max="10"
-//                           value={tuitionFormData.numberOfStudents || ''}
-//                           onChange={(e) => handleTuitionFormChange('numberOfStudents', parseInt(e.target.value) || '')}
-//                           placeholder="Number of Students"
-//                           className="mt-1"
-//                         />
-//                       </div>
-
-//                       <div>
-//                         <Label className="text-sm font-medium text-gray-700">Tutoring Days *</Label>
-//                         <Select
-//                           value={tuitionFormData.tutoringDays.toString() || ''}
-//                           onValueChange={(value) => handleTuitionFormChange('tutoringDays', parseInt(value))}
-//                         >
-//                           <SelectTrigger className="mt-1">
-//                             <SelectValue placeholder="Select Days" />
-//                           </SelectTrigger>
-//                           <SelectContent>
-//                             <SelectItem value="1">1 Day</SelectItem>
-//                             <SelectItem value="2">2 Days</SelectItem>
-//                             <SelectItem value="3">3 Days</SelectItem>
-//                             <SelectItem value="4">4 Days</SelectItem>
-//                             <SelectItem value="5">5 Days</SelectItem>
-//                             <SelectItem value="6">6 Days</SelectItem>
-//                             <SelectItem value="7">7 Days</SelectItem>
-//                           </SelectContent>
-//                         </Select>
-//                       </div>
-
-//                       <div>
-//                         <Label className="text-sm font-medium text-gray-700">Tutoring Duration *</Label>
-//                         <Select
-//                           value={tuitionFormData.tutoringDuration || ''}
-//                           onValueChange={(value) => handleTuitionFormChange('tutoringDuration', value)}
-//                         >
-//                           <SelectTrigger className="mt-1">
-//                             <SelectValue placeholder="Select Duration" />
-//                           </SelectTrigger>
-//                           <SelectContent>
-//                             <SelectItem value="1:00">1 Hour</SelectItem>
-//                             <SelectItem value="1:30">1.5 Hours</SelectItem>
-//                             <SelectItem value="2:00">2 Hours</SelectItem>
-//                             <SelectItem value="2:30">2.5 Hours</SelectItem>
-//                             <SelectItem value="3:00">3 Hours</SelectItem>
-//                             <SelectItem value="3:30">3.5 Hours</SelectItem>
-//                             <SelectItem value="4:00">4 Hours</SelectItem>
-//                           </SelectContent>
-//                         </Select>
-//                       </div>
-
-//                       <div>
-//                         <Label className="text-sm font-medium text-gray-700">Tutoring Time *</Label>
-//                         <Input
-//                           type="time"
-//                           value={tuitionFormData.tutoringTime}
-//                           onChange={(e) => handleTuitionFormChange('tutoringTime', e.target.value)}
-//                           className="mt-1"
-//                         />
-//                       </div>
-
-//                       <div>
-//                         <Label className="text-sm font-medium text-gray-700">Tutor Gender Preference *</Label>
-//                         <Select
-//                           value={tuitionFormData.tutorGenderPreference || ''}
-//                           onValueChange={(value) => handleTuitionFormChange('tutorGenderPreference', value)}
-//                         >
-//                           <SelectTrigger className="mt-1">
-//                             <SelectValue placeholder="Select Preference" />
-//                           </SelectTrigger>
-//                           <SelectContent>
-//                             <SelectItem value="male">Male</SelectItem>
-//                             <SelectItem value="female">Female</SelectItem>
-//                             <SelectItem value="any">Any</SelectItem>
-//                           </SelectContent>
-//                         </Select>
-//                       </div>
-//                     </div>
-
-//                     {/* Salary Range */}
-//                     <div className="space-y-4">
-//                       <div>
-//                         <Label className="text-sm font-medium text-gray-700">Minimum Salary *</Label>
-//                         <Input
-//                           type="number"
-//                           value={tuitionFormData.salaryRange.min || ''}
-//                           onChange={(e) => handleTuitionFormChange('salaryRange', { ...tuitionFormData.salaryRange, min: parseInt(e.target.value) || '' })}
-//                           placeholder="Minimum Salary"
-//                           className="mt-1"
-//                         />
-//                       </div>
-
-//                       <div>
-//                         <Label className="text-sm font-medium text-gray-700">Maximum Salary *</Label>
-//                         <Input
-//                           type="number"
-//                           value={tuitionFormData.salaryRange.max || ''}
-//                           onChange={(e) => handleTuitionFormChange('salaryRange', { ...tuitionFormData.salaryRange, max: parseInt(e.target.value) || '' })}
-//                           placeholder="Maximum Salary"
-//                           className="mt-1"
-//                         />
-//                       </div>
-//                     </div>
-
-//                     <div className="flex items-center space-x-2">
-//                       <Switch
-//                         id="isSalaryNegotiable"
-//                         checked={tuitionFormData.isSalaryNegotiable}
-//                         onCheckedChange={(checked) => handleTuitionFormChange('isSalaryNegotiable', checked)}
-//                       />
-//                       <Label htmlFor="isSalaryNegotiable" className="text-sm">Salary is Negotiable</Label>
-//                     </div>
-
-//                     <div>
-//                       <Label className="text-sm font-medium text-gray-700">Additional Information</Label>
-//                       <Textarea
-//                         value={tuitionFormData.extraInformation}
-//                         onChange={(e) => handleTuitionFormChange('extraInformation', e.target.value)}
-//                         placeholder="Any additional information..."
-//                         className="mt-1 min-h-[100px]"
-//                       />
-//                     </div>
-//                   </div>
-
-//                   <div className="mt-6">
-//                     <Button
-//                       onClick={handleTuitionSubmit}
-//                       disabled={isSubmittingTuition}
-//                       className="w-full bg-gradient-to-r from-green-600 to-green-400 hover:from-green-700 hover:to-green-500 text-white font-medium py-2 px-4 rounded-lg"
-//                     >
-//                       {isSubmittingTuition ? 'Submitting...' : 'Submit Tuition Request'}
-//                       {!isSubmittingTuition && <CheckCircle2 className="h-4 w-4 ml-2" />}
-//                     </Button>
-//                   </div>
-//                 </CardContent>
-//               </Card>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//   );
-// }
-
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext.next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -1365,7 +15,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   Star,
   MapPin,
@@ -1374,15 +23,17 @@ import {
   MessageCircle,
   User,
   CheckCircle2,
+  BookOpen,
+  DollarSign,
+  Users,
+  Award,
+  ShieldCheck,
+  Mail,
+  Phone,
+  Calendar,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  reviewService,
-  TutorReview,
-  ReviewStats,
-} from "@/services/reviewService";
-import ReviewForm from "@/components/tutor/ReviewForm";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -1392,69 +43,55 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { tutorApplicationService } from "@/services/tutorApplicationService";
-import {
-  tutorRequestService,
-  TutorRequestFormData,
-} from "@/services/tutorRequestService";
 import { BANGLADESH_DISTRICTS_WITH_POST_OFFICES } from "@/data/bangladeshDistricts";
-import mediumOptions from "@/data/mediumOptions.json";
-import { taxonomyService, Category } from "@/services/taxonomyService";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useGetSingleTutorHubQuery } from "@/redux/features/tutorHub/tutorHubApi";
+import {
+  useGetAllReviewByRoleQuery,
+  useCreateReviewMutation,
+  useCreateVideoReviewMutation,
+} from "@/redux/features/review/reviewApi";
 
 interface TutorProfileClientProps {
   tutorId: string;
 }
 
-// Demo data for missing fields
-const DEMO_DATA = {
-  rating: 4.5,
-  total_reviews: 12,
-  tutoring_experience: 3,
-  area: "Mirpur, Dhaka",
-  university_year: "4th Year",
-  blood_group: "O+",
-  preferred_class: "Class 9-12, University Admission",
-  preferred_tutoring_style: "Science, Business Studies",
-  preferred_subjects: "Physics, Chemistry, Mathematics, Accounting",
-  preferred_medium: "Bangla, English",
-  location: "Dhaka",
-  days_per_week: 5,
-  preferred_time: "4:00 PM - 8:00 PM",
-  expected_salary: "5000-8000 BDT",
-  educational_qualifications: [
-    {
-      exam_title: "SSC",
-      institute: "Mirpur Bangla High School",
-      board: "Dhaka",
-      group: "Science",
-      year: "2018",
-      gpa: "5.00",
-    },
-    {
-      exam_title: "HSC",
-      institute: "Dhaka College",
-      board: "Dhaka",
-      group: "Science",
-      year: "2020",
-      gpa: "5.00",
-    },
-    {
-      exam_title: "BSc",
-      institute: "Dhaka University",
-      board: "N/A",
-      group: "Computer Science",
-      year: "2024",
-      gpa: "3.75",
-    },
-  ],
-  other_skills: [
-    "Problem Solving",
-    "Communication",
-    "Time Management",
-    "Patient Teaching",
-  ],
-};
+interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  location: string;
+  avatar: string;
+  testimonial: string;
+  rating: number;
+  tutor_id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface VideoTestimonial {
+  id: string;
+  name: string;
+  role: string;
+  location: string;
+  avatar: string;
+  videoUrl: string;
+  thumbnail?: string;
+  duration: string;
+  testimonial: string;
+  rating: number;
+  tutor_id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ReviewResponse {
+  data: {
+    testimonial: Testimonial[];
+    videoTestimonial: VideoTestimonial[];
+  };
+}
 
 export default function TutorProfileClient({
   tutorId,
@@ -1462,297 +99,258 @@ export default function TutorProfileClient({
   const { user } = useAuth();
   const { toast } = useToast();
 
-
-  console.log(tutorId)
-
-  // Use RTK Query to fetch single tutor data
+  // RTK Query hooks
   const {
-    data: singleTutorResponse,
+    data: tutorResponse,
     isLoading: tutorLoading,
     error: tutorError,
   } = useGetSingleTutorHubQuery(tutorId);
 
-  // Extract tutor data from API response and merge with demo data
-  const backendTutor = singleTutorResponse?.data;
-  const tutor = backendTutor ? { ...DEMO_DATA, ...backendTutor } : null;
+  const {
+    data: reviewResponse,
+    isLoading: reviewsLoading,
+    error: reviewsError,
+    refetch: refetchReviews,
+  } = useGetAllReviewByRoleQuery({ id: tutorId });
 
-  // console.log('Tutor ID:', tutorId);
-  console.log("Tutor Data:", tutor);
+  // Mutation hooks
+  const [createReview, { isLoading: isCreatingReview }] =
+    useCreateReviewMutation();
+  const [createVideoReview, { isLoading: isCreatingVideoReview }] =
+    useCreateVideoReviewMutation();
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [contactForm, setContactForm] = useState({
-    name: "",
-    phone: "",
-    details: "",
+  // State for reviews
+  const [reviews, setReviews] = useState<Testimonial[]>([]);
+  const [videoReviews, setVideoReviews] = useState<VideoTestimonial[]>([]);
+  const [hasUserReviewed, setHasUserReviewed] = useState(false);
+
+  // State for review form
+  const [reviewForm, setReviewForm] = useState({
+    name: user?.fullName || "",
+    role: user?.role,
+    location: "Dhaka",
+    avatar: user?.avatar || "https://via.placeholder.com/150",
+    testimonial: "",
+    rating: 5,
   });
-  const [reviews, setReviews] = useState<TutorReview[]>([]);
-  const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
-  const [reviewsLoading, setReviewsLoading] = useState(false);
-  const [hasUserReviewed, setHasUserReviewed] = useState<boolean>(false);
 
-  // Tuition job posting form state
-  const [tuitionFormData, setTuitionFormData] = useState<any>({
-    phoneNumber: "",
-    studentGender: "" as any,
-    district: "",
-    area: "",
-    detailedLocation: "",
-    selectedCategories: [],
-    selectedSubjects: [],
-    selectedClasses: [],
-    tutorGenderPreference: "" as any,
-    isSalaryNegotiable: true,
-    salaryRange: {
-      min: "" as any,
-      max: "" as any,
-    },
-    extraInformation: "",
-    medium: "" as any,
-    numberOfStudents: "" as any,
-    tutoringDays: "" as any,
-    tutoringTime: "",
-    tutoringDuration: "" as any,
-    tutoringType: "" as any,
+  // State for video review form
+  const [videoReviewForm, setVideoReviewForm] = useState({
+    name: user?.fullName || "",
+    role: user?.role,
+    location: "Dhaka",
+    avatar: user?.avatar || "https://via.placeholder.com/150",
+    videoUrl: "",
+    thumbnail: "",
+    duration: "",
+    testimonial: "",
+    rating: 5,
   });
-  const [availableAreas, setAvailableAreas] = useState<string[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [subjects, setSubjects] = useState<any[]>([]);
-  const [classLevels, setClassLevels] = useState<any[]>([]);
-  const [isLoadingTaxonomy, setIsLoadingTaxonomy] = useState(false);
+
+  // State for tuition job posting
   const [isSubmittingTuition, setIsSubmittingTuition] = useState(false);
   const [showTuitionSuccess, setShowTuitionSuccess] = useState(false);
+  const [activeReviewTab, setActiveReviewTab] = useState<
+    "written" | "video" | "write"
+  >("written");
 
-  // Set loading state based on RTK Query
+  // Extract tutor data
+  const tutor = tutorResponse?.data;
+
+  // Parse educational qualifications
+  const educationalQualifications = tutor?.educational_qualifications
+    ? JSON.parse(tutor.educational_qualifications)
+    : [];
+
+  // Handle review data from API
   useEffect(() => {
-    if (tutorLoading) {
-      setLoading(true);
-    } else if (tutorError) {
-      setError("Failed to fetch tutor profile");
-      setLoading(false);
-    } else if (tutor) {
-      setLoading(false);
-      setError(null);
+    if (reviewResponse?.data) {
+      const reviewData = reviewResponse.data as ReviewResponse["data"];
+      setReviews(reviewData.testimonial || []);
+      setVideoReviews(reviewData.videoTestimonial || []);
     }
-  }, [tutorLoading, tutorError, tutor]);
+  }, [reviewResponse]);
 
-  // Fetch reviews when tutor data is available
+  // Check if user has already reviewed
   useEffect(() => {
-    if (tutorId && tutor) {
-      fetchReviews();
+    if (user && reviews.length > 0) {
+      const userReview = reviews.find(
+        (review) => review.name === user.fullName
+      );
+      setHasUserReviewed(!!userReview);
     }
-  }, [tutorId, tutor]);
+  }, [user, reviews]);
 
-  // Check if current user has already reviewed this tutor
-  const checkUserReview = () => {
-    if (!user || !reviews || !Array.isArray(reviews)) {
-      setHasUserReviewed(false);
+  // Update review form when user changes
+  useEffect(() => {
+    if (user) {
+      setReviewForm((prev) => ({
+        ...prev,
+        name: user.fullName || "",
+        role: user.role ? formatRole(user.role) : "Student",
+        avatar: user.avatar || "https://via.placeholder.com/150",
+      }));
+
+      setVideoReviewForm((prev) => ({
+        ...prev,
+        name: user.fullName || "",
+        role: user.role ? formatRole(user.role) : "Student",
+        avatar: user.avatar || "https://via.placeholder.com/150",
+      }));
+    }
+  }, [user]);
+
+  // Format user role for display
+  const formatRole = (role: string) => {
+    if (!role) return "Student";
+    const formatted = role.toLowerCase().replace(/_/g, " ");
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  };
+
+  // Handle written review submission
+  const handleSubmitReview = async () => {
+    if (!reviewForm.testimonial.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter your testimonial",
+        variant: "destructive",
+      });
       return;
     }
 
-    const userReview = reviews.find(
-      (review) => review && review.reviewer_id === user.id
-    );
-    setHasUserReviewed(!!userReview);
-  };
-
-  // Fetch reviews for the tutor
-  const fetchReviews = async () => {
-    if (!tutorId) return;
-
-    setReviewsLoading(true);
-    try {
-      const [reviewsData, statsData] = await Promise.all([
-        reviewService.getReviewsByTutorId(tutorId),
-        reviewService.getReviewStatsByTutorId(tutorId),
-      ]);
-
-      // Use demo reviews if no reviews from API
-      if (
-        !reviewsData ||
-        !Array.isArray(reviewsData) ||
-        reviewsData.length === 0
-      ) {
-        const demoReviews: TutorReview[] = [
-          // {
-          //   id: "1",
-          //   tutor_id: tutorId,
-          //   reviewer_id: "user1",
-          //   reviewer_name: "Rahim Ahmed",
-          //   rating: 5,
-          //   comment:
-          //     "Excellent tutor! My son improved significantly in mathematics.",
-          //   created_at: "2024-01-15T10:30:00.000Z",
-          //   status: "approved",
-          // }
-        ];
-        setReviews(demoReviews);
-      } else {
-        const validReviews = reviewsData.filter(
-          (review) =>
-            review &&
-            typeof review === "object" &&
-            review.reviewer_id &&
-            review.id
-        );
-        setReviews(validReviews);
-      }
-
-      // Use demo stats if no stats from API
-      if (!statsData) {
-        // setReviewStats({
-        //   average_rating: 4.5,
-        //   total_reviews: 12,
-        //   approved_reviews: 12,
-        //   rating_distribution: { 5: 8, 4: 3, 3: 1, 2: 0, 1: 0 },
-        // });
-      } else {
-        setReviewStats(statsData);
-      }
-    } catch (err) {
-      // console.error('Error fetching reviews:', err);
-      // Fallback to demo data
-      const demoReviews: TutorReview[] = [
-        // {
-        //   id: "1",
-        //   tutor_id: tutorId,
-        //   reviewer_id: "user1",
-        //   reviewer_name: "Rahim Ahmed",
-        //   rating: 5,
-        //   comment:
-        //     "Excellent tutor! My son improved significantly in mathematics.",
-        //   created_at: "2024-01-15T10:30:00.000Z",
-        //   status: "approved",
-        // },
-      ];
-      setReviews(demoReviews);
-      // setReviewStats({
-      //   average_rating: 4.5,
-      //   total_reviews: 12,
-      //   approved_reviews: 12,
-      //   rating_distribution: { 5: 8, 4: 3, 3: 1, 2: 0, 1: 0 },
-      // });
-    } finally {
-      setReviewsLoading(false);
+    if (!reviewForm.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter your name",
+        variant: "destructive",
+      });
+      return;
     }
-  };
 
-  // Check if user has reviewed whenever reviews or user changes
-  useEffect(() => {
-    checkUserReview();
-  }, [reviews, user]);
-
-  // Rest of your existing functions remain the same...
-  // (fetchTaxonomyData, fetchMultiCategoryTaxonomy, handleTuitionFormChange, etc.)
-
-  // Fetch taxonomy data for tuition form
-  const fetchTaxonomyData = useCallback(async () => {
-    setIsLoadingTaxonomy(true);
     try {
-      const taxonomy = await taxonomyService.getTaxonomyData();
-      // Use demo categories if no categories from API
-      // if (!taxonomy?.categories || taxonomy.categories.length === 0) {
-      //   const demoCategories: Category[] = [
-      //     {
-      //       id: "1",
-      //       name: "Science",
-      //       subjects: [
-      //         { id: "1", name: "Physics" },
-      //         { id: "2", name: "Chemistry" },
-      //         { id: "3", name: "Mathematics" },
-      //         { id: "4", name: "Biology" },
-      //       ],
-      //       classLevels: [
-      //         { id: "1", name: "Class 9" },
-      //         { id: "2", name: "Class 10" },
-      //         { id: "3", name: "Class 11" },
-      //         { id: "4", name: "Class 12" },
-      //       ],
-      //     },
-      //     {
-      //       id: "2",
-      //       name: "Business Studies",
-      //       subjects: [
-      //         { id: "5", name: "Accounting" },
-      //         { id: "6", name: "Finance" },
-      //         { id: "7", name: "Management" },
-      //       ],
-      //       classLevels: [
-      //         { id: "5", name: "Class 11" },
-      //         { id: "6", name: "Class 12" },
-      //         { id: "7", name: "University" },
-      //       ],
-      //     },
-      //   ];
-      //   setCategories(demoCategories);
-      // } else {
-      //   setCategories(taxonomy.categories);
-      // }
+      await createReview({
+        ...reviewForm,
+        userId: user?.id || "",
+        tutor_id: tutorId,
+        isActive: true,
+      }).unwrap();
+
+      toast({
+        title: "Success",
+        description: "Your review has been submitted successfully",
+      });
+
+      setReviewForm({
+        ...reviewForm,
+        testimonial: "",
+      });
+
+      refetchReviews();
+      setActiveReviewTab("written");
     } catch (error) {
-      // console.error('Error fetching taxonomy:', error);
-      // Fallback to demo categories
-      const demoCategories: Category[] = [
-        // {
-        //   id: "1",
-        //   name: "Science",
-        //   subjects: [
-        //     { id: "1", name: "Physics" },
-        //     { id: "2", name: "Chemistry" },
-        //     { id: "3", name: "Mathematics" },
-        //   ],
-        //   classLevels: [
-        //     { id: "1", name: "Class 9" },
-        //     { id: "2", name: "Class 10" },
-        //     { id: "3", name: "Class 11" },
-        //   ],
-        // },
-      ];
-      setCategories(demoCategories);
+      toast({
+        title: "Error",
+        description: "Failed to submit review",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle video review submission
+  const handleSubmitVideoReview = async () => {
+    if (
+      !videoReviewForm.videoUrl.trim() ||
+      !videoReviewForm.testimonial.trim()
+    ) {
+      toast({
+        title: "Error",
+        description: "Please fill all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await createVideoReview({
+        ...videoReviewForm,
+        userId: user?.id || "",
+        tutor_id: tutorId,
+        isActive: true,
+      }).unwrap();
+
+      toast({
+        title: "Success",
+        description: "Your video testimonial has been submitted successfully",
+      });
+
+      setVideoReviewForm({
+        ...videoReviewForm,
+        videoUrl: "",
+        testimonial: "",
+        thumbnail: "",
+        duration: "",
+      });
+
+      refetchReviews();
+      setActiveReviewTab("video");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit video testimonial",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle tuition job posting (just a button click)
+  const handleTuitionSubmit = async () => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "Please login to post a tuition job",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmittingTuition(true);
+    try {
+      // Simulate API call for posting tuition job
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      toast({
+        title: "Success",
+        description:
+          "Tuition job posted successfully! The tutor will contact you soon.",
+      });
+
+      setShowTuitionSuccess(true);
+
+      // Reset success message after 3 seconds
+      setTimeout(() => {
+        setShowTuitionSuccess(false);
+      }, 3000);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to post tuition job",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoadingTaxonomy(false);
+      setIsSubmittingTuition(false);
     }
-  }, [toast]);
+  };
 
-  // Update available areas when district changes
-  useEffect(() => {
-    if (tuitionFormData.district) {
-      const district = BANGLADESH_DISTRICTS_WITH_POST_OFFICES.find(
-        (d) => d.id === tuitionFormData.district
-      );
-      if (district) {
-        setAvailableAreas(district.areas.map((area) => area.name));
-        setTuitionFormData((prev:any) => ({
-          ...prev,
-          area: "",
-        }));
-      } else {
-        setAvailableAreas([]);
-      }
-    } else {
-      setAvailableAreas([]);
-    }
-  }, [tuitionFormData.district]);
-
-  // Fetch taxonomy data on component mount
-  useEffect(() => {
-    fetchTaxonomyData();
-  }, [fetchTaxonomyData]);
-
-  // All other existing functions (handleTuitionFormChange, handleSubjectSelection, etc.)
-  // remain exactly the same as in your original code...
-
-  // Rest of your component functions (handleContactSubmit, handleReviewSubmitted, etc.)
-  // remain exactly the same...
-
-  const formatMemberSince = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+  // Format date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
   };
 
+  // Render stars
   const renderStars = (rating: number) => {
     return (
       <div className="flex items-center">
@@ -1770,139 +368,243 @@ export default function TutorProfileClient({
     );
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+  // Get tutor's full name with fallback
+  const getTutorFullName = () => {
+    if (!tutor?.fullName) return "Tutor";
+    return tutor.fullName
+      .split(" ")
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  // Get tutor's subjects with fallback
+  const getTutorSubjects = () => {
+    if (!tutor?.subjects || !Array.isArray(tutor.subjects))
+      return ["Not specified"];
+    return tutor.subjects;
+  };
+
+  // Calculate average rating
+  const calculateAverageRating = () => {
+    if (reviews.length === 0) return 0;
+    const total = reviews.reduce((sum, review) => sum + review.rating, 0);
+    return total / reviews.length;
   };
 
   // Loading state
-  if (loading) {
+  if (tutorLoading) {
     return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 hide-scrollbar">
-        <div className="space-y-6">
-          <Skeleton className="h-12 w-96" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-64 w-full" />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left column skeleton */}
+          <div className="lg:col-span-3">
+            <Skeleton className="h-[400px] w-full rounded-lg" />
+          </div>
+          {/* Middle column skeleton */}
+          <div className="lg:col-span-6">
+            <Skeleton className="h-[600px] w-full rounded-lg" />
+          </div>
+          {/* Right column skeleton */}
+          <div className="lg:col-span-3">
+            <Skeleton className="h-[600px] w-full rounded-lg" />
+          </div>
         </div>
       </div>
     );
   }
 
   // Error state
-  if (error || !tutor) {
+  if (tutorError || !tutor) {
     return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 hide-scrollbar">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
             Tutor Not Found
           </h1>
           <p className="text-gray-600 mb-6">
-            {error || "The tutor profile you're looking for doesn't exist."}
+            The tutor profile you're looking for doesn't exist or has been
+            removed.
           </p>
         </div>
       </div>
     );
   }
 
-  const handleReviewSubmitted = (newReview: any) => {
-    // এখানে তুমি নতুন review add করতে পারো state-এ
-    setReviews((prev) => [newReview, ...prev]);
-  };
-  const handleTuitionSubmit = (newReview: any) => {
-    // এখানে তুমি নতুন review add করতে পারো state-এ
-    setReviews((prev) => [newReview, ...prev]);
-  };
-
-  // Your existing JSX return statement remains exactly the same
-  // The design will stay identical, just populated with real + demo data
   return (
     <div className="bg-white py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Section - Personal Profile Card */}
           <div className="lg:col-span-3">
-            <Card className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <Card className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
               <CardContent className="p-6">
                 {/* Tutor Image */}
-                <div className="flex justify-center mb-6">
-                  <Avatar className="w-32 h-32">
-                    <AvatarImage src={tutor.avatar_url} alt={tutor.full_name} />
-                    <AvatarFallback className="text-2xl">
-                      {tutor.full_name
+                <div className="flex justify-center mb-6 relative">
+                  <Avatar className="w-32 h-32 border-4 border-white shadow-lg">
+                    <AvatarImage
+                      src={tutor.avatar}
+                      alt={tutor.fullName}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="text-2xl bg-gradient-to-br from-green-100 to-emerald-100 text-green-800">
+                      {tutor.fullName
                         ?.split(" ")
                         .map((n: string) => n[0])
-                        .join("") || "T"}
+                        .join("")
+                        .slice(0, 2) || "TU"}
                     </AvatarFallback>
                   </Avatar>
+
+                  {/* Verified and Premium Badges */}
+                  <div className="absolute -top-2 -right-2 flex flex-col gap-1">
+                    {tutor.verified && (
+                      <div
+                        className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg"
+                        title="Verified Tutor"
+                      >
+                        <ShieldCheck className="h-4 w-4 text-white" />
+                      </div>
+                    )}
+                    {tutor.premium && (
+                      <div
+                        className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center shadow-lg"
+                        title="Premium Tutor"
+                      >
+                        <Award className="h-4 w-4 text-white" />
+                      </div>
+                    )}
+                    {tutor.genius && (
+                      <div
+                        className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg"
+                        title="Genius Tutor"
+                      >
+                        <Star className="h-3 w-3 text-white" />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Tutor Name */}
-                <h1 className="text-2xl font-bold text-green-900 text-center mb-6">
-                  {tutor.full_name?.toUpperCase() || "TUTOR NAME"}
+                <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">
+                  {getTutorFullName()}
                 </h1>
 
                 {/* Rating */}
-                <div className="text-center mb-6">
-                  <div className="flex items-center justify-center gap-1 mb-2">
-                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                    <span className="text-sm text-gray-600">
-                      {tutor.rating || "0.00"} ({tutor.total_reviews || 0}{" "}
-                      Reviews)
+                <div className="text-center mb-4">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    {renderStars(Math.round(calculateAverageRating()))}
+                    <span className="text-sm font-medium text-gray-700">
+                      {calculateAverageRating().toFixed(1)} ({reviews.length}{" "}
+                      reviews)
                     </span>
                   </div>
+                  <span className="text-xs text-gray-500">
+                    Tutor ID: {tutor.tutor_id}
+                  </span>
+                </div>
+
+                {/* Status Badge */}
+                <div className="flex justify-center mb-6">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      tutor.tutorStatus === "approved"
+                        ? "bg-green-100 text-green-800"
+                        : tutor.tutorStatus === "pending"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {tutor.tutorStatus?.charAt(0).toUpperCase() +
+                      tutor.tutorStatus?.slice(1)}
+                  </span>
                 </div>
 
                 {/* Personal Details */}
-                <div className="space-y-3 mb-8">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">University:</span>
-                    <span className="font-semibold text-right max-w-32 break-words">
-                      {tutor.university_name || "N/A"}
-                    </span>
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center gap-2 text-sm">
+                    <GraduationCap className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <span className="text-gray-600">Education: </span>
+                      <span className="font-semibold">
+                        {tutor.education ||
+                          tutor.qualification ||
+                          "Not specified"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Department:</span>
-                    <span className="font-semibold text-right max-w-32 break-words">
-                      {tutor.department_name || "N/A"}
-                    </span>
+
+                  <div className="flex items-center gap-2 text-sm">
+                    <BookOpen className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <span className="text-gray-600">Institute: </span>
+                      <span className="font-semibold">
+                        {tutor.Institute_name || "Not specified"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Gender:</span>
-                    <span className="font-semibold">
-                      {tutor.gender || "N/A"}
-                    </span>
+
+                  <div className="flex items-center gap-2 text-sm">
+                    <Users className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <span className="text-gray-600">Gender: </span>
+                      <span className="font-semibold capitalize">
+                        {tutor.gender || "Not specified"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">ID:</span>
-                    <span className="font-semibold">
-                      {tutor.tutor_id || "N/A"}
-                    </span>
+
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <span className="text-gray-600">Location: </span>
+                      <span className="font-semibold">
+                        {tutor.district?.charAt(0).toUpperCase() +
+                          tutor.district?.slice(1) || "Not specified"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Coverage Location:</span>
-                    <span className="font-semibold text-right max-w-32 break-words">
-                      {tutor.preferred_areas && tutor.preferred_areas.length > 0
-                        ? tutor.preferred_areas.join(", ") // Dhaka, Gazipur
-                        : "N/A"}
-                    </span>
+
+                  <div className="flex items-center gap-2 text-sm">
+                    <DollarSign className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <span className="text-gray-600">Hourly Rate: </span>
+                      <span className="font-semibold">
+                        ৳{tutor.hourly_rate || "Negotiable"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Experience:</span>
-                    <span className="font-semibold">
-                      {tutor.tutoring_experience || "N/A"} Years
-                    </span>
+
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <span className="text-gray-600">Experience: </span>
+                      <span className="font-semibold">
+                        {tutor.experience || 0} years
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <span className="text-gray-600">Phone: </span>
+                      <span className="font-semibold">{tutor.phone}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <span className="text-gray-600">Email: </span>
+                      <span className="font-semibold">{tutor.email}</span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Member Since */}
-                <div className="bg-green-500 text-white p-3 rounded-b-lg -mx-6 -mb-6">
-                  <p className="text-sm text-center">
-                    Member Since: {formatMemberSince(tutor.created_at)}
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg -mx-6 -mb-6 border-t border-gray-100">
+                  <p className="text-sm text-gray-600 text-center">
+                    Member since {formatDate(tutor.createdAt)}
                   </p>
                 </div>
               </CardContent>
@@ -1911,209 +613,257 @@ export default function TutorProfileClient({
 
           {/* Middle Section - Detailed Information */}
           <div className="lg:col-span-6">
-            <Card className="bg-white rounded-lg shadow-lg h-full">
+            <Card className="bg-white rounded-lg shadow-lg border border-gray-200">
               <CardContent className="p-0">
-                {/* Navigation Tabs */}
                 <Tabs defaultValue="personal-info" className="w-full">
-                  <TabsList className="flex flex-wrap w-full rounded-none border-b bg-transparent h-auto p-0">
+                  <TabsList className="flex w-full rounded-t-lg border-b bg-gray-50">
                     <TabsTrigger
                       value="personal-info"
-                      className="flex-grow rounded-none border-b-2 border-transparent data-[state=active]:border-green-600 data-[state=active]:bg-transparent data-[state=active]:text-green-600 py-3 px-4 text-sm font-medium text-center"
+                      className="flex-1 data-[state=active]:bg-white data-[state=active]:shadow-sm"
                     >
                       Personal Info
                     </TabsTrigger>
                     <TabsTrigger
-                      value="tutoring-info"
-                      className="flex-grow rounded-none border-b-2 border-transparent data-[state=active]:border-green-600 data-[state=active]:bg-transparent data-[state=active]:text-green-600 py-3 px-4 text-sm font-medium text-center"
-                    >
-                      Tutoring Info
-                    </TabsTrigger>
-                    <TabsTrigger
                       value="education"
-                      className="flex-grow rounded-none border-b-2 border-transparent data-[state=active]:border-green-600 data-[state=active]:bg-transparent data-[state=active]:text-green-600 py-3 px-4 text-sm font-medium text-center"
+                      className="flex-1 data-[state=active]:bg-white data-[state=active]:shadow-sm"
                     >
-                      Educational Info
+                      Education
                     </TabsTrigger>
                     <TabsTrigger
                       value="reviews"
-                      className="flex-grow rounded-none border-b-2 border-transparent data-[state=active]:border-green-600 data-[state=active]:bg-transparent data-[state=active]:text-green-600 py-3 px-4 text-sm font-medium text-center"
+                      className="flex-1 data-[state=active]:bg-white data-[state=active]:shadow-sm"
                     >
-                      Reviews
+                      Reviews ({reviews.length + videoReviews.length})
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="personal-info" className="p-6 space-y-4">
-                    <div className="space-y-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Running Year:</span>
-                        <span className="font-semibold">
-                          {tutor.university_year || "N/A"}
-                        </span>
+                  {/* Personal Info Tab */}
+                  <TabsContent value="personal-info" className="p-6 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          Personal Details
+                        </h3>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-sm text-gray-500">Full Name</p>
+                            <p className="font-medium">{getTutorFullName()}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Gender</p>
+                            <p className="font-medium capitalize">
+                              {tutor.gender}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Religion</p>
+                            <p className="font-medium">{tutor.religion}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Blood Group</p>
+                            <p className="font-medium">
+                              {tutor.blood_group || "N/A"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Nationality</p>
+                            <p className="font-medium">{tutor.nationality}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Gender:</span>
-                        <span className="font-semibold">
-                          {tutor.gender || "N/A"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Religion:</span>
-                        <span className="font-semibold">
-                          {tutor.religion || "N/A"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Nationality:</span>
-                        <span className="font-semibold">
-                          {tutor.nationality || "N/A"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Blood Group:</span>
-                        <span className="font-semibold">
-                          {tutor.blood_group || "N/A"}
-                        </span>
+
+                      <div className="space-y-4">
+                        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          Location Details
+                        </h3>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-sm text-gray-500">District</p>
+                            <p className="font-medium capitalize">
+                              {tutor.district}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">
+                              Present Location
+                            </p>
+                            <p className="font-medium">
+                              {tutor.present_location || "N/A"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">
+                              Preferred Areas
+                            </p>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {tutor.preferred_areas
+                                ?.slice(0, 3)
+                                .map((area: any, index: any) => (
+                                  <Badge
+                                    key={index}
+                                    variant="secondary"
+                                    className="bg-green-50 text-green-700 hover:bg-green-50 text-xs"
+                                  >
+                                    {area}
+                                  </Badge>
+                                ))}
+                              {tutor.preferred_areas?.length > 3 && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-gray-600 text-xs"
+                                >
+                                  +{tutor.preferred_areas.length - 3} more
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </TabsContent>
 
-                  <TabsContent value="tutoring-info" className="p-6 space-y-4">
-                    <div className="space-y-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">
-                          Preferred Tutoring Class:
-                        </span>
-                        <span className="font-semibold">
-                          {tutor.preferred_class || "N/A"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">
-                          Preferred Tutoring Category:
-                        </span>
-                        <span className="font-semibold">
-                          {tutor.preferred_tutoring_style || "N/A"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">
-                          Preferred Tutoring Subject:
-                        </span>
-                        <span className="font-semibold text-right max-w-48">
-                          {tutor.preferred_subjects || "N/A"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">
-                          Preferred Tutoring Method:
-                        </span>
-                        <span className="font-semibold">
-                          {tutor.preferred_medium || "N/A"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">
-                          Tutor Present Location:
-                        </span>
-                        <span className="font-semibold">
-                          {tutor.district || tutor.location || "N/A"}
-                          {tutor.area && `, ${tutor.area}`}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Available Days:</span>
-                        <span className="font-semibold">
-                          {tutor.days_per_week || "N/A"} Day/Week
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Available Time:</span>
-                        <span className="font-semibold">
-                          {tutor.preferred_time || "N/A"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">
-                          Tutoring Experience:
-                        </span>
-                        <span className="font-semibold">
-                          {tutor.tutoring_experience || "N/A"} Years
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Preferable Area:</span>
-                        <span className="font-semibold text-right max-w-48">
-                          {tutor.area || "N/A"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Expected Salary:</span>
-                        <span className="font-semibold">
-                          {tutor.expected_salary || "N/A"}
-                        </span>
+                    {/* Tutoring Details */}
+                    <div className="space-y-4 pt-4 border-t">
+                      <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                        <BookOpen className="h-4 w-4" />
+                        Tutoring Details
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Subjects</p>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {getTutorSubjects().map(
+                              (subject: any, index: any) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="bg-blue-50 text-blue-700 hover:bg-blue-50"
+                                >
+                                  {subject}
+                                </Badge>
+                              )
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Availability</p>
+                          <p className="font-medium">
+                            {tutor.availability || "Flexible"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">
+                            Preferred Time
+                          </p>
+                          <p className="font-medium">
+                            {tutor.preferred_time?.join(", ") || "Flexible"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">
+                            Tutoring Style
+                          </p>
+                          <p className="font-medium">
+                            {tutor.preferred_tutoring_style?.join(", ") ||
+                              "Standard"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">
+                            Expected Salary
+                          </p>
+                          <p className="font-medium">
+                            {tutor.expected_salary || "Negotiable"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Days per Week</p>
+                          <p className="font-medium">
+                            {tutor.days_per_week || "Flexible"}
+                          </p>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Bio */}
+                    {tutor.bio && (
+                      <div className="space-y-4 pt-4 border-t">
+                        <h3 className="font-semibold text-gray-900">Bio</h3>
+                        <p className="text-gray-700">{tutor.bio}</p>
+                      </div>
+                    )}
+
+                    {/* Additional Info */}
+                    {tutor.other_skills && tutor.other_skills.length > 0 && (
+                      <div className="space-y-4 pt-4 border-t">
+                        <h3 className="font-semibold text-gray-900">Skills</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {tutor.other_skills.map((skill: any, index: any) => (
+                            <Badge
+                              key={index}
+                              variant="outline"
+                              className="bg-gray-50"
+                            >
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </TabsContent>
 
+                  {/* Education Tab */}
                   <TabsContent value="education" className="p-6">
                     <div className="space-y-6">
-                      <h3 className="text-lg font-semibold mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
                         Educational Qualifications
                       </h3>
-                      {tutor.educational_qualifications &&
-                      tutor.educational_qualifications.length > 0 ? (
-                        <div className="overflow-x-auto">
-                          <Table className="min-w-full bg-white border border-gray-200 rounded-lg">
-                            <TableHeader className="bg-gray-800 text-white">
-                              <TableRow className="hover:bg-gray-800">
-                                <TableHead className="px-4 py-2 text-left text-sm text-white font-medium">
+                      {educationalQualifications.length > 0 ? (
+                        <div className="overflow-x-auto rounded-lg border border-gray-200">
+                          <Table>
+                            <TableHeader className="bg-gray-50">
+                              <TableRow>
+                                <TableHead className="font-medium">
                                   Exam
                                 </TableHead>
-                                <TableHead className="px-4 py-2 text-left text-sm text-white font-medium">
+                                <TableHead className="font-medium">
                                   Institute
                                 </TableHead>
-                                <TableHead className="px-4 py-2 text-left text-sm text-white font-medium">
+                                <TableHead className="font-medium">
                                   Board
                                 </TableHead>
-                                <TableHead className="px-4 py-2 text-left text-sm text-white font-medium">
+                                <TableHead className="font-medium">
                                   Group
                                 </TableHead>
-                                <TableHead className="px-4 py-2 text-left text-sm text-white font-medium">
+                                <TableHead className="font-medium">
                                   Year
                                 </TableHead>
-                                <TableHead className="px-4 py-2 text-left text-sm text-white font-medium">
-                                  GPA
+                                <TableHead className="font-medium">
+                                  GPA/CGPA
                                 </TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {tutor.educational_qualifications.map(
+                              {educationalQualifications.map(
                                 (edu: any, index: number) => (
                                   <TableRow
                                     key={index}
                                     className={
                                       index % 2 === 0
-                                        ? "bg-gray-50"
-                                        : "bg-white"
+                                        ? "bg-white"
+                                        : "bg-gray-50"
                                     }
                                   >
-                                    <TableCell className="px-4 py-2 text-sm text-gray-800">
-                                      {edu.exam_title || "N/A"}
+                                    <TableCell className="font-medium">
+                                      {edu.examTitle}
                                     </TableCell>
-                                    <TableCell className="px-4 py-2 text-sm text-gray-800">
-                                      {edu.institute || "N/A"}
-                                    </TableCell>
-                                    <TableCell className="px-4 py-2 text-sm text-gray-800">
-                                      {edu.board || "N/A"}
-                                    </TableCell>
-                                    <TableCell className="px-4 py-2 text-sm text-gray-800">
-                                      {edu.group || "N/A"}
-                                    </TableCell>
-                                    <TableCell className="px-4 py-2 text-sm text-gray-800">
-                                      {edu.year || "N/A"}
-                                    </TableCell>
-                                    <TableCell className="px-4 py-2 text-sm text-gray-800">
-                                      {edu.gpa || "N/A"}
+                                    <TableCell>{edu.institute}</TableCell>
+                                    <TableCell>{edu.board}</TableCell>
+                                    <TableCell>{edu.group}</TableCell>
+                                    <TableCell>{edu.year}</TableCell>
+                                    <TableCell className="font-semibold">
+                                      {edu.gpa}
                                     </TableCell>
                                   </TableRow>
                                 )
@@ -2122,27 +872,47 @@ export default function TutorProfileClient({
                           </Table>
                         </div>
                       ) : (
-                        <p className="text-gray-600">
-                          No educational qualifications available.
+                        <p className="text-gray-600 text-center py-8">
+                          No educational qualifications provided
                         </p>
                       )}
 
-                      {tutor.other_skills && tutor.other_skills.length > 0 && (
-                        <div className="mt-6">
-                          <h3 className="text-lg font-semibold mb-4">
-                            Tutor Skills
-                          </h3>
-                          <div className="flex flex-wrap gap-2">
-                            {tutor.other_skills.map(
-                              (skill: string, index: number) => (
-                                <Badge
-                                  key={index}
-                                  variant="secondary"
-                                  className="px-3 py-1 text-sm"
-                                >
-                                  {skill}
-                                </Badge>
-                              )
+                      {/* Additional Education Info */}
+                      {(tutor.Institute_name ||
+                        tutor.department_name ||
+                        tutor.year) && (
+                        <div className="pt-6 border-t">
+                          <h4 className="font-semibold text-gray-900 mb-3">
+                            Current Education
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {tutor.Institute_name && (
+                              <div>
+                                <p className="text-sm text-gray-500">
+                                  Institute
+                                </p>
+                                <p className="font-medium">
+                                  {tutor.Institute_name}
+                                </p>
+                              </div>
+                            )}
+                            {tutor.department_name && (
+                              <div>
+                                <p className="text-sm text-gray-500">
+                                  Department
+                                </p>
+                                <p className="font-medium">
+                                  {tutor.department_name}
+                                </p>
+                              </div>
+                            )}
+                            {tutor.year && (
+                              <div>
+                                <p className="text-sm text-gray-500">
+                                  Year/Semester
+                                </p>
+                                <p className="font-medium">{tutor.year}</p>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -2150,127 +920,353 @@ export default function TutorProfileClient({
                     </div>
                   </TabsContent>
 
+                  {/* Reviews Tab */}
                   <TabsContent value="reviews" className="p-6">
                     <div className="space-y-6">
                       {/* Review Stats */}
-                      {reviewStats && (
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold">
+                      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-6">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
                               Review Summary
                             </h3>
                             <div className="flex items-center gap-2">
-                              {renderStars(
-                                Math.round(reviewStats.average_rating || 0)
-                              )}
-                              <span className="text-sm text-gray-600">
-                                {reviewStats.average_rating?.toFixed(1) ||
-                                  "0.0"}{" "}
-                                ({reviewStats.approved_reviews || 0} reviews)
+                              <div className="flex items-center">
+                                <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                                <span className="ml-2 text-2xl font-bold text-gray-900">
+                                  {calculateAverageRating().toFixed(1)}
+                                </span>
+                              </div>
+                              <span className="text-gray-600">
+                                out of 5 ({reviews.length + videoReviews.length}{" "}
+                                total reviews)
                               </span>
                             </div>
                           </div>
-                          <div className="grid grid-cols-1 gap-4 text-center">
-                            <div>
+                          <div className="flex flex-wrap gap-4">
+                            <div className="text-center">
                               <div className="text-2xl font-bold text-green-600">
-                                {reviewStats.approved_reviews || 0}
+                                {reviews.length}
                               </div>
                               <div className="text-sm text-gray-600">
-                                Approved Reviews
+                                Written Reviews
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-blue-600">
+                                {videoReviews.length}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                Video Reviews
                               </div>
                             </div>
                           </div>
                         </div>
-                      )}
+                      </div>
 
-                      {/* Review Form - Only for logged-in students who haven't reviewed */}
-                      {user && user.role === "student" && !hasUserReviewed && (
-                        <div className="border rounded-lg p-4 bg-green-50">
-                          <ReviewForm
-                            tutorId={tutorId}
-                            onReviewSubmitted={handleReviewSubmitted}
-                          />
-                        </div>
-                      )}
+                      {/* Review Tabs */}
+                      <Tabs
+                        value={activeReviewTab}
+                        onValueChange={(value) =>
+                          setActiveReviewTab(
+                            value as "written" | "video" | "write"
+                          )
+                        }
+                      >
+                        <TabsList className="grid grid-cols-3 mb-6">
+                          <TabsTrigger value="written">
+                            Written Reviews
+                          </TabsTrigger>
+                          <TabsTrigger value="video">Video Reviews</TabsTrigger>
+                          <TabsTrigger value="write">
+                            {hasUserReviewed ? "Update Review" : "Write Review"}
+                          </TabsTrigger>
+                        </TabsList>
 
-                      {/* Reviews List */}
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold">Reviews</h3>
-
-                        {reviewsLoading ? (
-                          <div className="space-y-4">
-                            {[1, 2, 3].map((i) => (
-                              <div key={i} className="border rounded-lg p-4">
-                                <Skeleton className="h-4 w-1/4 mb-2" />
-                                <Skeleton className="h-4 w-1/6 mb-3" />
-                                <Skeleton className="h-16 w-full" />
-                              </div>
-                            ))}
-                          </div>
-                        ) : reviews && reviews.length > 0 ? (
-                          <div className="space-y-4">
-                            {reviews.map((review) => (
-                              <div
-                                key={review.id}
-                                className="border rounded-lg p-4 bg-white"
-                              >
-                                <div className="flex items-start justify-between mb-3">
-                                  <div className="flex items-center gap-3">
-                                    <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                      <User className="h-4 w-4 text-gray-600" />
-                                    </div>
-                                    <div>
-                                      <div className="font-medium text-sm">
-                                        {review.reviewer_name || "Anonymous"}
+                        {/* Written Reviews */}
+                        <TabsContent value="written" className="space-y-4">
+                          {reviewsLoading ? (
+                            <div className="space-y-4">
+                              {[1, 2].map((i) => (
+                                <Skeleton key={i} className="h-32 w-full" />
+                              ))}
+                            </div>
+                          ) : reviews.length > 0 ? (
+                            <div className="space-y-4">
+                              {reviews.map((review) => (
+                                <Card
+                                  key={review.id}
+                                  className="border border-gray-200"
+                                >
+                                  <CardContent className="p-4">
+                                    <div className="flex items-start justify-between mb-3">
+                                      <div className="flex items-center gap-3">
+                                        <Avatar className="h-10 w-10">
+                                          <AvatarImage
+                                            src={review.avatar}
+                                            alt={review.name}
+                                          />
+                                          <AvatarFallback>
+                                            {review.name
+                                              .split(" ")
+                                              .map((n) => n[0])
+                                              .join("")}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                          <h4 className="font-medium text-gray-900">
+                                            {review.name}
+                                          </h4>
+                                          <p className="text-sm text-gray-500">
+                                            {review.role} • {review.location}
+                                          </p>
+                                        </div>
                                       </div>
                                       <div className="flex items-center gap-2">
-                                        {renderStars(review.rating || 0)}
-                                        <span className="text-xs text-gray-500">
-                                          {review.created_at
-                                            ? formatDate(review.created_at)
-                                            : "Unknown date"}
+                                        {renderStars(review.rating)}
+                                        <span className="text-sm text-gray-500">
+                                          {formatDate(review.createdAt)}
                                         </span>
                                       </div>
                                     </div>
+                                    <p className="text-gray-700">
+                                      {review.testimonial}
+                                    </p>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-12">
+                              <MessageCircle className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                              <h4 className="text-lg font-medium text-gray-900 mb-2">
+                                No written reviews yet
+                              </h4>
+                              <p className="text-gray-600">
+                                Be the first to share your experience with this
+                                tutor
+                              </p>
+                            </div>
+                          )}
+                        </TabsContent>
+
+                        {/* Video Reviews */}
+                        <TabsContent value="video" className="space-y-4">
+                          {reviewsLoading ? (
+                            <div className="space-y-4">
+                              {[1, 2].map((i) => (
+                                <Skeleton key={i} className="h-48 w-full" />
+                              ))}
+                            </div>
+                          ) : videoReviews.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {videoReviews.map((review) => (
+                                <Card
+                                  key={review.id}
+                                  className="border border-gray-200"
+                                >
+                                  <CardContent className="p-4">
+                                    <div className="mb-3">
+                                      <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 mb-3">
+                                        {review.thumbnail ? (
+                                          <img
+                                            src={review.thumbnail}
+                                            alt={review.name}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                            <div className="text-center">
+                                              <MessageCircle className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+                                              <p className="text-sm text-gray-500">
+                                                Video testimonial
+                                              </p>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="flex justify-between items-start">
+                                        <div>
+                                          <h4 className="font-medium text-gray-900">
+                                            {review.name}
+                                          </h4>
+                                          <p className="text-sm text-gray-500">
+                                            {review.role} • {review.duration}
+                                          </p>
+                                        </div>
+                                        {renderStars(review.rating)}
+                                      </div>
+                                    </div>
+                                    <p className="text-gray-700 text-sm line-clamp-2">
+                                      {review.testimonial}
+                                    </p>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="w-full mt-3"
+                                      onClick={() =>
+                                        window.open(review.videoUrl, "_blank")
+                                      }
+                                    >
+                                      Watch Video
+                                    </Button>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-12">
+                              <MessageCircle className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                              <h4 className="text-lg font-medium text-gray-900 mb-2">
+                                No video reviews yet
+                              </h4>
+                              <p className="text-gray-600">
+                                Be the first to share a video testimonial
+                              </p>
+                            </div>
+                          )}
+                        </TabsContent>
+
+                        {/* Write Review */}
+                        <TabsContent value="write" className="space-y-6">
+                          {/* Written Review Form */}
+                          <Card className="border border-gray-200">
+                            <CardContent className="p-6">
+                              <h4 className="font-semibold text-gray-900 mb-4">
+                                Write a Review
+                              </h4>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="rating">Rating</Label>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <button
+                                        key={star}
+                                        type="button"
+                                        onClick={() =>
+                                          setReviewForm({
+                                            ...reviewForm,
+                                            rating: star,
+                                          })
+                                        }
+                                        className="p-1"
+                                      >
+                                        <Star
+                                          className={`h-6 w-6 ${
+                                            star <= reviewForm.rating
+                                              ? "text-yellow-400 fill-yellow-400"
+                                              : "text-gray-300"
+                                          }`}
+                                        />
+                                      </button>
+                                    ))}
                                   </div>
                                 </div>
-
-                                <p className="text-gray-700 text-sm leading-relaxed mb-3">
-                                  {review.comment || "No comment provided"}
-                                </p>
-
-                                {review.response && (
-                                  <div className="bg-gray-50 rounded-lg p-3 mt-3">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <MessageCircle className="h-4 w-4 text-gray-600" />
-                                      <span className="text-sm font-medium text-gray-700">
-                                        Tutor Response
-                                      </span>
-                                      <span className="text-xs text-gray-500">
-                                        {review.response_created_at &&
-                                          formatDate(
-                                            review.response_created_at
-                                          )}
-                                      </span>
-                                    </div>
-                                    <p className="text-sm text-gray-600">
-                                      {review.response}
-                                    </p>
-                                  </div>
-                                )}
+                                <div>
+                                  <Label htmlFor="testimonial">
+                                    Your Testimonial *
+                                  </Label>
+                                  <Textarea
+                                    id="testimonial"
+                                    placeholder="Share your experience with this tutor..."
+                                    value={reviewForm.testimonial}
+                                    onChange={(e) =>
+                                      setReviewForm({
+                                        ...reviewForm,
+                                        testimonial: e.target.value,
+                                      })
+                                    }
+                                    className="mt-2 min-h-[120px]"
+                                  />
+                                </div>
+                                <Button
+                                  onClick={handleSubmitReview}
+                                  disabled={
+                                    isCreatingReview || !reviewForm.testimonial
+                                  }
+                                  className="w-full"
+                                >
+                                  {isCreatingReview
+                                    ? "Submitting..."
+                                    : "Submit Review"}
+                                </Button>
                               </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-center py-8 text-gray-600">
-                            <MessageCircle className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                            <p>No reviews yet.</p>
-                            <p className="text-sm">
-                              Be the first to review this tutor!
-                            </p>
-                          </div>
-                        )}
-                      </div>
+                            </CardContent>
+                          </Card>
+
+                          {/* Video Review Form */}
+                          <Card className="border border-gray-200">
+                            <CardContent className="p-6">
+                              <h4 className="font-semibold text-gray-900 mb-4">
+                                Share Video Testimonial
+                              </h4>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="thumbnailUrl">Thumbnail URL *</Label>
+                                  <Input
+                                    id="thumbnail"
+                                    placeholder="https://imageurl.com/thumbnail.jpg"
+                                    value={videoReviewForm.thumbnail}
+                                    onChange={(e) =>
+                                      setVideoReviewForm({
+                                        ...videoReviewForm,
+                                        thumbnail: e.target.value,
+                                      })
+                                    }
+                                    className="mt-2"
+                                  />
+                                </div>
+
+                                <div>
+                                  <Label htmlFor="videoUrl">Video URL *</Label>
+                                  <Input
+                                    id="videoUrl"
+                                    placeholder="https://youtube.com/..."
+                                    value={videoReviewForm.videoUrl}
+                                    onChange={(e) =>
+                                      setVideoReviewForm({
+                                        ...videoReviewForm,
+                                        videoUrl: e.target.value,
+                                      })
+                                    }
+                                    className="mt-2"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="videoTestimonial">
+                                    Video Description *
+                                  </Label>
+                                  <Textarea
+                                    id="videoTestimonial"
+                                    placeholder="Describe what you shared in the video..."
+                                    value={videoReviewForm.testimonial}
+                                    onChange={(e) =>
+                                      setVideoReviewForm({
+                                        ...videoReviewForm,
+                                        testimonial: e.target.value,
+                                      })
+                                    }
+                                    className="mt-2 min-h-[100px]"
+                                  />
+                                </div>
+                                <Button
+                                  onClick={handleSubmitVideoReview}
+                                  disabled={
+                                    isCreatingVideoReview ||
+                                    !videoReviewForm.videoUrl ||
+                                    !videoReviewForm.testimonial
+                                  }
+                                  className="w-full"
+                                >
+                                  {isCreatingVideoReview
+                                    ? "Submitting..."
+                                    : "Submit Video Testimonial"}
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </TabsContent>
+                      </Tabs>
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -2278,36 +1274,43 @@ export default function TutorProfileClient({
             </Card>
           </div>
 
-          {/* Right Section - Tuition Job Posting */}
-          <div className="lg:col-span-3 relative">
-            <Card className="bg-white rounded-lg shadow-lg">
-              <CardContent className="p-6 flex flex-col">
-                <h3 className="text-lg font-bold text-gray-800 mb-6">
-                  Post a Tuition Job
-                </h3>
-
-                <div
-                  className="space-y-4 flex-1 overflow-y-auto scrollbar-hide"
-                  style={{ maxHeight: "calc(100vh - 300px)" }}
-                >
-                  {/* Your existing tuition form JSX remains exactly the same */}
-                  {/* ... */}
-                </div>
-
-                <div className="mt-6">
-                  <Button
-                    onClick={handleTuitionSubmit}
-                    disabled={isSubmittingTuition}
-                    className="w-full bg-gradient-to-r from-green-600 to-green-400 hover:from-green-700 hover:to-green-500 text-white font-medium py-2 px-4 rounded-lg"
-                  >
-                    {isSubmittingTuition
-                      ? "Submitting..."
-                      : "Submit Tuition Request"}
-                    {!isSubmittingTuition && (
-                      <CheckCircle2 className="h-4 w-4 ml-2" />
-                    )}
-                  </Button>
-                </div>
+          {/* Right Section - Tuition Job Posting (Only Button) */}
+          <div className="lg:col-span-3">
+            <Card className="bg-white rounded-lg shadow-lg border border-gray-200">
+              <CardContent className="p-6">
+                {showTuitionSuccess ? (
+                  <div className="text-center py-8">
+                    <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Tuition Job Posted Successfully!
+                    </h3>
+                    <p className="text-gray-600">
+                      The tutor will contact you shortly.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">
+                      Interested in this tutor?
+                    </h3>
+                    <p className="text-gray-600 text-center mb-8">
+                      Post a tuition job and let the tutor contact you directly.
+                    </p>
+                    <Button
+                      onClick={handleTuitionSubmit}
+                      disabled={isSubmittingTuition}
+                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium py-6 text-lg rounded-lg transition-all duration-300 hover:shadow-lg"
+                      size="lg"
+                    >
+                      {isSubmittingTuition
+                        ? "Posting Tuition Job..."
+                        : "Post a Tuition Job"}
+                    </Button>
+                    <p className="text-sm text-gray-500 text-center mt-4">
+                      One click to connect with this tutor
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

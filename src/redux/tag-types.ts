@@ -18,6 +18,7 @@ export enum tagTypes {
   notice = "notice",
   application = "application",
   notification = "notification",
+  review = "review",
 }
 
 export const tagTypesList = [
@@ -40,4 +41,5 @@ export const tagTypesList = [
   tagTypes.Note,
   tagTypes.Document,
   tagTypes.notification,
+  tagTypes.review,
 ];
