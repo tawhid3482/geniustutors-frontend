@@ -24,9 +24,9 @@ const reviewApi = baseApi.injectEndpoints({
       invalidatesTags: [tagTypes.review],
     }),
 
-    GetAllReview: builder.query({
-      query: () => ({
-        url: "/review",
+    GetAllAdminReview: builder.query({
+      query: ({ id }) => ({
+        url: `/review/admin/${id}`,
         method: "GET",
       }),
       providesTags: [tagTypes.review],
@@ -43,7 +43,17 @@ const reviewApi = baseApi.injectEndpoints({
     UpdateReview: builder.mutation({
       query: ({ id, data }) => {
         return {
-          url: `/review/update/${id}`,
+          url: `/review/update/testimonial/${id}`,
+          method: "PATCH",
+          data: data,
+        };
+      },
+      invalidatesTags: [tagTypes.review],
+    }),
+    UpdateVideoReview: builder.mutation({
+      query: ({ id, data }) => {
+        return {
+          url: `/review/update/videoTestimonial/${id}`,
           method: "PATCH",
           data: data,
         };
@@ -58,14 +68,23 @@ const reviewApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [tagTypes.review],
     }),
+    DeleteVideoReview: builder.mutation({
+      query: (id: string) => ({
+        url: `/review/delete/video/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: [tagTypes.review],
+    }),
   }),
 });
 
 export const {
-useCreateReviewMutation,
-useCreateVideoReviewMutation,
-useGetAllReviewByRoleQuery,
-useGetAllReviewQuery,
-useUpdateReviewMutation,
-useDeleteReviewMutation
+  useCreateReviewMutation,
+  useCreateVideoReviewMutation,
+  useGetAllReviewByRoleQuery,
+  useGetAllAdminReviewQuery,
+  useUpdateReviewMutation,
+  useDeleteReviewMutation,
+  useUpdateVideoReviewMutation,
+  useDeleteVideoReviewMutation,
 } = reviewApi;

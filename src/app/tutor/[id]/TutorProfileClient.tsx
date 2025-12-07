@@ -1202,7 +1202,9 @@ export default function TutorProfileClient({
                               </h4>
                               <div className="space-y-4">
                                 <div>
-                                  <Label htmlFor="thumbnailUrl">Thumbnail URL *</Label>
+                                  <Label htmlFor="thumbnailUrl">
+                                    Thumbnail URL *
+                                  </Label>
                                   <Input
                                     id="thumbnail"
                                     placeholder="https://imageurl.com/thumbnail.jpg"
