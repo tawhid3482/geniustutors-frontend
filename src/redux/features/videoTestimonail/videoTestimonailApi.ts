@@ -21,7 +21,15 @@ const videoVideoTestimonialApi = baseApi.injectEndpoints({
       }),
       providesTags: [tagTypes.VideoTestimonial],
     }),
-    
+
+    getAllVideoTestimonialForAdmin: builder.query({
+      query: (id: string) => ({
+        url: `/video-testimonials/admin/${id}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.VideoTestimonial],
+    }),
+
     updateVideoTestimonial: builder.mutation({
       query: ({ id, data }) => {
         return {
@@ -44,5 +52,9 @@ const videoVideoTestimonialApi = baseApi.injectEndpoints({
 });
 
 export const {
-useGetAllVideoTestimonialQuery
+  useGetAllVideoTestimonialQuery,
+  useCreateVideoTestimonialMutation,
+  useGetAllVideoTestimonialForAdminQuery,
+  useUpdateVideoTestimonialMutation,
+  useDeleteVideoTestimonialMutation,
 } = videoVideoTestimonialApi;

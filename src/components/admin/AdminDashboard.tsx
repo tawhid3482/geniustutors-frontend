@@ -37,6 +37,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePermissionMenu } from "@/hooks/usePermissionMenu";
 import { adminMenuItems, managerMenuItems } from "@/config/adminMenu";
 import PermissionAssignment from "./PermissionAssignment";
+import Category from "./components/Category";
 // import RefundPoliciesPage from "@/app/admin/refund-policies/page";
 
 // Icon mapping for string to component conversion
@@ -475,7 +476,7 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
   // Render taxonomy management section
   const renderTaxonomyManagement = () => {
     return (
-      <div />
+      <Category />
     );
   };
 

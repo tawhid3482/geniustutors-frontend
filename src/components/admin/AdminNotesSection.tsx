@@ -305,7 +305,7 @@ const AdminNotesSection = () => {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center text-xs text-gray-500">
                     <Calendar className="h-3 w-3 mr-1" />
-                    {formatDate(note.created_at)}
+                    {formatDate(note.createdAt)}
                   </div>
                 </div>
               </CardHeader>

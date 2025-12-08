@@ -21,6 +21,13 @@ const testimonialApi = baseApi.injectEndpoints({
       }),
       providesTags: [tagTypes.testimonial],
     }),
+    getAllTestimonialForAdmin: builder.query({
+      query: (id:string) => ({
+        url: `/testimonials/admin/${id}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.testimonial],
+    }),
     
     updateTestimonial: builder.mutation({
       query: ({ id, data }) => {
@@ -45,5 +52,8 @@ const testimonialApi = baseApi.injectEndpoints({
 
 export const {
 useGetAllTestimonialQuery,
-useCreateTestimonialMutation
+useCreateTestimonialMutation,
+useDeleteTestimonialMutation,
+useUpdateTestimonialMutation,
+useGetAllTestimonialForAdminQuery
 } = testimonialApi;

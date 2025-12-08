@@ -1,14 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { toast } from '@/components/ui/use-toast';
-import { Textarea } from '@/components/ui/textarea';
-import { Tag, Code, Save, RefreshCw, Link, Shield } from 'lucide-react';
-import axios from 'axios';
-import { API_BASE_URL } from '@/config/api';
-import { useAuth } from '@/contexts/AuthContext.next';
+import React, { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/components/ui/use-toast";
+import { Textarea } from "@/components/ui/textarea";
+import { Tag, Code, Save, RefreshCw, Link, Shield } from "lucide-react";
+import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
+import { useAuth } from "@/contexts/AuthContext.next";
 
 interface WebsiteSettings {
   seo_title: string;
@@ -26,50 +32,53 @@ export default function PlatformControlSection() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { user } = useAuth();
-  const isSuperAdmin = user?.role === 'super_admin';
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
 
   // Website settings state (only SEO & Analytics related fields)
   const [websiteSettings, setWebsiteSettings] = useState<WebsiteSettings>({
-    seo_title: '',
-    seo_description: '',
-    seo_keywords: '',
-    google_analytics_id: '',
-    facebook_pixel_id: '',
-    google_tag_manager_id: '',
-    custom_head_code: '',
-    custom_footer_code: '',
-    footer_credit: ''
+    seo_title: "",
+    seo_description: "",
+    seo_keywords: "",
+    google_analytics_id: "",
+    facebook_pixel_id: "",
+    google_tag_manager_id: "",
+    custom_head_code: "",
+    custom_footer_code: "",
+    footer_credit: "",
   });
 
   // Fetch website settings
   const fetchWebsiteSettings = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE_URL}/website-management/settings`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${API_BASE_URL}/website-management/settings`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (response.data.success) {
         const data = response.data.data;
         setWebsiteSettings({
-          seo_title: data.seo_title || '',
-          seo_description: data.seo_description || '',
-          seo_keywords: data.seo_keywords || '',
-          google_analytics_id: data.google_analytics_id || '',
-          facebook_pixel_id: data.facebook_pixel_id || '',
-          google_tag_manager_id: data.google_tag_manager_id || '',
-          custom_head_code: data.custom_head_code || '',
-          custom_footer_code: data.custom_footer_code || '',
-          footer_credit: data.footer_credit || ''
+          seo_title: data.seo_title || "",
+          seo_description: data.seo_description || "",
+          seo_keywords: data.seo_keywords || "",
+          google_analytics_id: data.google_analytics_id || "",
+          facebook_pixel_id: data.facebook_pixel_id || "",
+          google_tag_manager_id: data.google_tag_manager_id || "",
+          custom_head_code: data.custom_head_code || "",
+          custom_footer_code: data.custom_footer_code || "",
+          footer_credit: data.footer_credit || "",
         });
       }
     } catch (error) {
-      console.error('Error fetching website settings:', error);
+      console.error("Error fetching website settings:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to fetch website settings',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to fetch website settings",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -81,23 +90,25 @@ export default function PlatformControlSection() {
   }, []);
 
   // Handle input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setWebsiteSettings(prev => ({ ...prev, [name]: value }));
+    setWebsiteSettings((prev) => ({ ...prev, [name]: value }));
   };
 
   // Save website settings
   const saveWebsiteSettings = async () => {
     try {
       setSaving(true);
-      const token = localStorage.getItem('token');
-      
+      const token = localStorage.getItem("token");
+
       // Validate required fields
       if (!websiteSettings.seo_title.trim()) {
         toast({
-          title: 'Validation Error',
-          description: 'SEO title is required',
-          variant: 'destructive'
+          title: "Validation Error",
+          description: "SEO title is required",
+          variant: "destructive",
         });
         return;
       }
@@ -114,26 +125,32 @@ export default function PlatformControlSection() {
         ...(isSuperAdmin && {
           custom_head_code: websiteSettings.custom_head_code,
           custom_footer_code: websiteSettings.custom_footer_code,
-          footer_credit: websiteSettings.footer_credit
-        })
+          footer_credit: websiteSettings.footer_credit,
+        }),
       };
 
-      const response = await axios.put(`${API_BASE_URL}/website-management/settings`, dataToSave, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.put(
+        `${API_BASE_URL}/website-management/settings`,
+        dataToSave,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (response.data.success) {
         toast({
-          title: 'Success',
-          description: isSuperAdmin ? 'All settings saved successfully' : 'SEO & Analytics settings saved successfully',
+          title: "Success",
+          description: isSuperAdmin
+            ? "All settings saved successfully"
+            : "SEO & Analytics settings saved successfully",
         });
       }
     } catch (error) {
-      console.error('Error saving website settings:', error);
+      console.error("Error saving website settings:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to save settings',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to save settings",
+        variant: "destructive",
       });
     } finally {
       setSaving(false);
@@ -154,13 +171,12 @@ export default function PlatformControlSection() {
       <div className="flex flex-col gap-2">
         <h2 className="text-3xl font-bold tracking-tight">Platform Control</h2>
         <p className="text-muted-foreground">
-          {isSuperAdmin 
-            ? 'Manage SEO, analytics, and advanced platform settings (Super Admin)'
-            : 'Manage SEO and analytics settings for the platform (Admin)'
-          }
+          {isSuperAdmin
+            ? "Manage SEO, analytics, and advanced platform settings (Super Admin)"
+            : "Manage SEO and analytics settings for the platform (Admin)"}
         </p>
       </div>
-      
+
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* SEO Settings */}
@@ -170,7 +186,9 @@ export default function PlatformControlSection() {
                 <Tag className="h-5 w-5" />
                 SEO Configuration
               </CardTitle>
-              <CardDescription>Search engine optimization settings</CardDescription>
+              <CardDescription>
+                Search engine optimization settings
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -215,7 +233,9 @@ export default function PlatformControlSection() {
                 <Code className="h-5 w-5" />
                 Analytics & Tracking
               </CardTitle>
-              <CardDescription>Configure analytics and tracking codes</CardDescription>
+              <CardDescription>
+                Configure analytics and tracking codes
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -228,7 +248,8 @@ export default function PlatformControlSection() {
                   placeholder="GA4-XXXXXXXXXX"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Your Google Analytics 4 Measurement ID (format: GA4-XXXXXXXXXX)
+                  Your Google Analytics 4 Measurement ID (format:
+                  GA4-XXXXXXXXXX)
                 </p>
               </div>
               <div>
@@ -245,7 +266,9 @@ export default function PlatformControlSection() {
                 </p>
               </div>
               <div>
-                <Label htmlFor="google_tag_manager_id">Google Tag Manager ID</Label>
+                <Label htmlFor="google_tag_manager_id">
+                  Google Tag Manager ID
+                </Label>
                 <Input
                   id="google_tag_manager_id"
                   name="google_tag_manager_id"
@@ -272,7 +295,9 @@ export default function PlatformControlSection() {
                   Footer Credit
                   <Shield className="h-4 w-4 text-primary" />
                 </CardTitle>
-                <CardDescription>Manage the footer credit text and link (Super Admin Only)</CardDescription>
+                <CardDescription>
+                  Manage the footer credit text and link (Super Admin Only)
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -285,7 +310,10 @@ export default function PlatformControlSection() {
                     placeholder="© 2025 Tutor Today. All rights reserved | Developed by WebByte Studio"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    You can include a link by adding HTML anchor tags. Example: "© 2025 Tutor Today. All rights reserved | Developed by &lt;a href='https://webbytestudio.com' target='_blank'&gt;WebByte Studio&lt;/a&gt;"
+                    You can include a link by adding HTML anchor tags. Example:
+                    "© 2025 Tutor Today. All rights reserved | Developed by
+                    &lt;a href='https://webbytestudio.com'
+                    target='_blank'&gt;WebByte Studio&lt;/a&gt;"
                   </p>
                 </div>
               </CardContent>
@@ -300,11 +328,15 @@ export default function PlatformControlSection() {
                     Custom Head Code
                     <Shield className="h-4 w-4 text-primary" />
                   </CardTitle>
-                  <CardDescription>Add custom HTML code to the head section (Super Admin Only)</CardDescription>
+                  <CardDescription>
+                    Add custom HTML code to the head section (Super Admin Only)
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div>
-                    <Label htmlFor="custom_head_code">Custom HTML/CSS/JavaScript</Label>
+                    <Label htmlFor="custom_head_code">
+                      Custom HTML/CSS/JavaScript
+                    </Label>
                     <Textarea
                       id="custom_head_code"
                       name="custom_head_code"
@@ -315,7 +347,8 @@ export default function PlatformControlSection() {
                       className="font-mono text-sm"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      This code will be inserted in the HTML head section. Use carefully.
+                      This code will be inserted in the HTML head section. Use
+                      carefully.
                     </p>
                   </div>
                 </CardContent>
@@ -328,11 +361,16 @@ export default function PlatformControlSection() {
                     Custom Footer Code
                     <Shield className="h-4 w-4 text-primary" />
                   </CardTitle>
-                  <CardDescription>Add custom HTML code before closing body tag (Super Admin Only)</CardDescription>
+                  <CardDescription>
+                    Add custom HTML code before closing body tag (Super Admin
+                    Only)
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div>
-                    <Label htmlFor="custom_footer_code">Custom HTML/CSS/JavaScript</Label>
+                    <Label htmlFor="custom_footer_code">
+                      Custom HTML/CSS/JavaScript
+                    </Label>
                     <Textarea
                       id="custom_footer_code"
                       name="custom_footer_code"
@@ -343,7 +381,8 @@ export default function PlatformControlSection() {
                       className="font-mono text-sm"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      This code will be inserted before the closing body tag. Use carefully.
+                      This code will be inserted before the closing body tag.
+                      Use carefully.
                     </p>
                   </div>
                 </CardContent>
@@ -355,7 +394,11 @@ export default function PlatformControlSection() {
         <div className="flex gap-2">
           <Button onClick={saveWebsiteSettings} disabled={saving}>
             <Save className="h-4 w-4 mr-2" />
-            {saving ? 'Saving...' : (isSuperAdmin ? 'Save All Settings' : 'Save SEO & Analytics')}
+            {saving
+              ? "Saving..."
+              : isSuperAdmin
+              ? "Save All Settings"
+              : "Save SEO & Analytics"}
           </Button>
         </div>
       </div>
