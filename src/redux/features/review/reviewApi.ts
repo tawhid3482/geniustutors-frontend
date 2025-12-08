@@ -39,6 +39,13 @@ const reviewApi = baseApi.injectEndpoints({
       }),
       providesTags: [tagTypes.review],
     }),
+    GetAllTutorReview: builder.query({
+      query: ({ id }) => ({
+        url: `/review/tutor/${id}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.review],
+    }),
 
     UpdateReview: builder.mutation({
       query: ({ id, data }) => {
@@ -87,4 +94,5 @@ export const {
   useDeleteReviewMutation,
   useUpdateVideoReviewMutation,
   useDeleteVideoReviewMutation,
+  useGetAllTutorReviewQuery
 } = reviewApi;

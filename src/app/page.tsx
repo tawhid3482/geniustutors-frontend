@@ -74,7 +74,7 @@ export default function Home() {
       <main className="flex-1 w-full overflow-x-hidden">
         <HeroSection />
         <PopularCategorySection />
-        <TutorShowcase />
+        {/* <TutorShowcase /> */}
         <SearchJobsSection />
         {/* <SearchJobsSectionContent /> */}
         <TuitionTypesSection />

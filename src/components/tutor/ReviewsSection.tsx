@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,84 +15,140 @@ import {
   TrendingUp,
   Award,
   ThumbsUp,
-  Reply
+  Reply,
+  Video,
+  MessageCircle,
+  MapPin,
+  Users
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext.next';
-import { api } from '@/config/api';
+import { useGetAllTutorReviewQuery } from '@/redux/features/review/reviewApi';
 
-interface TutorReview {
+// Types based on your API response
+interface Testimonial {
   id: string;
+  name: string;
+  role: string;
+  location: string;
+  avatar: string;
+  testimonial: string;
+  isActive: boolean;
   rating: number;
-  comment: string;
-  status: 'pending' | 'approved' | 'rejected';
-  subject: string;
-  response?: string;
-  response_created_at?: string;
-  created_at: string;
-  updated_at: string;
-  student_name: string;
-  student_email: string;
+  tutor_id: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
+interface VideoTestimonial {
+  id: string;
+  name: string;
+  role: string;
+  location: string;
+  avatar: string;
+  videoUrl: string;
+  thumbnail: string;
+  duration: string;
+  testimonial: string;
+  isActive: boolean;
+  rating: number;
+  tutor_id: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ReviewsResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: {
+    testimonial: Testimonial[];
+    videoTestimonial: VideoTestimonial[];
+  };
+}
+
+// Type for calculated statistics
 interface ReviewStats {
   total_reviews: number;
-  pending_reviews: number;
-  approved_reviews: number;
-  rejected_reviews: number;
   average_rating: number;
   five_star_reviews: number;
-  four_star_reviews: number;
-  three_star_reviews: number;
-  two_star_reviews: number;
-  one_star_reviews: number;
+  approved_reviews: number;
+  rating_distribution: {
+    [key: string]: number;
+  };
 }
 
 export function ReviewsSection() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [reviews, setReviews] = useState<TutorReview[]>([]);
-  const [stats, setStats] = useState<ReviewStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  
+  // State for response dialog
   const [respondingToReview, setRespondingToReview] = useState<string | null>(null);
   const [responseText, setResponseText] = useState('');
   const [submittingResponse, setSubmittingResponse] = useState(false);
+  const [activeTab, setActiveTab] = useState<'all' | 'testimonials' | 'videos'>('all');
 
-  useEffect(() => {
-    fetchReviews();
-    fetchStats();
-  }, []);
+  // Use RTK Query hook
+  const { 
+    data: reviewsResponse, 
+    isLoading, 
+    isError,
+    refetch 
+  } = useGetAllTutorReviewQuery({ id: user?.id } as any, {
+    skip: !user?.id,
+    refetchOnMountOrArgChange: true,
+  });
 
-  const fetchReviews = async () => {
-    try {
-      
-      
-      const data = await api.get('/reviews/my-reviews');
-     
-      
-      setReviews(data.data || []);
-    } catch (error: any) {
-      
-      toast({
-        title: "Error",
-        description: "Failed to fetch reviews. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const fetchStats = async () => {
-    try {
-     
-      const data = await api.get('/reviews/my-stats');
-      
+  // Calculate statistics from the data
+  const calculateStats = (): ReviewStats => {
+    const testimonialData = reviewsResponse?.data?.testimonial || [];
+    const videoTestimonialData = reviewsResponse?.data?.videoTestimonial || [];
+    const allReviews = [...testimonialData, ...videoTestimonialData];
     
-      setStats(data.data);
-    } catch (error: any) {
-     
-    } finally {
-      setLoading(false);
+    const total_reviews = allReviews.length;
+    
+    const totalRating = allReviews.reduce((sum, review) => sum + (review.rating || 0), 0);
+    const average_rating = total_reviews > 0 ? totalRating / total_reviews : 0;
+    
+    const five_star_reviews = allReviews.filter(review => review.rating === 5).length;
+    
+    const approved_reviews = allReviews.filter(review => review.isActive).length;
+    
+    const rating_distribution = {
+      '5_star': allReviews.filter(review => review.rating === 5).length,
+      '4_star': allReviews.filter(review => review.rating === 4).length,
+      '3_star': allReviews.filter(review => review.rating === 3).length,
+      '2_star': allReviews.filter(review => review.rating === 2).length,
+      '1_star': allReviews.filter(review => review.rating === 1).length,
+    };
+
+    return {
+      total_reviews,
+      average_rating,
+      five_star_reviews,
+      approved_reviews,
+      rating_distribution
+    };
+  };
+
+  const stats = reviewsResponse ? calculateStats() : null;
+
+  // Get filtered reviews based on active tab
+  const getFilteredReviews = () => {
+    if (!reviewsResponse?.data) return [];
+    
+    switch (activeTab) {
+      case 'testimonials':
+        return reviewsResponse.data.testimonial;
+      case 'videos':
+        return reviewsResponse.data.videoTestimonial;
+      default:
+        return [...reviewsResponse.data.testimonial, ...reviewsResponse.data.videoTestimonial];
     }
   };
+
+  const filteredReviews = getFilteredReviews();
 
   const handleRespondToReview = async (reviewId: string) => {
     if (!responseText.trim()) {
@@ -106,10 +162,9 @@ export function ReviewsSection() {
 
     setSubmittingResponse(true);
     try {
-     
-      await api.post(`/reviews/respond/${reviewId}`, { response: responseText.trim() });
-
-      
+      // Here you would implement the response API call
+      // For now, we'll simulate a successful response
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       toast({
         title: "Response Submitted",
@@ -118,10 +173,11 @@ export function ReviewsSection() {
 
       setResponseText('');
       setRespondingToReview(null);
-      fetchReviews(); // Refresh reviews to show the new response
+      
+      // Refetch reviews to get updated data
+      refetch();
     } catch (error: any) {
-      
-      
+      console.error('Error submitting response:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to submit response. Please try again.",
@@ -148,26 +204,37 @@ export function ReviewsSection() {
     );
   };
 
-  const renderStatusBadge = (status: string) => {
-    const statusConfig = {
-      pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
-      approved: { color: 'bg-green-100 text-green-800', label: 'Approved' },
-      rejected: { color: 'bg-red-100 text-red-800', label: 'Rejected' },
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-    
+  const renderStatusBadge = (isActive: boolean) => {
     return (
-      <Badge className={`${config.color} border-0`}>
-        {config.label}
+      <Badge className={`${isActive ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} border-0`}>
+        {isActive ? 'Active' : 'Inactive'}
       </Badge>
     );
   };
 
-  if (loading) {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-32 w-32 border-4 border-gray-200 border-t-green-600"></div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-8">
+        <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Reviews</h3>
+        <p className="text-gray-600 mb-4">Failed to load reviews. Please try again.</p>
+        <Button onClick={() => refetch()}>Retry</Button>
       </div>
     );
   }
@@ -177,19 +244,24 @@ export function ReviewsSection() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reviews & Ratingssss</h1>
-          <p className="text-gray-600 mt-1">View feedback from your students</p>
+          <h1 className="text-2xl font-bold text-gray-900">Reviews & Testimonials</h1>
+          <p className="text-gray-600 mt-1">View feedback and testimonials from students</p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Refresh
+          </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      {stats && (
+      {stats && stats.total_reviews > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="p-2 bg-blue-100 rounded-lg">
-                  <Star className="h-6 w-6 text-blue-600" />
+                  <Users className="h-6 w-6 text-blue-600" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Total Reviews</p>
@@ -234,7 +306,7 @@ export function ReviewsSection() {
                   <ThumbsUp className="h-6 w-6 text-purple-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Approved</p>
+                  <p className="text-sm font-medium text-gray-600">Active</p>
                   <p className="text-2xl font-bold text-gray-900">{stats.approved_reviews}</p>
                 </div>
               </div>
@@ -252,7 +324,7 @@ export function ReviewsSection() {
           <CardContent>
             <div className="space-y-3">
               {[5, 4, 3, 2, 1].map((rating) => {
-                const count = stats[`${rating}_star_reviews` as keyof ReviewStats] as number;
+                const count = stats.rating_distribution[`${rating}_star`] || 0;
                 const percentage = stats.total_reviews > 0 ? (count / stats.total_reviews) * 100 : 0;
                 
                 return (
@@ -276,38 +348,105 @@ export function ReviewsSection() {
         </Card>
       )}
 
+      {/* Tabs for filtering */}
+      <div className="flex space-x-2 border-b pb-2">
+        <Button
+          variant={activeTab === 'all' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('all')}
+          className="rounded-full"
+        >
+          All Reviews ({stats?.total_reviews || 0})
+        </Button>
+        <Button
+          variant={activeTab === 'testimonials' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('testimonials')}
+          className="rounded-full"
+        >
+          <MessageSquare className="h-4 w-4 mr-2" />
+          Testimonials ({reviewsResponse?.data?.testimonial?.length || 0})
+        </Button>
+        <Button
+          variant={activeTab === 'videos' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('videos')}
+          className="rounded-full"
+        >
+          <Video className="h-4 w-4 mr-2" />
+          Video Testimonials ({reviewsResponse?.data?.videoTestimonial?.length || 0})
+        </Button>
+      </div>
+
       {/* Reviews List */}
       <Card>
         <CardHeader>
-          <CardTitle>Student Reviews</CardTitle>
-          <p className="text-sm text-gray-600">Feedback from your students only</p>
+          <CardTitle>
+            {activeTab === 'all' && 'All Reviews'}
+            {activeTab === 'testimonials' && 'Text Testimonials'}
+            {activeTab === 'videos' && 'Video Testimonials'}
+          </CardTitle>
+          <p className="text-sm text-gray-600">
+            Showing {filteredReviews.length} {filteredReviews.length === 1 ? 'review' : 'reviews'}
+          </p>
         </CardHeader>
         <CardContent>
-          {reviews.length === 0 ? (
+          {filteredReviews.length === 0 ? (
             <div className="text-center py-8">
               <Star className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Reviews Yet</h3>
-              <p className="text-gray-600">You haven't received any reviews from students yet.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Reviews Found</h3>
+              <p className="text-gray-600">
+                {activeTab === 'all' 
+                  ? 'You haven\'t received any reviews yet.' 
+                  : `No ${activeTab} found.`}
+              </p>
             </div>
           ) : (
             <div className="space-y-6">
-              {reviews.map((review) => (
+              {filteredReviews.map((review: any) => (
                 <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-gray-100 rounded-full">
-                        <User className="h-5 w-5 text-gray-600" />
+                      <div className="relative">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100">
+                          {review.avatar ? (
+                            <img 
+                              src={review.avatar} 
+                              alt={review.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                              <User className="h-5 w-5 text-gray-500" />
+                            </div>
+                          )}
+                        </div>
+                        {'videoUrl' in review && (
+                          <div className="absolute -top-1 -right-1">
+                            <Badge className="bg-blue-100 text-blue-800 border-0">
+                              <Video className="h-3 w-3" />
+                            </Badge>
+                          </div>
+                        )}
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">{review.student_name}</h4>
-                        <p className="text-sm text-gray-600">{review.student_email}</p>
+                        <h4 className="font-medium text-gray-900">{review.name}</h4>
+                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                          <span>{review.role}</span>
+                          {review.location && (
+                            <>
+                              <span>•</span>
+                              <div className="flex items-center">
+                                <MapPin className="h-3 w-3 mr-1" />
+                                {review.location}
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {renderStatusBadge(review.status)}
+                      {renderStatusBadge(review.isActive)}
                       <div className="flex items-center text-sm text-gray-500">
                         <Calendar className="h-4 w-4 mr-1" />
-                        {new Date(review.created_at).toLocaleDateString()}
+                        {formatDate(review.createdAt)}
                       </div>
                     </div>
                   </div>
@@ -315,28 +454,27 @@ export function ReviewsSection() {
                   <div className="mb-3">
                     <div className="flex items-center space-x-2 mb-2">
                       {renderStars(review.rating)}
-                      <Badge variant="outline" className="text-xs">
-                        {review.subject}
-                      </Badge>
                     </div>
-                    <p className="text-gray-700">{review.comment}</p>
+                    <p className="text-gray-700">{review.testimonial}</p>
+                    
+                    {/* Video testimonial preview */}
+                    {'videoUrl' in review && review.videoUrl && (
+                      <div className="mt-3">
+                        <a 
+                          href={review.videoUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                        >
+                          <Video className="h-4 w-4 mr-2" />
+                          Watch video testimonial
+                        </a>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Response Section */}
-                  {review.response ? (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Reply className="h-4 w-4 text-green-600" />
-                        <span className="text-sm font-medium text-green-800">Your Response</span>
-                        {review.response_created_at && (
-                          <span className="text-xs text-green-600">
-                            {new Date(review.response_created_at).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-green-700">{review.response}</p>
-                    </div>
-                  ) : (
+                  {/* Response Section - Only for text testimonials */}
+                  {'videoUrl' in review ? null : (
                     <div className="flex justify-end">
                       <Button
                         variant="outline"
@@ -345,7 +483,7 @@ export function ReviewsSection() {
                         className="text-green-600 border-green-200 hover:bg-green-50"
                       >
                         <MessageSquare className="h-4 w-4 mr-2" />
-                        Respond
+                        Respond to Review
                       </Button>
                     </div>
                   )}

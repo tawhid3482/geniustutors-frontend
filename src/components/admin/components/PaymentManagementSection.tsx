@@ -10,133 +10,222 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
-import { MoreHorizontal, Search, Filter, Download, Plus, CreditCard, DollarSign, BarChart2, ArrowUpRight, ArrowDownRight, Wallet, Calendar, CheckCircle, XCircle, Eye, Trash, Edit } from "lucide-react";
-import { platformPaymentMethodService, PlatformPaymentMethod } from "@/services/platformPaymentMethodService";
-import { analyticsService, PaymentAnalytics } from "@/services/analyticsService";
-import { transactionService, Transaction as ApiTransaction } from "@/services/transactionService";
+import { 
+  Search, 
+  Filter, 
+  Download, 
+  DollarSign, 
+  BarChart2, 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  Wallet, 
+  Calendar, 
+  Eye, 
+  Trash, 
+  Edit, 
+  RefreshCw,
+  TrendingUp,
+  PieChart
+} from "lucide-react";
 import { RevenueChart } from "./RevenueChart";
 import { useRole } from '@/contexts/RoleContext';
+import { 
+  useDeleteTransactionMutation, 
+  useGetAllTransactionQuery, 
+  useUpdateTransactionMutation,
+  Transaction as ApiTransaction 
+} from '@/redux/features/transaction/transactionApi';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell
+} from 'recharts';
 
-// Use the imported interface from the service
-type PaymentMethod = PlatformPaymentMethod;
+// Interface for transformed transaction data for UI
+interface Transaction {
+  id: string;
+  studentName: string | null;
+  tutorName: string | null;
+  amount: number;
+  status: 'completed' | 'pending' | 'failed' | 'refunded';
+  paymentMethod: string;
+  date: string;
+  transactionId: string;
+  type: 'payment' | 'payout' | 'refunded';
+  originalData?: ApiTransaction;
+}
 
-// Use the imported interface from the service
-type Transaction = ApiTransaction;
+// Interface for analytics data
+interface AnalyticsData {
+  totalRevenue: string;
+  monthlyRevenue: string;
+  processingFees: string;
+  pendingPayouts: string;
+  transactionCount: number;
+  successRate: string;
+}
 
-// Use the imported interface from the service
+// Interface for chart data
+interface ChartData {
+  name: string;
+  value: number;
+  revenue?: number;
+  count?: number;
+}
 
-// Mock data for initial display - moved outside component to prevent recreation on every render
-const mockPaymentMethods: PaymentMethod[] = [
-  {
-    id: '1',
-    name: 'Bkash',
-    type: 'mobile_banking',
-    status: 'active',
-    payment_number: '01712345678',
-    created_at: '2023-05-15T00:00:00Z',
-    updated_at: '2023-05-15T00:00:00Z'
-  },
-  {
-    id: '2',
-    name: 'Nagad',
-    type: 'mobile_banking',
-    status: 'active',
-    payment_number: '01812345678',
-    created_at: '2023-06-20T00:00:00Z',
-    updated_at: '2023-06-20T00:00:00Z'
-  },
-  {
-    id: '3',
-    name: 'Rocket',
-    type: 'mobile_banking',
-    status: 'inactive',
-    payment_number: '01912345678',
-    created_at: '2023-03-25T00:00:00Z',
-    updated_at: '2023-03-25T00:00:00Z'
-  },
-];
+// Helper function to transform backend data to UI format
+const transformTransactionData = (apiData: ApiTransaction): Transaction => {
+  return {
+    id: apiData.id,
+    studentName: apiData.student || null,
+    tutorName: apiData.tutor || null,
+    amount: apiData.Amount,
+    status: apiData.Status.toLowerCase() as 'completed' | 'pending' | 'failed' | 'refunded',
+    paymentMethod: apiData.method || apiData.paymentMethod || 'N/A',
+    date: new Date(apiData.createdAt).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }),
+    transactionId: apiData.transactionId,
+    type: apiData.type as 'payment' | 'payout' | 'refunded',
+    originalData: apiData
+  };
+};
 
-const mockTransactions: Transaction[] = [
-  {
-    id: '1',
-    studentName: 'Rafiul Islam',
-    tutorName: 'Ahmed Khan',
-    amount: '৳2,500',
-    status: 'completed',
-    paymentMethod: 'bKash',
-    date: '2023-08-15',
-    transactionId: 'TRX123456789',
-    type: 'payment'
-  },
-  {
-    id: '2',
-    studentName: 'Sadia Rahman',
-    tutorName: 'Farhan Ali',
-    amount: '৳1,800',
-    status: 'pending',
-    paymentMethod: 'Nagad',
-    date: '2023-08-14',
-    transactionId: 'TRX987654321',
-    type: 'payment'
-  },
-  {
-    id: '3',
-    studentName: 'Karim Ahmed',
-    tutorName: 'Nusrat Jahan',
-    amount: '৳3,200',
-    status: 'failed',
-    paymentMethod: 'Visa/Mastercard',
-    date: '2023-08-13',
-    transactionId: 'TRX456789123',
-    type: 'payment'
-  },
-  {
-    id: '4',
-    studentName: 'Tahmina Akter',
-    tutorName: 'Zubair Hossain',
-    amount: '৳1,500',
-    status: 'cancelled',
-    paymentMethod: 'bKash',
-    date: '2023-08-12',
-    transactionId: 'TRX789123456',
-    type: 'refund'
-  },
-  {
-    id: '5',
-    studentName: '',
-    tutorName: 'Sabina Yasmin',
-    amount: '৳4,500',
-    status: 'completed',
-    paymentMethod: 'Bank Transfer',
-    date: '2023-08-11',
-    transactionId: 'TRX321654987',
-    type: 'payout'
-  },
-];
+// Helper function to calculate analytics
+const calculateAnalytics = (transactions: Transaction[]): AnalyticsData => {
+  const totalRevenue = transactions
+    .filter(t => t.status === 'completed' && t.type === 'payment')
+    .reduce((sum, t) => sum + t.amount, 0);
 
-const mockAnalytics: PaymentAnalytics = {
-  totalRevenue: '৳125,000',
-  monthlyRevenue: '৳28,500',
-  processingFees: '৳3,200',
-  pendingPayouts: '৳15,800',
-  transactionCount: 87,
-  successRate: '94.2%'
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  
+  const monthlyRevenue = transactions
+    .filter(t => {
+      if (t.status !== 'completed' || t.type !== 'payment') return false;
+      const transactionDate = new Date(t.originalData?.createdAt || '');
+      return transactionDate.getMonth() === currentMonth && 
+             transactionDate.getFullYear() === currentYear;
+    })
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const pendingPayouts = transactions
+    .filter(t => t.type === 'payout' && t.status === 'pending')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const completedCount = transactions.filter(t => t.status === 'completed').length;
+  const successRate = transactions.length > 0 
+    ? `${Math.round((completedCount / transactions.length) * 100)}%`
+    : '0%';
+
+  return {
+    totalRevenue: `৳${totalRevenue.toLocaleString()}`,
+    monthlyRevenue: `৳${monthlyRevenue.toLocaleString()}`,
+    processingFees: '৳0',
+    pendingPayouts: `৳${pendingPayouts.toLocaleString()}`,
+    transactionCount: transactions.length,
+    successRate
+  };
+};
+
+// Helper function to prepare chart data
+const prepareChartData = (transactions: Transaction[]) => {
+  // Monthly revenue data for line chart
+  const monthlyData: ChartData[] = [];
+  const monthlyMap = new Map<string, number>();
+  
+  transactions
+    .filter(t => t.status === 'completed' && t.type === 'payment')
+    .forEach(t => {
+      const date = new Date(t.originalData?.createdAt || '');
+      const monthYear = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      const current = monthlyMap.get(monthYear) || 0;
+      monthlyMap.set(monthYear, current + t.amount);
+    });
+  
+  monthlyMap.forEach((value, key) => {
+    monthlyData.push({
+      name: key, revenue: value,
+      value: 0
+    });
+  });
+  
+  // Sort by date
+  monthlyData.sort((a, b) => {
+    const dateA = new Date(`01 ${a.name}`);
+    const dateB = new Date(`01 ${b.name}`);
+    return dateA.getTime() - dateB.getTime();
+  });
+
+  // Status distribution for pie chart
+  const statusCounts = {
+    completed: 0,
+    pending: 0,
+    failed: 0,
+    refunded: 0
+  };
+  
+  transactions.forEach(t => {
+    statusCounts[t.status] = (statusCounts[t.status] || 0) + 1;
+  });
+
+  const statusData: ChartData[] = [
+    { name: 'Completed', value: statusCounts.completed },
+    { name: 'Pending', value: statusCounts.pending },
+    { name: 'Failed', value: statusCounts.failed },
+    { name: 'Refunded', value: statusCounts.refunded }
+  ].filter(item => item.value > 0);
+
+  // Payment method distribution for bar chart
+  const methodMap = new Map<string, number>();
+  transactions.forEach(t => {
+    const current = methodMap.get(t.paymentMethod) || 0;
+    methodMap.set(t.paymentMethod, current + 1);
+  });
+
+  const methodData: any[] = Array.from(methodMap.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => (b.count || 0) - (a.count || 0));
+
+  return { monthlyData, statusData, methodData };
+};
+
+// Colors for charts
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+const STATUS_COLORS = {
+  'Completed': '#10b981',
+  'Pending': '#f59e0b',
+  'Failed': '#ef4444',
+  'Refunded': '#3b82f6'
 };
 
 export function PaymentManagementSection() {
   const { toast } = useToast();
   const { canDelete } = useRole();
+
+  // RTK Query hooks
+  const { 
+    data: transactionResponse, 
+    isLoading: isTransactionsLoading, 
+    isError: isTransactionsError,
+    refetch: refetchTransactions 
+  } = useGetAllTransactionQuery(undefined);
   
-  // State for payment methods
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [showAddMethodModal, setShowAddMethodModal] = useState(false);
-  const [newPaymentMethod, setNewPaymentMethod] = useState<Partial<PaymentMethod>>({
-    type: 'mobile_banking',
-    status: 'active',
-    payment_number: ''
-  });
+  const [updateTransaction, { isLoading: isUpdating }] = useUpdateTransactionMutation();
+  const [deleteTransaction, { isLoading: isDeleting }] = useDeleteTransactionMutation();
   
   // State for transactions
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -147,7 +236,7 @@ export function PaymentManagementSection() {
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
   const [showEditStatusModal, setShowEditStatusModal] = useState(false);
   const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null);
-  const [newStatus, setNewStatus] = useState<'pending' | 'completed' | 'failed' | 'cancelled' | ''>('');
+  const [newStatus, setNewStatus] = useState<'completed' | 'pending' | 'failed' | 'refunded'>('pending');
   
   // State for filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -155,8 +244,8 @@ export function PaymentManagementSection() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   
-  // State for analytics
-  const [analytics, setAnalytics] = useState<PaymentAnalytics>({
+  // State for analytics and charts
+  const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalRevenue: '৳0',
     monthlyRevenue: '৳0',
     processingFees: '৳0',
@@ -165,50 +254,36 @@ export function PaymentManagementSection() {
     successRate: '0%'
   });
   
-  // State for loading
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshingAnalytics, setIsRefreshingAnalytics] = useState(false);
-  const [isRefreshingTransactions, setIsRefreshingTransactions] = useState(false);
-  
-  // Fetch data on component mount
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Fetch payment methods from API
-        const paymentMethodsData = await platformPaymentMethodService.getPaymentMethods();
-        setPaymentMethods(paymentMethodsData);
-        
-        // Fetch real analytics data from API
-        const analyticsData = await analyticsService.getPaymentAnalytics();
-        setAnalytics(analyticsData);
-        
-        // Fetch real transaction data from API
-        const transactionData = await transactionService.getTransactions({ limit: 50 });
-        setTransactions(transactionData.transactions);
-        setFilteredTransactions(transactionData.transactions);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load data. Using mock data.",
-          variant: "destructive"
-        });
-        // Fallback to mock data
-        setPaymentMethods(mockPaymentMethods);
-        setTransactions(mockTransactions);
-        setFilteredTransactions(mockTransactions);
-        setAnalytics(mockAnalytics);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const [chartData, setChartData] = useState<{
+    monthlyData: ChartData[];
+    statusData: ChartData[];
+    methodData: ChartData[];
+  }>({
+    monthlyData: [],
+    statusData: [],
+    methodData: []
+  });
 
-    fetchData();
-  }, [toast]);
+  const [isRefreshingAnalytics, setIsRefreshingAnalytics] = useState(false);
   
-  // Apply filters when filter state changes
+  // Process transaction data from RTK Query
+  useEffect(() => {
+    if (transactionResponse?.data) {
+      const transformedTransactions = transactionResponse.data.map(transformTransactionData);
+      setTransactions(transformedTransactions);
+      setFilteredTransactions(transformedTransactions);
+      
+      // Calculate analytics
+      const analyticsData = calculateAnalytics(transformedTransactions);
+      setAnalytics(analyticsData);
+      
+      // Prepare chart data
+      const charts = prepareChartData(transformedTransactions);
+      setChartData(charts);
+    }
+  }, [transactionResponse]);
+  
+  // Apply filters when filter state or transactions change
   useEffect(() => {
     let result = transactions;
     
@@ -217,7 +292,7 @@ export function PaymentManagementSection() {
       const query = searchQuery.toLowerCase();
       result = result.filter(transaction => 
         (transaction.studentName?.toLowerCase().includes(query) || false) ||
-        transaction.tutorName.toLowerCase().includes(query) ||
+        (transaction.tutorName?.toLowerCase().includes(query) || false) ||
         transaction.transactionId.toLowerCase().includes(query) ||
         transaction.paymentMethod.toLowerCase().includes(query)
       );
@@ -233,139 +308,46 @@ export function PaymentManagementSection() {
       result = result.filter(transaction => transaction.type === typeFilter);
     }
     
-    // Apply date filter (simplified for mock data)
-    if (dateFilter === 'today') {
-      result = result.filter(transaction => transaction.date === '2023-08-15');
-    } else if (dateFilter === 'week') {
-      result = result.filter(transaction => ['2023-08-15', '2023-08-14', '2023-08-13', '2023-08-12', '2023-08-11', '2023-08-10', '2023-08-09'].includes(transaction.date));
-    } else if (dateFilter === 'month') {
-      // All transactions in our mock data are from August 2023
-      result = result;
+    // Apply date filter
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const monthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+      
+      result = result.filter(transaction => {
+        const transactionDate = new Date(transaction.originalData?.createdAt || '');
+        switch (dateFilter) {
+          case 'today':
+            return transactionDate >= today;
+          case 'week':
+            return transactionDate >= weekAgo;
+          case 'month':
+            return transactionDate >= monthAgo;
+          default:
+            return true;
+        }
+      });
     }
     
     setFilteredTransactions(result);
   }, [searchQuery, statusFilter, typeFilter, dateFilter, transactions]);
-  
-  // Handle adding a new payment method
-  const handleAddPaymentMethod = async () => {
-    console.log('Adding payment method:', newPaymentMethod);
-    
-    if (!newPaymentMethod.name) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a payment method.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!newPaymentMethod.payment_number) {
-      toast({
-        title: "Missing Information",
-        description: "Please enter a payment number.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      // Call the API to add payment method
-      const newMethod = await platformPaymentMethodService.addPaymentMethod({
-        name: newPaymentMethod.name as 'Bkash' | 'Nagad' | 'Rocket',
-        payment_number: newPaymentMethod.payment_number,
-        status: newPaymentMethod.status as 'active' | 'inactive'
-      });
-      
-      // Update local state
-      setPaymentMethods(prev => [...prev, newMethod]);
-      setShowAddMethodModal(false);
-      setNewPaymentMethod({
-        type: 'mobile_banking',
-        status: 'active',
-        payment_number: ''
-      });
-      
-      toast({
-        title: "Payment Method Added",
-        description: `${newMethod.name} has been added as a payment method.`,
-      });
-    } catch (error: any) {
-      console.error('Error adding payment method:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add payment method.",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  // Handle toggling payment method status
-  const handleToggleMethodStatus = async (id: string) => {
-    try {
-      const result = await platformPaymentMethodService.togglePaymentMethodStatus(id);
-      
-      // Update local state
-      setPaymentMethods(prev => prev.map(method => 
-        method.id === id ? { ...method, status: result.status } : method
-      ));
-      
-      const method = paymentMethods.find(m => m.id === id);
-      
-      toast({
-        title: `Payment Method ${result.status === 'active' ? 'Activated' : 'Deactivated'}`,
-        description: `${method?.name} is now ${result.status}.`,
-      });
-    } catch (error: any) {
-      console.error('Error toggling payment method status:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to toggle payment method status.",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  // Handle deleting a payment method
-  const handleDeletePaymentMethod = async (id: string) => {
-    console.log('Deleting payment method with id:', id);
-    console.log('Current payment methods:', paymentMethods);
-    
-    try {
-      await platformPaymentMethodService.deletePaymentMethod(id);
-      
-      // Update local state
-      setPaymentMethods(prev => prev.filter(method => method.id !== id));
-      
-      toast({
-        title: "Payment Method Deleted",
-        description: "The payment method has been removed from the system.",
-      });
-    } catch (error: any) {
-      console.error('Error deleting payment method:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete payment method.",
-        variant: "destructive"
-      });
-    }
-  };
 
   // Handle refreshing analytics data
   const handleRefreshAnalytics = async () => {
     try {
       setIsRefreshingAnalytics(true);
-      const analyticsData = await analyticsService.getPaymentAnalytics();
-      setAnalytics(analyticsData);
+      await refetchTransactions();
       
       toast({
         title: "Analytics Updated",
-        description: "Analytics data has been refreshed with the latest information.",
+        description: "Analytics data has been refreshed.",
       });
     } catch (error: any) {
       console.error('Error refreshing analytics:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to refresh analytics data.",
+        description: "Failed to refresh analytics data.",
         variant: "destructive"
       });
     } finally {
@@ -376,30 +358,19 @@ export function PaymentManagementSection() {
   // Handle refreshing transaction data
   const handleRefreshTransactions = async () => {
     try {
-      setIsRefreshingTransactions(true);
-      const transactionData = await transactionService.getTransactions({ 
-        limit: 50,
-        search: searchQuery,
-        status: statusFilter,
-        type: typeFilter,
-        dateFilter: dateFilter
-      });
-      setTransactions(transactionData.transactions);
-      setFilteredTransactions(transactionData.transactions);
+      await refetchTransactions();
       
       toast({
         title: "Transactions Updated",
-        description: "Transaction data has been refreshed with the latest information.",
+        description: "Transaction data has been refreshed.",
       });
     } catch (error: any) {
       console.error('Error refreshing transactions:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to refresh transaction data.",
+        description: "Failed to refresh transaction data.",
         variant: "destructive"
       });
-    } finally {
-      setIsRefreshingTransactions(false);
     }
   };
 
@@ -408,28 +379,33 @@ export function PaymentManagementSection() {
     if (!transactionToDelete) return;
 
     try {
-      await transactionService.deleteTransaction(transactionToDelete.id);
+      await deleteTransaction(transactionToDelete.id).unwrap();
       
-      // Remove transaction from local state
+      // Filter out the deleted transaction
       const updatedTransactions = transactions.filter(t => t.id !== transactionToDelete.id);
       const updatedFilteredTransactions = filteredTransactions.filter(t => t.id !== transactionToDelete.id);
       
       setTransactions(updatedTransactions);
       setFilteredTransactions(updatedFilteredTransactions);
       
+      // Recalculate analytics and charts
+      const analyticsData = calculateAnalytics(updatedTransactions);
+      setAnalytics(analyticsData);
+      const charts = prepareChartData(updatedTransactions);
+      setChartData(charts);
+      
       toast({
         title: "Transaction Deleted",
-        description: `Transaction ${transactionToDelete.transactionId} has been deleted successfully.`,
+        description: `Transaction ${transactionToDelete.transactionId} has been deleted.`,
       });
       
-      // Close modal and reset state
       setShowDeleteModal(false);
       setTransactionToDelete(null);
     } catch (error: any) {
       console.error('Error deleting transaction:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to delete transaction.",
+        description: "Failed to delete transaction.",
         variant: "destructive"
       });
     }
@@ -448,20 +424,15 @@ export function PaymentManagementSection() {
     setShowEditStatusModal(true);
   };
 
-  // Handle status change
-  const handleStatusChange = (value: string) => {
-    setNewStatus(value as 'pending' | 'completed' | 'failed' | 'cancelled');
-  };
-
   // Handle status update
   const handleUpdateStatus = async () => {
     if (!transactionToEdit || !newStatus) return;
 
     try {
-      const updatedTransaction = await transactionService.updateTransactionStatus(
-        transactionToEdit.id, 
-        newStatus as 'pending' | 'completed' | 'failed' | 'cancelled'
-      );
+      await updateTransaction({
+        id: transactionToEdit.id,
+        data: { Status: newStatus }
+      }).unwrap();
       
       // Update local state
       const updatedTransactions = transactions.map(t => 
@@ -474,20 +445,25 @@ export function PaymentManagementSection() {
       setTransactions(updatedTransactions);
       setFilteredTransactions(updatedFilteredTransactions);
       
+      // Recalculate analytics and charts
+      const analyticsData = calculateAnalytics(updatedTransactions);
+      setAnalytics(analyticsData);
+      const charts = prepareChartData(updatedTransactions);
+      setChartData(charts);
+      
       toast({
         title: "Status Updated",
-        description: `Transaction ${transactionToEdit.transactionId} status has been updated to ${newStatus}.`,
+        description: `Transaction status updated to ${newStatus}.`,
       });
       
-      // Close modal and reset state
       setShowEditStatusModal(false);
       setTransactionToEdit(null);
-      setNewStatus('');
+      setNewStatus('pending');
     } catch (error: any) {
       console.error('Error updating transaction status:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to update transaction status.",
+        description: "Failed to update transaction status.",
         variant: "destructive"
       });
     }
@@ -505,7 +481,7 @@ export function PaymentManagementSection() {
       case 'refunded':
         return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Refunded</Badge>;
       default:
-        return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
     }
   };
   
@@ -514,27 +490,32 @@ export function PaymentManagementSection() {
     switch (type) {
       case 'payment':
         return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">Payment</Badge>;
-      case 'refund':
+      case 'refunded':
         return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Refund</Badge>;
       case 'payout':
         return <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200">Payout</Badge>;
       default:
-        return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800">{type}</Badge>;
     }
   };
-  
-  // Render status badge for payment methods
-  const renderMethodStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Active</Badge>;
-      case 'inactive':
-        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">Inactive</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>;
+
+  // Custom Tooltip for charts
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-sm">
+          <p className="font-medium text-gray-900">{label}</p>
+          {payload.map((pld: any, index: number) => (
+            <p key={index} className="text-sm" style={{ color: pld.color }}>
+              {pld.name}: {pld.name === 'revenue' ? `৳${pld.value.toLocaleString()}` : pld.value}
+            </p>
+          ))}
+        </div>
+      );
     }
+    return null;
   };
-  
+
   return (
     <div className="space-y-6 w-full overflow-y-auto">
       {/* Header */}
@@ -542,7 +523,7 @@ export function PaymentManagementSection() {
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Payment Management</h2>
-            <p className="text-white/90 mt-1">Manage payment methods, transactions, and financial analytics</p>
+            <p className="text-white/90 mt-1">Manage transactions and financial analytics</p>
           </div>
           <div className="flex items-center gap-2">
             <Badge className="bg-white/20 hover:bg-white/30 text-white">
@@ -553,9 +534,8 @@ export function PaymentManagementSection() {
       </div>
       
       <Tabs defaultValue="analytics" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="methods">Payment Methods</TabsTrigger>
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
         </TabsList>
         
@@ -571,18 +551,14 @@ export function PaymentManagementSection() {
                 variant="outline" 
                 size="sm"
                 onClick={handleRefreshAnalytics}
-                disabled={isRefreshingAnalytics}
+                disabled={isRefreshingAnalytics || isTransactionsLoading}
               >
                 {isRefreshingAnalytics ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
                 ) : (
-                  <Download className="mr-2 h-4 w-4" />
+                  <RefreshCw className="mr-2 h-4 w-4" />
                 )}
-                {isRefreshingAnalytics ? 'Refreshing...' : 'Refresh Data'}
-              </Button>
-              <Button variant="outline" size="sm">
-                <Download className="mr-2 h-4 w-4" />
-                Export
+                {isRefreshingAnalytics || isTransactionsLoading ? 'Refreshing...' : 'Refresh Data'}
               </Button>
             </div>
           </div>
@@ -596,7 +572,7 @@ export function PaymentManagementSection() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {isRefreshingAnalytics ? (
+                {isTransactionsLoading || isRefreshingAnalytics ? (
                   <div className="flex items-center justify-center h-16">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
                   </div>
@@ -617,7 +593,7 @@ export function PaymentManagementSection() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {isRefreshingAnalytics ? (
+                {isTransactionsLoading || isRefreshingAnalytics ? (
                   <div className="flex items-center justify-center h-16">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                   </div>
@@ -638,7 +614,7 @@ export function PaymentManagementSection() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {isRefreshingAnalytics ? (
+                {isTransactionsLoading || isRefreshingAnalytics ? (
                   <div className="flex items-center justify-center h-16">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
                   </div>
@@ -661,7 +637,7 @@ export function PaymentManagementSection() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {isRefreshingAnalytics ? (
+                {isTransactionsLoading || isRefreshingAnalytics ? (
                   <div className="flex items-center justify-center h-16">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
                   </div>
@@ -682,7 +658,7 @@ export function PaymentManagementSection() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {isRefreshingAnalytics ? (
+                {isTransactionsLoading || isRefreshingAnalytics ? (
                   <div className="flex items-center justify-center h-16">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
                   </div>
@@ -703,7 +679,7 @@ export function PaymentManagementSection() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {isRefreshingAnalytics ? (
+                {isTransactionsLoading || isRefreshingAnalytics ? (
                   <div className="flex items-center justify-center h-16">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-600"></div>
                   </div>
@@ -717,158 +693,141 @@ export function PaymentManagementSection() {
             </Card>
           </div>
           
-          <RevenueChart />
-        </TabsContent>
-        
-        {/* Payment Methods Tab */}
-        <TabsContent value="methods" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Available Payment Methods</h3>
-            <Dialog open={showAddMethodModal} onOpenChange={setShowAddMethodModal}>
-              <DialogTrigger asChild>
-                <Button className="bg-green-600 hover:bg-green-700">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Payment Method
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Payment Method</DialogTitle>
-                  <DialogDescription>
-                    Add a new payment method to the platform
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="grid gap-4 py-4">
-                  <div>
-                    <Label htmlFor="methodName">Payment Method</Label>
-                    <Select 
-                      value={newPaymentMethod.name} 
-                      onValueChange={(value) => setNewPaymentMethod({...newPaymentMethod, name: value as 'Bkash' | 'Nagad' | 'Rocket'})}
-                    >
-                      <SelectTrigger id="methodName">
-                        <SelectValue placeholder="Select payment method" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Bkash">Bkash</SelectItem>
-                        <SelectItem value="Nagad">Nagad</SelectItem>
-                        <SelectItem value="Rocket">Rocket</SelectItem>
-                      </SelectContent>
-                    </Select>
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Monthly Revenue Line Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                  Monthly Revenue Trend
+                </CardTitle>
+                <CardDescription>Revenue over time from completed payments</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isTransactionsLoading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                   </div>
-                  
-                  <div className="hidden">
-                    <Label htmlFor="methodType">Method Type</Label>
-                    <Input
-                      id="methodType"
-                      value="mobile_banking"
-                      readOnly
-                    />
+                ) : chartData.monthlyData.length === 0 ? (
+                  <div className="flex items-center justify-center h-64 text-gray-500">
+                    <p>No revenue data available</p>
                   </div>
-                  
-                  <div>
-                    <Label htmlFor="paymentNumber">Payment Number</Label>
-                    <Input
-                      id="paymentNumber"
-                      type="tel"
-                      placeholder="e.g., 01712345678"
-                      value={newPaymentMethod.payment_number || ''}
-                      onChange={(e) => setNewPaymentMethod({...newPaymentMethod, payment_number: e.target.value})}
-                    />
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={chartData.monthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis 
+                        tickFormatter={(value) => `৳${value.toLocaleString()}`}
+                      />
+                      <Tooltip 
+                        formatter={(value) => [`৳${Number(value).toLocaleString()}`, 'Revenue']}
+                        labelFormatter={(label) => `Month: ${label}`}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="revenue" 
+                        stroke="#3b82f6" 
+                        strokeWidth={2}
+                        name="Revenue"
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Status Distribution Pie Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChart className="h-5 w-5 text-green-600" />
+                  Transaction Status Distribution
+                </CardTitle>
+                <CardDescription>Breakdown of transactions by status</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isTransactionsLoading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                   </div>
-                  
-                  <div>
-                    <Label htmlFor="methodStatus">Initial Status</Label>
-                    <Select 
-                      value={newPaymentMethod.status} 
-                      onValueChange={(value) => setNewPaymentMethod({...newPaymentMethod, status: value as any})}
-                    >
-                      <SelectTrigger id="methodStatus">
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
+                ) : chartData.statusData.length === 0 ? (
+                  <div className="flex items-center justify-center h-64 text-gray-500">
+                    <p>No status data available</p>
                   </div>
-                </div>
-                
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowAddMethodModal(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleAddPaymentMethod} className="bg-green-600 hover:bg-green-700">
-                    Add Method
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <RechartsPieChart>
+                      <Pie
+                        data={chartData.statusData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="value"
+                        nameKey="name"
+                      >
+                        {chartData.statusData.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={STATUS_COLORS[entry.name as keyof typeof STATUS_COLORS] || COLORS[index % COLORS.length]} 
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value) => [value, 'Count']}
+                      />
+                      <Legend />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Payment Method Bar Chart */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart2 className="h-5 w-5 text-purple-600" />
+                  Payment Methods Distribution
+                </CardTitle>
+                <CardDescription>Number of transactions by payment method</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isTransactionsLoading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                  </div>
+                ) : chartData.methodData.length === 0 ? (
+                  <div className="flex items-center justify-center h-64 text-gray-500">
+                    <p>No payment method data available</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={chartData.methodData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar 
+                        dataKey="count" 
+                        name="Number of Transactions" 
+                        fill="#8884d8"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
           </div>
-          
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Method Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Payment Number</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Added Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paymentMethods.map((method) => (
-                    <TableRow key={method.id}>
-                      <TableCell className="font-medium">{method.name}</TableCell>
-                      <TableCell>
-                        Mobile Banking
-                      </TableCell>
-                      <TableCell>{method.payment_number}</TableCell>
-                      <TableCell>{renderMethodStatusBadge(method.status)}</TableCell>
-                      <TableCell>{new Date(method.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleToggleMethodStatus(method.id)}>
-                              {method.status === 'active' ? (
-                                <>
-                                  <XCircle className="mr-2 h-4 w-4 text-red-600" />
-                                  Deactivate
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-                                  Activate
-                                </>
-                              )}
-                            </DropdownMenuItem>
-                            {canDelete && (
-                              <DropdownMenuItem 
-                                onClick={() => handleDeletePaymentMethod(method.id)}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
         </TabsContent>
         
         {/* Transactions Tab */}
@@ -916,7 +875,7 @@ export function PaymentManagementSection() {
                     <SelectContent>
                       <SelectItem value="all">All Types</SelectItem>
                       <SelectItem value="payment">Payment</SelectItem>
-                      <SelectItem value="refund">Refund</SelectItem>
+                      <SelectItem value="refunded">Refund</SelectItem>
                       <SelectItem value="payout">Payout</SelectItem>
                     </SelectContent>
                   </Select>
@@ -950,14 +909,14 @@ export function PaymentManagementSection() {
                   variant="outline" 
                   className="h-8"
                   onClick={handleRefreshTransactions}
-                  disabled={isRefreshingTransactions}
+                  disabled={isTransactionsLoading}
                 >
-                  {isRefreshingTransactions ? (
+                  {isTransactionsLoading ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
                   ) : (
-                    <Download className="mr-2 h-4 w-4" />
+                    <RefreshCw className="mr-2 h-4 w-4" />
                   )}
-                  {isRefreshingTransactions ? 'Refreshing...' : 'Refresh'}
+                  {isTransactionsLoading ? 'Loading...' : 'Refresh'}
                 </Button>
                 <Button variant="outline" className="h-8">
                   <Download className="mr-2 h-4 w-4" />
@@ -966,9 +925,13 @@ export function PaymentManagementSection() {
               </div>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {isTransactionsLoading ? (
                 <div className="flex justify-center items-center py-8">
                   <div className="h-8 w-8 border-4 border-t-green-600 border-green-200 rounded-full animate-spin"></div>
+                </div>
+              ) : isTransactionsError ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>Error loading transactions. Please try again.</p>
                 </div>
               ) : filteredTransactions.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
@@ -995,8 +958,8 @@ export function PaymentManagementSection() {
                         <TableRow key={transaction.id}>
                           <TableCell className="font-medium">{transaction.transactionId}</TableCell>
                           <TableCell>{transaction.studentName || '-'}</TableCell>
-                          <TableCell>{transaction.tutorName}</TableCell>
-                          <TableCell>{transaction.amount}</TableCell>
+                          <TableCell>{transaction.tutorName || '-'}</TableCell>
+                          <TableCell>৳{transaction.amount.toLocaleString()}</TableCell>
                           <TableCell>{transaction.paymentMethod}</TableCell>
                           <TableCell>{renderTransactionTypeBadge(transaction.type)}</TableCell>
                           <TableCell>{renderTransactionStatusBadge(transaction.status)}</TableCell>
@@ -1020,8 +983,13 @@ export function PaymentManagementSection() {
                                 onClick={() => handleEditStatusClick(transaction)}
                                 title="Edit Status"
                                 className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                disabled={isUpdating}
                               >
-                                <Edit className="h-4 w-4" />
+                                {isUpdating ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                ) : (
+                                  <Edit className="h-4 w-4" />
+                                )}
                               </Button>
                               {canDelete && (
                                 <Button 
@@ -1030,8 +998,13 @@ export function PaymentManagementSection() {
                                   onClick={() => handleDeleteClick(transaction)}
                                   title="Delete Transaction"
                                   className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  disabled={isDeleting}
                                 >
-                                  <Trash className="h-4 w-4" />
+                                  {isDeleting ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                                  ) : (
+                                    <Trash className="h-4 w-4" />
+                                  )}
                                 </Button>
                               )}
                             </div>
@@ -1057,7 +1030,7 @@ export function PaymentManagementSection() {
             </DialogDescription>
           </DialogHeader>
           
-          {selectedTransaction && (
+          {selectedTransaction && selectedTransaction.originalData && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -1070,7 +1043,7 @@ export function PaymentManagementSection() {
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Amount</h4>
-                  <p className="font-semibold">{selectedTransaction.amount}</p>
+                  <p className="font-semibold">৳{selectedTransaction.amount.toLocaleString()}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Status</h4>
@@ -1083,6 +1056,14 @@ export function PaymentManagementSection() {
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Payment Method</h4>
                   <p>{selectedTransaction.paymentMethod}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">Payment Number</h4>
+                  <p>{selectedTransaction.originalData.PaymentNumber || 'N/A'}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">Method Type</h4>
+                  <p>{selectedTransaction.originalData.paymentMethod || 'N/A'}</p>
                 </div>
               </div>
               
@@ -1101,6 +1082,28 @@ export function PaymentManagementSection() {
                       <p>{selectedTransaction.tutorName}</p>
                     </div>
                   )}
+                </div>
+              </div>
+              
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium text-gray-500 mb-2">System Information</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h5 className="text-xs font-medium text-gray-500">User ID</h5>
+                    <p className="font-mono text-xs">{selectedTransaction.originalData.userId}</p>
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-medium text-gray-500">Created</h5>
+                    <p>{new Date(selectedTransaction.originalData.createdAt).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-medium text-gray-500">Updated</h5>
+                    <p>{new Date(selectedTransaction.originalData.updatedAt).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-medium text-gray-500">Active</h5>
+                    <p>{selectedTransaction.originalData.is_Active ? 'Yes' : 'No'}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1141,7 +1144,7 @@ export function PaymentManagementSection() {
                   </div>
                   <div>
                     <span className="text-gray-500">Amount:</span>
-                    <span className="ml-2 font-semibold">{transactionToDelete.amount}</span>
+                    <span className="ml-2 font-semibold">৳{transactionToDelete.amount.toLocaleString()}</span>
                   </div>
                   <div>
                     <span className="text-gray-500">Method:</span>
@@ -1153,7 +1156,7 @@ export function PaymentManagementSection() {
                   </div>
                   <div className="col-span-2">
                     <span className="text-gray-500">Tutor:</span>
-                    <span className="ml-2">{transactionToDelete.tutorName}</span>
+                    <span className="ml-2">{transactionToDelete.tutorName || 'N/A'}</span>
                   </div>
                 </div>
               </div>
@@ -1191,9 +1194,19 @@ export function PaymentManagementSection() {
               variant="destructive"
               onClick={handleDeleteTransaction}
               className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
             >
-              <Trash className="mr-2 h-4 w-4" />
-              Delete Transaction
+              {isDeleting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash className="mr-2 h-4 w-4" />
+                  Delete Transaction
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1223,7 +1236,7 @@ export function PaymentManagementSection() {
                   </div>
                   <div>
                     <span className="text-gray-500">Amount:</span>
-                    <span className="ml-2 font-semibold">{transactionToEdit.amount}</span>
+                    <span className="ml-2 font-semibold">৳{transactionToEdit.amount.toLocaleString()}</span>
                   </div>
                   <div>
                     <span className="text-gray-500">Method:</span>
@@ -1235,22 +1248,25 @@ export function PaymentManagementSection() {
                   </div>
                   <div className="col-span-2">
                     <span className="text-gray-500">Tutor:</span>
-                    <span className="ml-2">{transactionToEdit.tutorName}</span>
+                    <span className="ml-2">{transactionToEdit.tutorName || 'N/A'}</span>
                   </div>
                 </div>
               </div>
               
               <div>
                 <Label htmlFor="statusSelect">New Status</Label>
-                <Select value={newStatus} onValueChange={handleStatusChange}>
+                <Select 
+                  value={newStatus} 
+                  onValueChange={(value: 'completed' | 'pending' | 'failed' | 'refunded') => setNewStatus(value)}
+                >
                   <SelectTrigger id="statusSelect">
                     <SelectValue placeholder="Select new status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="failed">Failed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="refunded">Refunded</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1281,18 +1297,27 @@ export function PaymentManagementSection() {
               onClick={() => {
                 setShowEditStatusModal(false);
                 setTransactionToEdit(null);
-                setNewStatus('');
+                setNewStatus('pending');
               }}
             >
               Cancel
             </Button>
             <Button
               onClick={handleUpdateStatus}
-              disabled={!newStatus || newStatus === transactionToEdit?.status}
+              disabled={!newStatus || newStatus === transactionToEdit?.status || isUpdating}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              <Edit className="mr-2 h-4 w-4" />
-              Update Status
+              {isUpdating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Update Status
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
