@@ -31,7 +31,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ user
       const response = await notificationService.getNotifications();
       if (response.success) {
         setNotifications(response.data);
-        const unread = response.data.filter(n => !n.read_status).length;
+        const unread = response.data.filter((n:any) => !n.read_status).length;
         setUnreadCount(unread);
       }
     } catch (error) {
@@ -80,7 +80,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ user
       const response = await notificationService.deleteNotification(notificationId);
       if (response.success) {
         const notification = notifications.find(n => n.id === notificationId);
-        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+        setNotifications(prev => prev.filter((n:any) => n.id !== notificationId));
         if (notification && !notification.read_status) {
           setUnreadCount(prev => Math.max(0, prev - 1));
         }

@@ -34,6 +34,7 @@ import {
 // Import new sections
 import { TutoringHistorySection } from './TutoringHistorySection';
 import { PaymentSection } from './PaymentSection';
+import StudentApply from './dashboard/StudentApply';
 
 
 
@@ -186,6 +187,7 @@ export function TutorDashboard() {
             
             {activeTab === "chat" && <ChatSection />}
             {activeTab === "reviews" && <ReviewsSection />}
+            {activeTab === "studentApply" && <StudentApply />}
             {activeTab === "assignments" && <TutorAssignmentsSection />}
             {activeTab === "demo-classes" && <DemoClassesSection tutorId={user?.id || ''} />}
             {activeTab === "subscription" && <EnhancedUpgradeSection />}
@@ -236,7 +238,7 @@ export function TutorDashboard() {
       )}
       
               {/* Floating Tutor Chat Widget */}
-              <FloatingTutorChat
+              {/* <FloatingTutorChat
           chatContacts={chatContacts}
           chatMessages={chatMessages}
           selectedChat={selectedChat}
@@ -244,7 +246,7 @@ export function TutorDashboard() {
           newMessage={newMessage}
           setNewMessage={setNewMessage}
           handleSendMessage={sendMessage}
-        />
+        /> */}
     </div>
   );
 }

@@ -153,6 +153,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'jobs', label: 'Find job', icon: Search },
             { id: 'profile', label: 'Update Profile', icon: User },
             { id: 'notifications', label: 'Notification', icon: BellRing },
+            { id: 'studentApply', label: 'Student-Apply', icon: BookCheck },
             // { id: 'confirmation-letter', label: 'Confirmation Letter', icon: FileCheck },
             // { id: 'tutoring-history', label: 'Tutoring History', icon: History },
             // { id: 'payment-section', label: 'Payment Section', icon: CreditCard },

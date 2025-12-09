@@ -622,7 +622,7 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
       )}
       
       {/* Floating Support Chat Widget */}
-      <FloatingSupportChat
+      {/* <FloatingSupportChat
         chatContacts={chatContacts}
         chatMessages={chatMessages}
         selectedChat={selectedChat}
@@ -630,7 +630,7 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
         newMessage={newMessage}
         setNewMessage={setNewMessage}
         handleSendMessage={handleSendMessage}
-      />
+      /> */}
     </div>
   );
 }

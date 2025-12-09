@@ -1,6 +1,7 @@
 import { api } from '@/config/api';
 
 export interface Notification {
+  [x: string]: any;
   id: string;
   userId: string;
   title: string;

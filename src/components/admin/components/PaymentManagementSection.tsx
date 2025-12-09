@@ -34,7 +34,6 @@ import {
   useDeleteTransactionMutation, 
   useGetAllTransactionQuery, 
   useUpdateTransactionMutation,
-  Transaction as ApiTransaction 
 } from '@/redux/features/transaction/transactionApi';
 import {
   BarChart,
@@ -63,7 +62,7 @@ interface Transaction {
   date: string;
   transactionId: string;
   type: 'payment' | 'payout' | 'refunded';
-  originalData?: ApiTransaction;
+  originalData?: any;
 }
 
 // Interface for analytics data
@@ -85,7 +84,7 @@ interface ChartData {
 }
 
 // Helper function to transform backend data to UI format
-const transformTransactionData = (apiData: ApiTransaction): Transaction => {
+const transformTransactionData = (apiData: any): Transaction => {
   return {
     id: apiData.id,
     studentName: apiData.student || null,

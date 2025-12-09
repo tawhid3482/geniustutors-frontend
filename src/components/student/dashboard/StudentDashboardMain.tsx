@@ -1039,7 +1039,7 @@ export function StudentDashboardMain() {
       )}
 
       {/* Floating Support Chat Widget */}
-      <FloatingStudentChat
+      {/* <FloatingStudentChat
         chatContacts={chatContacts}
         chatMessages={chatMessages}
         selectedChat={selectedChat}
@@ -1047,7 +1047,7 @@ export function StudentDashboardMain() {
         newMessage={newMessage}
         setNewMessage={setNewMessage}
         handleSendMessage={sendMessage}
-      />
+      /> */}
     </div>
   );
 }
