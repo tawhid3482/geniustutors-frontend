@@ -143,7 +143,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
           ],
           account: [
             { id: 'note', label: 'Notes', icon: StickyNote },
-            // { id: 'settings', label: 'Settings', icon: Settings },
+            { id: 'settings', label: 'Settings', icon: Settings },
           ],
         };
       case 'TUTOR':

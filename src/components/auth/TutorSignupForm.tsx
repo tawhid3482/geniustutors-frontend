@@ -20,11 +20,11 @@ import {
   User,
   Phone,
 } from "lucide-react";
-import { MultiSelect } from "@/components/ui/multi-select";
 import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
 import { useGetAllAreaQuery } from "@/redux/features/area/areaApi";
 import { useCheckPhoneNumberMutation } from '@/redux/features/auth/authApi';
 import { useSendOtpMutation } from '@/redux/features/phoneVerification/phoneVerificationApi';
+import { CreatableMultiSelect } from "@/components/ui/creatable-multi-select"; 
 
 interface TutorSignupFormProps {
   onPhoneVerification: (phoneNumber: string, fullName: string, formData?: any) => void;
@@ -70,7 +70,6 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
       const result = await checkPhoneNumber({ phone }).unwrap();
       console.log('📞 Phone check response:', result);
       
-      // Check if phone exists based on API response
       if (result.success && result.data && result.data.exists === true) {
         console.log('❌ Phone number already exists');
         return true;
@@ -81,12 +80,10 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
     } catch (error: any) {
       console.error('Error checking phone:', error);
       
-      // If there's an error in the API call, check the error response
       if (error?.data?.data?.exists === true) {
         return true;
       }
       
-      // Default to false if there's any uncertainty
       return false;
     }
   };
@@ -109,14 +106,14 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
     setTutorFormData((prev) => ({ ...prev, background: backgrounds }));
   };
 
-  // Prepare categories for MultiSelect
+  // Prepare categories for CreatableMultiSelect
   const categoryOptions =
     categoryData?.data?.map((category: any) => ({
       value: category.name,
       label: category.name,
     })) || [];
 
-  // Prepare areas for MultiSelect - flatten all area names
+  // Prepare areas for CreatableMultiSelect
   const areaOptions =
     areaData?.data?.flatMap(
       (area: any) =>
@@ -166,8 +163,6 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
     setLoading(true);
 
     try {
-      // Check if phone number already exists using RTK Query
-      console.log('🔍 Checking if phone number exists...');
       const phoneExists = await handleCheckPhoneExists(tutorFormData.phone);
       
       if (phoneExists) {
@@ -182,7 +177,7 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
         normalizedPhone = "0" + tutorFormData.phone.slice(3);
       }
 
-      // Build registration payload for OTP verification
+      // Build registration payload
       const registrationPayload = {
         fullName: tutorFormData.fullName,
         email: tutorFormData.email || null,
@@ -199,11 +194,9 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
         nationality: tutorFormData.nationality,
         background: tutorFormData.background,
       };
+      console.log(registrationPayload)
 
-      // console.log('📋 TutorSignupForm - Form data prepared:', registrationPayload);
-      
-      // Send OTP for phone verification ONLY if phone doesn't exist
-      console.log('📱 Sending OTP for phone verification...');
+      // Send OTP for phone verification
       await sendOTP({ 
         phone: normalizedPhone, 
         name: tutorFormData.fullName 
@@ -215,7 +208,6 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
     } catch (error: any) {
       console.error('❌ Error in tutor registration:', error);
       
-      // Handle specific error messages from API
       if (error?.data?.message) {
         toast.error(error.data.message);
       } else if (error.message) {
@@ -380,7 +372,7 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
           />
         </div>
 
-        {/* Preferred Areas - From Database */}
+        {/* Preferred Areas - Creatable MultiSelect */}
         <div className="space-y-2">
           <Label
             htmlFor="preferredAreas"
@@ -388,14 +380,17 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
           >
             Preferred Areas *
           </Label>
-          <MultiSelect
+          <CreatableMultiSelect
             value={tutorFormData.preferredAreas}
             onValueChange={handlePreferredAreasChange}
-            placeholder="Select preferred areas"
+            placeholder="Select areas or type to add new..."
             options={areaOptions}
             maxSelections={5}
-            className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+            className="border-green-200 focus:border-green-500"
           />
+          <p className="text-xs text-gray-500">
+            Type to search existing areas or add new ones
+          </p>
         </div>
 
         {/* Gender */}
@@ -459,22 +454,25 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
           />
         </div>
 
-        {/* Background - Categories From Database */}
+        {/* Background - Creatable MultiSelect */}
         <div className="space-y-2">
           <Label
             htmlFor="background"
             className="text-sm font-semibold text-green-800"
           >
-           Background
+            Background *
           </Label>
-          <MultiSelect
+          <CreatableMultiSelect
             value={tutorFormData.background}
             onValueChange={handleBackgroundChange}
-            placeholder="Select teaching categories"
+            placeholder="Select teaching categories or type to add new..."
             options={categoryOptions}
             maxSelections={5}
-            className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+            className="border-green-200 focus:border-green-500"
           />
+          <p className="text-xs text-gray-500">
+            Type to search existing categories or add new ones
+          </p>
         </div>
       </div>
 

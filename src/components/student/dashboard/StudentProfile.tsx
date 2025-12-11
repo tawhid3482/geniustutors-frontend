@@ -192,72 +192,72 @@ export function StudentProfile({
     }
   };
 
-  const handlePasswordFormSubmit = async () => {
-    // Check if userId is available
-    if (!user?.id) {
-      toast({
-        title: "Error",
-        description: "User ID not found. Please log in again.",
-        variant: "destructive",
-      });
-      return;
-    }
+  // const handlePasswordFormSubmit = async () => {
+  //   // Check if userId is available
+  //   if (!user?.id) {
+  //     toast({
+  //       title: "Error",
+  //       description: "User ID not found. Please log in again.",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
 
-    // Validate passwords
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast({
-        title: "Error",
-        description: "New passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
+  //   // Validate passwords
+  //   if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+  //     toast({
+  //       title: "Error",
+  //       description: "New passwords do not match",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
 
-    if (passwordForm.newPassword.length < 6) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
-        variant: "destructive",
-      });
-      return;
-    }
+  //   if (passwordForm.newPassword.length < 6) {
+  //     toast({
+  //       title: "Error",
+  //       description: "Password must be at least 6 characters",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
 
-    try {
-      // Change password with user ID
-      await changePassword({
-        id: user?.id,
-        data: {
-          oldPassword: passwordForm.currentPassword,
-          newPassword: passwordForm.newPassword,
-        },
-      }).unwrap();
+  //   try {
+  //     // Change password with user ID
+  //     await changePassword({
+  //       id: user?.id,
+  //       data: {
+  //         oldPassword: passwordForm.currentPassword,
+  //         newPassword: passwordForm.newPassword,
+  //       },
+  //     }).unwrap();
 
-      toast({
-        title: "Success",
-        description: "Password changed successfully",
-      });
+  //     toast({
+  //       title: "Success",
+  //       description: "Password changed successfully",
+  //     });
 
-      signOut();
-      router.push("/");
-      toast({
-        description: "Please Login again",
-      });
+  //     signOut();
+  //     router.push("/");
+  //     toast({
+  //       description: "Please Login again",
+  //     });
 
-      // Clear form
-      setPasswordForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-    } catch (error: any) {
-      console.error("Error changing password:", error);
-      toast({
-        title: "Error",
-        description: error?.data?.message || "Failed to change password",
-        variant: "destructive",
-      });
-    }
-  };
+  //     // Clear form
+  //     setPasswordForm({
+  //       currentPassword: "",
+  //       newPassword: "",
+  //       confirmPassword: "",
+  //     });
+  //   } catch (error: any) {
+  //     console.error("Error changing password:", error);
+  //     toast({
+  //       title: "Error",
+  //       description: error?.data?.message || "Failed to change password",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
 
   return (
     <div className="w-full space-y-6">
@@ -420,7 +420,7 @@ export function StudentProfile({
       </Card>
 
       {/* Password Change Section */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Change Password</CardTitle>
         </CardHeader>
@@ -492,7 +492,7 @@ export function StudentProfile({
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }

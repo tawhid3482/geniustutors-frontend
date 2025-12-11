@@ -112,6 +112,7 @@ import { useStudentChat } from "@/hooks/useStudentChat";
 import { useGetAllTutorRequestsQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
 import { useGetAllTutorsQuery } from "@/redux/features/tutorHub/tutorHubApi";
 import StudentReviews from "./StudentReviews";
+import StudentSettings from "./StudentSettings";
 
 export function StudentDashboardMain() {
   const { user, signOut, updateUserProfile } = useAuth();
@@ -342,22 +343,22 @@ export function StudentDashboardMain() {
   };
 
   // Dashboard functions
-  const fetchDashboard = async () => {
-    try {
-      setDataLoading(true);
-      const data = await getLearningDashboard();
-      setDashboard(data);
-    } catch (error) {
-      console.error("Error fetching dashboard:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load learning dashboard",
-        variant: "destructive",
-      });
-    } finally {
-      setDataLoading(false);
-    }
-  };
+  // const fetchDashboard = async () => {
+  //   try {
+  //     setDataLoading(true);
+  //     const data = await getLearningDashboard();
+  //     setDashboard(data);
+  //   } catch (error) {
+  //     console.error("Error fetching dashboard:", error);
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to load learning dashboard",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setDataLoading(false);
+  //   }
+  // };
 
   // Fetch posted jobs
   const fetchPostedJobs = useCallback(async () => {
@@ -714,34 +715,34 @@ export function StudentDashboardMain() {
     }
   };
 
-  const loadEnrolledCourses = async () => {
-    if (!user?.id) return;
+  // const loadEnrolledCourses = async () => {
+  //   if (!user?.id) return;
 
-    try {
-      setIsLoadingCourses(true);
-      const response = await getMyEnrollments();
-      setEnrolledCourses(response.enrollments || []);
-    } catch (error) {
-      // console.error("Error loading enrolled courses:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load your courses. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingCourses(false);
-    }
-  };
+  //   try {
+  //     setIsLoadingCourses(true);
+  //     const response = await getMyEnrollments();
+  //     setEnrolledCourses(response.enrollments || []);
+  //   } catch (error) {
+  //     // console.error("Error loading enrolled courses:", error);
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to load your courses. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsLoadingCourses(false);
+  //   }
+  // };
 
   // Load initial data
   useEffect(() => {
     if (user) {
-      fetchDashboard();
+      // fetchDashboard();
       loadTaxonomyData();
-      fetchPostedJobs();
+      // fetchPostedJobs();
       loadBookings();
       loadProfileData();
-      loadEnrolledCourses();
+      // loadEnrolledCourses();
     }
   }, [user]);
 
@@ -762,7 +763,7 @@ export function StudentDashboardMain() {
   // Load courses when courses tab is active
   useEffect(() => {
     if (activeTab === "courses") {
-      loadEnrolledCourses();
+      // loadEnrolledCourses();
     }
   }, [activeTab]);
 
@@ -995,6 +996,7 @@ export function StudentDashboardMain() {
               <ApprovalLetterSection studentId={user.id} />
             )}
             {activeTab === "reviews" && <StudentReviews />}
+            {activeTab === "settings" && <StudentSettings />}
             {activeTab === "note" && <GuardianNotesSection />}
           </div>
         </main>

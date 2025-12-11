@@ -136,12 +136,6 @@ export default function TutorRequestPage() {
     tutoringType: "" as any,
   });
 
-  // Process ALL districts from districtData - FIXED: Show all district names as separate options
-  const [districts, setDistricts] = useState<{value: string, label: string}[]>([]);
-
-  // Process ALL areas from areaData - FIXED: Show all area names as separate options
-  const [areas, setAreas] = useState<{value: string, label: string}[]>([]);
-
   // Taxonomy data
   const [categories, setCategories] = useState<Category[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
@@ -150,59 +144,6 @@ export default function TutorRequestPage() {
 
 
     // console.log(categories)
-
-
-  // Process ALL districts from districtData - FIXED VERSION
-  useEffect(() => {
-    if (districtData?.data && Array.isArray(districtData?.data)) {
-      // console.log("Processing ALL district data:", districtData);
-      
-      const processedDistricts: {value: string, label: string}[] = [];
-      
-      districtData?.data.forEach((district: District) => {
-        if (district.name && Array.isArray(district.name)) {
-          // Create separate options for EACH district name in the array
-          district.name.forEach((districtName: string) => {
-            processedDistricts.push({
-              value: `${district.id}-${districtName}`, // Combine ID and name for unique value
-              label: districtName,
-            });
-          });
-        }
-      });
-      
-      setDistricts(processedDistricts);
-      // console.log("All Processed Districts:", processedDistricts);
-    } else {
-      console.log("District data is not in expected format:", districtData);
-    }
-  }, [districtData]);
-
-  // Process ALL areas from areaData - FIXED VERSION
-  useEffect(() => {
-    if (areaData?.data && Array.isArray(areaData?.data)) {
-      // console.log("Processing ALL area data:", areaData);
-      
-      const processedAreas: {value: string, label: string}[] = [];
-      
-      areaData?.data.forEach((area: Area) => {
-        if (area.name && Array.isArray(area.name)) {
-          // Create separate options for EACH area name in the array
-          area.name.forEach((areaName: string) => {
-            processedAreas.push({
-              value: `${area.id}-${areaName}`, // Combine ID and name for unique value
-              label: areaName,
-            });
-          });
-        }
-      });
-      
-      setAreas(processedAreas);
-      // console.log("All Processed Areas:", processedAreas);
-    } else {
-      console.log("Area data is not in expected format:", areaData);
-    }
-  }, [areaData]);
 
   // Process categories from categoryData
   useEffect(() => {
@@ -381,12 +322,11 @@ export default function TutorRequestPage() {
     try {
       setIsSubmitting(true);
 
-      // Extract only the name part before submitting (remove the ID part)
+      // Prepare submit data
       const submitData = {
         ...formData,
         userId: user?.id || "" as any,
-        district: formData.district.split('-')[1] || formData.district, // Get only the district name
-        area: formData.area.split('-')[1] || formData.area, // Get only the area name
+        // No need to split district and area anymore since they are plain input
       };
 
       // Validate form data (same validation logic as before)
@@ -708,41 +648,31 @@ export default function TutorRequestPage() {
                   </div>
                 </div>
 
-                {/* Location Information Section */}
+                {/* Location Information Section - Changed District and Area to plain Input */}
                 <div className="space-y-4 sm:space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                    {/* District - Plain Input (no dropdown) */}
                     <div className="space-y-2">
-                      <SearchableSelect
+                      <Input
+                        id="district"
                         value={formData.district}
-                        onValueChange={(value) =>
-                          handleChange("district", value)
+                        onChange={(e) =>
+                          handleChange("district", e.target.value)
                         }
                         placeholder="District *"
-                        options={districts}
-                        disabled={isLoadingDistricts}
+                        className="w-full h-10 sm:h-11"
                       />
-                      {isLoadingDistricts && (
-                        <p className="text-xs text-gray-500">Loading districts...</p>
-                      )}
-                      {districts.length === 0 && !isLoadingDistricts && (
-                        <p className="text-xs text-gray-500">No districts available</p>
-                      )}
                     </div>
 
+                    {/* Area - Plain Input (no dropdown) */}
                     <div className="space-y-2">
-                      <SearchableSelect
+                      <Input
+                        id="area"
                         value={formData.area}
-                        onValueChange={(value) => handleChange("area", value)}
+                        onChange={(e) => handleChange("area", e.target.value)}
                         placeholder="Area *"
-                        options={areas}
-                        disabled={isLoadingAreas}
+                        className="w-full h-10 sm:h-11"
                       />
-                      {isLoadingAreas && (
-                        <p className="text-xs text-gray-500">Loading areas...</p>
-                      )}
-                      {areas.length === 0 && !isLoadingAreas && (
-                        <p className="text-xs text-gray-500">No areas available</p>
-                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -787,7 +717,7 @@ export default function TutorRequestPage() {
                   </div>
                 </div>
 
-                {/* Academic Information Section */}
+                {/* Academic Information Section - Same as before */}
                 <div className="space-y-4 sm:space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     <div className="space-y-2">
@@ -974,7 +904,7 @@ export default function TutorRequestPage() {
                             parseInt(e.target.value) || ""
                           )
                         }
-                        placeholder="Students Number*"
+                        placeholder="Total Students*"
                         className="w-full h-11"
                       />
                     </div>

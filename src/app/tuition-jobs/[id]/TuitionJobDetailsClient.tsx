@@ -422,8 +422,8 @@ const [applyForTutorRequest, { isLoading: applyingForJob }] =useApplyForTutorReq
                 Tutor Needed For {job.subject}
               </h1>
               <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-                <span>Job ID: {job.id.slice(0, 8)}</span>
-                <span>
+                <span className="text-green-500 font-bold">Job ID: {job.id.slice(0, 8)}</span>
+                <span className="text-green-500 font-bold"> 
                   Posted at: {new Date(job.createdAt).toLocaleDateString()}
                 </span>
               </div>
