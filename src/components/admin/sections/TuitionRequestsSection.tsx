@@ -184,7 +184,7 @@ export function TuitionRequestsSection() {
   });
 
   const { data: DistrictData } = useGetAllDistrictsQuery(undefined);
-  
+
   const { data: categoryData } = useGetAllCategoryQuery(undefined);
 
   // RTK Query mutations
@@ -193,11 +193,15 @@ export function TuitionRequestsSection() {
   const [createTutorRequest] = useCreateTutorRequestsMutation();
 
   const [requests, setRequests] = useState<TuitionRequest[]>([]);
-  const [filteredRequests, setFilteredRequests] = useState<TuitionRequest[]>([]);
+  const [filteredRequests, setFilteredRequests] = useState<TuitionRequest[]>(
+    []
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedRequest, setSelectedRequest] = useState<TuitionRequest | null>(null);
-  
+  const [selectedRequest, setSelectedRequest] = useState<TuitionRequest | null>(
+    null
+  );
+
   // Modal states
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showAssignTutorModal, setShowAssignTutorModal] = useState(false);
@@ -247,7 +251,9 @@ export function TuitionRequestsSection() {
 
   const [isCreating, setIsCreating] = useState(false);
   const [assignments, setAssignments] = useState<TutorAssignment[]>([]);
-  const [updateNoticeHistory, setUpdateNoticeHistory] = useState<UpdateNoticeHistory[]>([]);
+  const [updateNoticeHistory, setUpdateNoticeHistory] = useState<
+    UpdateNoticeHistory[]
+  >([]);
   const [isLoadingUpdateHistory, setIsLoadingUpdateHistory] = useState(false);
 
   // Categories and filters
@@ -258,10 +264,16 @@ export function TuitionRequestsSection() {
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
 
   // District এবং area state
-  const [selectedDistrictForEdit, setSelectedDistrictForEdit] = useState<string>("");
-  const [selectedDistrictForCreate, setSelectedDistrictForCreate] = useState<string>("");
-  const [availableAreasForEdit, setAvailableAreasForEdit] = useState<string[]>([]);
-  const [availableAreasForCreate, setAvailableAreasForCreate] = useState<string[]>([]);
+  const [selectedDistrictForEdit, setSelectedDistrictForEdit] =
+    useState<string>("");
+  const [selectedDistrictForCreate, setSelectedDistrictForCreate] =
+    useState<string>("");
+  const [availableAreasForEdit, setAvailableAreasForEdit] = useState<string[]>(
+    []
+  );
+  const [availableAreasForCreate, setAvailableAreasForCreate] = useState<
+    string[]
+  >([]);
 
   // Taxonomy data states
   const [isLoadingTaxonomy, setIsLoadingTaxonomy] = useState(false);
@@ -269,9 +281,12 @@ export function TuitionRequestsSection() {
   // Tutor assignment filters
   const [tutorFilters, setTutorFilters] = useState<TutorFilter>({});
   const [isLoadingTutors, setIsLoadingTutors] = useState(false);
-  const [selectedTutorDetails, setSelectedTutorDetails] = useState<LocalTutor | null>(null);
+  const [selectedTutorDetails, setSelectedTutorDetails] =
+    useState<LocalTutor | null>(null);
   const [showTutorDetails, setShowTutorDetails] = useState(false);
-  const [assignmentTab, setAssignmentTab] = useState<"all" | "matched" | "nearby">("all");
+  const [assignmentTab, setAssignmentTab] = useState<
+    "all" | "matched" | "nearby"
+  >("all");
   const [tutorSearchTerm, setTutorSearchTerm] = useState("");
   const [sendEmailNotification, setSendEmailNotification] = useState(true);
   const [sendSMSNotification, setSendSMSNotification] = useState(true);
@@ -285,10 +300,11 @@ export function TuitionRequestsSection() {
   const realTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // District options
-  const districtOptions = DistrictData?.data?.map((district: District) => ({
-    value: district.name,
-    label: district.name,
-  })) || [];
+  const districtOptions =
+    DistrictData?.data?.map((district: District) => ({
+      value: district.name,
+      label: district.name,
+    })) || [];
 
   // Check if current user can delete requests
   const canDeleteRequests = () => {
@@ -299,38 +315,48 @@ export function TuitionRequestsSection() {
   useEffect(() => {
     if (tutorRequestsData) {
       if (tutorRequestsData.success && Array.isArray(tutorRequestsData.data)) {
-        const formattedRequests: TuitionRequest[] = tutorRequestsData.data.map((req: any) => ({
-          id: req.id,
-          tutorRequestId: req.tutorRequestId,
-          studentName: req.studentName || "Anonymous Student",
-          studentGender: req.studentGender,
-          phoneNumber: req.phoneNumber,
-          district: req.district,
-          area: req.area,
-          detailedLocation: req.detailedLocation,
-          medium: req.medium,
-          subject: req.subject || (Array.isArray(req.selectedSubjects) ? req.selectedSubjects.join(", ") : "Not specified"),
-          studentClass: req.studentClass || (Array.isArray(req.selectedClasses) ? req.selectedClasses.join(", ") : "Not specified"),
-          selectedCategories: req.selectedCategories || [],
-          selectedSubjects: req.selectedSubjects || [],
-          selectedClasses: req.selectedClasses || [],
-          tutoringType: req.tutoringType,
-          numberOfStudents: req.numberOfStudents,
-          tutoringDays: req.tutoringDays,
-          tutoringTime: req.tutoringTime,
-          tutoringDuration: req.tutoringDuration,
-          tutorGenderPreference: req.tutorGenderPreference,
-          isSalaryNegotiable: req.isSalaryNegotiable || false,
-          salaryRange: req.salaryRange || { min: 0, max: 0 },
-          extraInformation: req.extraInformation,
-          adminNote: req.adminNote,
-          status: req.status,
-          createdAt: req.createdAt,
-          updatedAt: req.updatedAt,
-          user: req.user,
-          assignments: req.assignments || [],
-        }));
-        
+        const formattedRequests: TuitionRequest[] = tutorRequestsData.data.map(
+          (req: any) => ({
+            id: req.id,
+            tutorRequestId: req.tutorRequestId,
+            studentName: req.studentName || "Anonymous Student",
+            studentGender: req.studentGender,
+            phoneNumber: req.phoneNumber,
+            district: req.district,
+            area: req.area,
+            detailedLocation: req.detailedLocation,
+            medium: req.medium,
+            subject:
+              req.subject ||
+              (Array.isArray(req.selectedSubjects)
+                ? req.selectedSubjects.join(", ")
+                : "Not specified"),
+            studentClass:
+              req.studentClass ||
+              (Array.isArray(req.selectedClasses)
+                ? req.selectedClasses.join(", ")
+                : "Not specified"),
+            selectedCategories: req.selectedCategories || [],
+            selectedSubjects: req.selectedSubjects || [],
+            selectedClasses: req.selectedClasses || [],
+            tutoringType: req.tutoringType,
+            numberOfStudents: req.numberOfStudents,
+            tutoringDays: req.tutoringDays,
+            tutoringTime: req.tutoringTime,
+            tutoringDuration: req.tutoringDuration,
+            tutorGenderPreference: req.tutorGenderPreference,
+            isSalaryNegotiable: req.isSalaryNegotiable || false,
+            salaryRange: req.salaryRange || { min: 0, max: 0 },
+            extraInformation: req.extraInformation,
+            adminNote: req.adminNote,
+            status: req.status,
+            createdAt: req.createdAt,
+            updatedAt: req.updatedAt,
+            user: req.user,
+            assignments: req.assignments || [],
+          })
+        );
+
         setRequests(formattedRequests);
         setFilteredRequests(formattedRequests);
       }
@@ -343,25 +369,34 @@ export function TuitionRequestsSection() {
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter((request) =>
-        (request.tutorRequestId && request.tutorRequestId.toLowerCase().includes(term)) ||
-        (request.phoneNumber && request.phoneNumber.toLowerCase().includes(term)) ||
-        (request.district && request.district.toLowerCase().includes(term)) ||
-        (request.area && request.area.toLowerCase().includes(term)) ||
-        (request.subject && request.subject.toLowerCase().includes(term)) ||
-        (request.studentName && request.studentName.toLowerCase().includes(term))
+      filtered = filtered.filter(
+        (request) =>
+          (request.tutorRequestId &&
+            request.tutorRequestId.toLowerCase().includes(term)) ||
+          (request.phoneNumber &&
+            request.phoneNumber.toLowerCase().includes(term)) ||
+          (request.district && request.district.toLowerCase().includes(term)) ||
+          (request.area && request.area.toLowerCase().includes(term)) ||
+          (request.subject && request.subject.toLowerCase().includes(term)) ||
+          (request.studentName &&
+            request.studentName.toLowerCase().includes(term))
       );
     }
 
     if (statusFilter !== "all") {
-      filtered = filtered.filter((request) => request.status.toLowerCase() === statusFilter);
+      filtered = filtered.filter(
+        (request) => request.status.toLowerCase() === statusFilter
+      );
     }
 
     setFilteredRequests(filtered);
   }, [searchTerm, statusFilter, requests]);
 
   // Handle status change
-  const handleStatusChange = async (requestId: string, newStatus: "Active" | "Inactive" | "Completed" | "Assign") => {
+  const handleStatusChange = async (
+    requestId: string,
+    newStatus: "Active" | "Inactive" | "Completed" | "Assign"
+  ) => {
     try {
       const response = await updateTutorRequestStatus({
         id: requestId,
@@ -412,7 +447,7 @@ export function TuitionRequestsSection() {
       if (selectedDistrictData) {
         const allAreas = [
           ...(selectedDistrictData.area || []),
-          ...(selectedDistrictData.thana || [])
+          ...(selectedDistrictData.thana || []),
         ];
         setAvailableAreasForEdit(allAreas);
       }
@@ -422,10 +457,10 @@ export function TuitionRequestsSection() {
   // Create মডালের জন্য district change handler
   const handleCreateDistrictChange = (district: string) => {
     setSelectedDistrictForCreate(district);
-    setCreateFormData(prev => ({
+    setCreateFormData((prev) => ({
       ...prev,
       district: district,
-      area: ""
+      area: "",
     }));
     setAvailableAreasForCreate([]);
 
@@ -437,7 +472,7 @@ export function TuitionRequestsSection() {
       if (selectedDistrictData) {
         const allAreas = [
           ...(selectedDistrictData.area || []),
-          ...(selectedDistrictData.thana || [])
+          ...(selectedDistrictData.thana || []),
         ];
         setAvailableAreasForCreate(allAreas);
       }
@@ -453,7 +488,10 @@ export function TuitionRequestsSection() {
   };
 
   // Handle create salary range change
-  const handleCreateSalaryRangeChange = (type: "min" | "max", value: number) => {
+  const handleCreateSalaryRangeChange = (
+    type: "min" | "max",
+    value: number
+  ) => {
     setCreateFormData((prev) => ({
       ...prev,
       salaryRange: {
@@ -540,6 +578,7 @@ export function TuitionRequestsSection() {
             { id: 10, name: "Class 10" },
             { id: 11, name: "Class 11" },
             { id: 12, name: "Class 12" },
+            { id: 13, name: "University" },
           ]);
         } catch (error) {
           console.error("Error fetching taxonomy:", error);
@@ -559,17 +598,17 @@ export function TuitionRequestsSection() {
   const handleCreateRequest = async () => {
     // Validate required fields
     const requiredFields = [
-      'phoneNumber',
-      'studentGender',
-      'district',
-      'area',
-      'medium',
-      'tutoringType',
-      'tutoringDuration',
-      'tutoringDays',
-      'tutoringTime',
-      'numberOfStudents',
-      'tutorGenderPreference'
+      "phoneNumber",
+      "studentGender",
+      "district",
+      "area",
+      "medium",
+      "tutoringType",
+      "tutoringDuration",
+      "tutoringDays",
+      "tutoringTime",
+      "numberOfStudents",
+      "tutorGenderPreference",
     ];
 
     for (const field of requiredFields) {
@@ -662,7 +701,7 @@ export function TuitionRequestsSection() {
 
       const result = await createTutorRequest(submitData);
 
-      if ('data' in result && result.data?.success) {
+      if ("data" in result && result.data?.success) {
         toast({
           title: "Success",
           description: "Tuition request created successfully",
@@ -672,9 +711,10 @@ export function TuitionRequestsSection() {
         await refetchRTK();
       } else {
         const errorData = (result.error as any)?.data;
-        const errorMessage = errorData?.message || 
-                           errorData?.error?.message || 
-                           "Failed to create tutor request";
+        const errorMessage =
+          errorData?.message ||
+          errorData?.error?.message ||
+          "Failed to create tutor request";
         toast({
           title: "Error",
           description: errorMessage,
@@ -731,7 +771,9 @@ export function TuitionRequestsSection() {
   const fetchUpdateNoticeHistory = useCallback(async (requestId: string) => {
     try {
       setIsLoadingUpdateHistory(true);
-      const response = await tutorRequestService.getUpdateNoticeHistory(requestId);
+      const response = await tutorRequestService.getUpdateNoticeHistory(
+        requestId
+      );
       if (response.success) {
         setUpdateNoticeHistory(response.data);
       }
@@ -753,10 +795,10 @@ export function TuitionRequestsSection() {
   // Open edit modal - district data setup
   const openEditRequestModal = (request: TuitionRequest) => {
     setSelectedRequest(request);
-    
+
     // Set district for edit
     setSelectedDistrictForEdit(request.district || "");
-    
+
     // Load areas for the district if available
     if (DistrictData?.data && request.district) {
       const selectedDistrictData = DistrictData.data.find(
@@ -765,12 +807,12 @@ export function TuitionRequestsSection() {
       if (selectedDistrictData) {
         const allAreas = [
           ...(selectedDistrictData.area || []),
-          ...(selectedDistrictData.thana || [])
+          ...(selectedDistrictData.thana || []),
         ];
         setAvailableAreasForEdit(allAreas);
       }
     }
-    
+
     setEditFormData({
       studentName: request.studentName,
       studentGender: request.studentGender,
@@ -863,11 +905,14 @@ export function TuitionRequestsSection() {
       return;
     }
 
-    if (!confirm("Are you sure you want to delete this tuition request?")) return;
+    if (!confirm("Are you sure you want to delete this tuition request?"))
+      return;
 
     setIsDeleting(true);
     try {
-      const response = await tutorRequestService.deleteTutorRequestAdmin(requestId);
+      const response = await tutorRequestService.deleteTutorRequestAdmin(
+        requestId
+      );
       if (response.success) {
         toast({
           title: "Success",
@@ -887,24 +932,27 @@ export function TuitionRequestsSection() {
   };
 
   // Fetch tutors
-  const fetchTutors = useCallback(async (filters?: TutorFilter) => {
-    try {
-      setIsLoadingTutors(true);
-      const response = await tutorService.getAllTutors(filters);
-      if (response.success && response.data) {
-        setTutors(response.data as LocalTutor[]);
-        setFilteredTutors(response.data as LocalTutor[]);
+  const fetchTutors = useCallback(
+    async (filters?: TutorFilter) => {
+      try {
+        setIsLoadingTutors(true);
+        const response = await tutorService.getAllTutors(filters);
+        if (response.success && response.data) {
+          setTutors(response.data as LocalTutor[]);
+          setFilteredTutors(response.data as LocalTutor[]);
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch tutors",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingTutors(false);
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch tutors",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingTutors(false);
-    }
-  }, [toast]);
+    },
+    [toast]
+  );
 
   // Open assign tutor modal
   const openAssignTutorModal = async (request: TuitionRequest) => {
@@ -995,7 +1043,9 @@ export function TuitionRequestsSection() {
   const viewAssignments = async (request: TuitionRequest) => {
     setSelectedRequest(request);
     try {
-      const response = await tutorRequestService.getTutorAssignments(request.id);
+      const response = await tutorRequestService.getTutorAssignments(
+        request.id
+      );
       if (response.success) {
         setAssignments(response.data);
       }
@@ -1041,7 +1091,7 @@ export function TuitionRequestsSection() {
   const toggleRealTimeUpdates = () => {
     setRealTimeConfig((prev) => {
       const newConfig = { ...prev, enabled: !prev.enabled };
-      
+
       if (newConfig.enabled) {
         realTimeIntervalRef.current = setInterval(() => {
           refetchRTK();
@@ -1053,7 +1103,7 @@ export function TuitionRequestsSection() {
           realTimeIntervalRef.current = null;
         }
       }
-      
+
       return newConfig;
     });
   };
@@ -1092,6 +1142,15 @@ export function TuitionRequestsSection() {
   }, [realTimeConfig.enabled, realTimeConfig.interval, refetchRTK]);
 
   const isLoading = rtkLoading || rtkFetching;
+
+    // Handle form field changes
+    const handleChange = (field: keyof any, value: any) => {
+      setCreateFormData((prev:any) => ({
+        ...prev,
+        [field]: value,
+      }));
+    };
+  
 
   // Success view
   if (showSuccess) {
@@ -1174,7 +1233,8 @@ export function TuitionRequestsSection() {
                 </div>
                 <h3 className="font-medium text-gray-800">Schedule</h3>
                 <p className="text-sm text-gray-600">
-                  {createFormData.tutoringDays} days/week at {createFormData.tutoringTime}
+                  {createFormData.tutoringDays} days/week at{" "}
+                  {createFormData.tutoringTime}
                 </p>
               </div>
               <div className="bg-white p-4 rounded-lg shadow-sm border border-green-100">
@@ -1206,10 +1266,7 @@ export function TuitionRequestsSection() {
             >
               Close
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowCreateModal(true)}
-            >
+            <Button variant="outline" onClick={() => setShowCreateModal(true)}>
               Create Another Request
             </Button>
           </CardFooter>
@@ -1235,7 +1292,8 @@ export function TuitionRequestsSection() {
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span className="text-sm">Real-time updates enabled</span>
                 <span className="text-xs">
-                  • Last updated: {realTimeConfig.lastUpdate.toLocaleTimeString()}
+                  • Last updated:{" "}
+                  {realTimeConfig.lastUpdate.toLocaleTimeString()}
                 </span>
               </div>
             )}
@@ -1261,7 +1319,9 @@ export function TuitionRequestsSection() {
               disabled={isLoading}
               className="bg-white/10 border-white/20 text-white hover:bg-white/20"
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+              />
               Refresh
             </Button>
             <Button
@@ -1344,11 +1404,15 @@ export function TuitionRequestsSection() {
                   {filteredRequests.map((request) => (
                     <TableRow key={request.id}>
                       <TableCell className="font-medium">
-                        <div className="text-sm">{request.tutorRequestId || request.id.slice(-8)}</div>
+                        <div className="text-sm">
+                          {request.tutorRequestId || request.id.slice(-8)}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">{request.studentName}</div>
-                        <div className="text-sm text-muted-foreground">{request.studentGender}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {request.studentGender}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
@@ -1360,7 +1424,9 @@ export function TuitionRequestsSection() {
                         {request.district}
                         {request.area ? `, ${request.area}` : ""}
                       </TableCell>
-                      <TableCell>{request.subject || "Not specified"}</TableCell>
+                      <TableCell>
+                        {request.subject || "Not specified"}
+                      </TableCell>
                       <TableCell>{request.tutoringType}</TableCell>
                       <TableCell>
                         {request.salaryRange.min === request.salaryRange.max
@@ -1368,7 +1434,9 @@ export function TuitionRequestsSection() {
                           : `৳${request.salaryRange.min} - ৳${request.salaryRange.max}`}
                       </TableCell>
                       <TableCell>{renderStatusBadge(request.status)}</TableCell>
-                      <TableCell>{new Date(request.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        {new Date(request.createdAt).toLocaleDateString()}
+                      </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -1378,40 +1446,60 @@ export function TuitionRequestsSection() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => viewRequestDetails(request)}>
+                            <DropdownMenuItem
+                              onClick={() => viewRequestDetails(request)}
+                            >
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openEditRequestModal(request)}>
+                            <DropdownMenuItem
+                              onClick={() => openEditRequestModal(request)}
+                            >
                               <Edit className="h-4 w-4 mr-2" />
                               Edit Request
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openAssignTutorModal(request)}>
+                            <DropdownMenuItem
+                              onClick={() => openAssignTutorModal(request)}
+                            >
                               <UserPlus className="h-4 w-4 mr-2" />
                               Assign Tutor
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => viewAssignments(request)}>
+                            <DropdownMenuItem
+                              onClick={() => viewAssignments(request)}
+                            >
                               <Users className="h-4 w-4 mr-2" />
                               View Assignments
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => handleStatusChange(request.id, "Active")}
-                              disabled={request.status.toLowerCase() === "active"}
+                              onClick={() =>
+                                handleStatusChange(request.id, "Active")
+                              }
+                              disabled={
+                                request.status.toLowerCase() === "active"
+                              }
                             >
                               <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
                               Mark as Active
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleStatusChange(request.id, "Inactive")}
-                              disabled={request.status.toLowerCase() === "inactive"}
+                              onClick={() =>
+                                handleStatusChange(request.id, "Inactive")
+                              }
+                              disabled={
+                                request.status.toLowerCase() === "inactive"
+                              }
                             >
                               <XCircle className="h-4 w-4 mr-2 text-gray-600" />
                               Mark as Inactive
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleStatusChange(request.id, "Completed")}
-                              disabled={request.status.toLowerCase() === "completed"}
+                              onClick={() =>
+                                handleStatusChange(request.id, "Completed")
+                              }
+                              disabled={
+                                request.status.toLowerCase() === "completed"
+                              }
                             >
                               <CheckCircle className="h-4 w-4 mr-2 text-blue-600" />
                               Mark as Completed
@@ -1420,12 +1508,16 @@ export function TuitionRequestsSection() {
                               <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                  onClick={() => handleDeleteRequest(request.id)}
+                                  onClick={() =>
+                                    handleDeleteRequest(request.id)
+                                  }
                                   className="text-destructive focus:text-destructive"
                                   disabled={isDeleting}
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
-                                  {isDeleting ? "Deleting..." : "Delete Request"}
+                                  {isDeleting
+                                    ? "Deleting..."
+                                    : "Delete Request"}
                                 </DropdownMenuItem>
                               </>
                             )}
@@ -1461,7 +1553,9 @@ export function TuitionRequestsSection() {
                   <Input
                     id="create-phoneNumber"
                     value={createFormData.phoneNumber}
-                    onChange={(e) => handleCreateFormChange("phoneNumber", e.target.value)}
+                    onChange={(e) =>
+                      handleCreateFormChange("phoneNumber", e.target.value)
+                    }
                     placeholder="Enter phone number"
                     required
                   />
@@ -1471,7 +1565,9 @@ export function TuitionRequestsSection() {
                   <Label htmlFor="create-studentGender">Student Gender *</Label>
                   <Select
                     value={createFormData.studentGender}
-                    onValueChange={(value) => handleCreateFormChange("studentGender", value)}
+                    onValueChange={(value) =>
+                      handleCreateFormChange("studentGender", value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select gender" />
@@ -1514,7 +1610,9 @@ export function TuitionRequestsSection() {
                   {availableAreasForCreate.length > 0 ? (
                     <Select
                       value={createFormData.area}
-                      onValueChange={(value) => handleCreateFormChange("area", value)}
+                      onValueChange={(value) =>
+                        handleCreateFormChange("area", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select area" />
@@ -1531,7 +1629,9 @@ export function TuitionRequestsSection() {
                     <Input
                       id="create-area"
                       value={createFormData.area}
-                      onChange={(e) => handleCreateFormChange("area", e.target.value)}
+                      onChange={(e) =>
+                        handleCreateFormChange("area", e.target.value)
+                      }
                       placeholder="Enter area"
                       required
                       disabled={!createFormData.district}
@@ -1540,11 +1640,15 @@ export function TuitionRequestsSection() {
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="create-detailedLocation">Detailed Location (Optional)</Label>
+                  <Label htmlFor="create-detailedLocation">
+                    Detailed Location (Optional)
+                  </Label>
                   <Input
                     id="create-detailedLocation"
                     value={createFormData.detailedLocation}
-                    onChange={(e) => handleCreateFormChange("detailedLocation", e.target.value)}
+                    onChange={(e) =>
+                      handleCreateFormChange("detailedLocation", e.target.value)
+                    }
                     placeholder="Enter detailed location"
                   />
                 </div>
@@ -1559,7 +1663,9 @@ export function TuitionRequestsSection() {
                   <Label htmlFor="create-medium">Medium *</Label>
                   <Select
                     value={createFormData.medium}
-                    onValueChange={(value) => handleCreateFormChange("medium", value)}
+                    onValueChange={(value) =>
+                      handleCreateFormChange("medium", value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select medium" />
@@ -1576,14 +1682,20 @@ export function TuitionRequestsSection() {
                   <Label htmlFor="create-tutoringType">Tutoring Type *</Label>
                   <Select
                     value={createFormData.tutoringType}
-                    onValueChange={(value) => handleCreateFormChange("tutoringType", value)}
+                    onValueChange={(value) =>
+                      handleCreateFormChange("tutoringType", value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select tutoring type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Home Tutoring">Home Tutoring</SelectItem>
-                      <SelectItem value="Online Tutoring">Online Tutoring</SelectItem>
+                      <SelectItem value="Home Tutoring">
+                        Home Tutoring
+                      </SelectItem>
+                      <SelectItem value="Online Tutoring">
+                        Online Tutoring
+                      </SelectItem>
                       <SelectItem value="Both">Both</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1593,14 +1705,19 @@ export function TuitionRequestsSection() {
 
             {/* Category, Subjects, and Classes Section */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Category, Subjects & Classes</h3>
+              <h3 className="text-lg font-semibold">
+                Category, Subjects & Classes
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="create-category">Category *</Label>
                   <Select
                     value=""
                     onValueChange={(value) => {
-                      if (value && !createFormData.selectedCategories.includes(value)) {
+                      if (
+                        value &&
+                        !createFormData.selectedCategories.includes(value)
+                      ) {
                         handleCreateCategorySelection(value);
                       }
                     }}
@@ -1618,21 +1735,25 @@ export function TuitionRequestsSection() {
                   </Select>
                   {createFormData.selectedCategories.length > 0 && (
                     <div className="mt-2 space-y-1">
-                      {createFormData.selectedCategories.map((category, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm"
-                        >
-                          <span>{category}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleCreateCategorySelection(category)}
-                            className="text-red-500 hover:text-red-700 text-xs"
+                      {createFormData.selectedCategories.map(
+                        (category, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm"
                           >
-                            ×
-                          </button>
-                        </div>
-                      ))}
+                            <span>{category}</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCreateCategorySelection(category)
+                              }
+                              className="text-red-500 hover:text-red-700 text-xs"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        )
+                      )}
                     </div>
                   )}
                 </div>
@@ -1640,12 +1761,17 @@ export function TuitionRequestsSection() {
                 <div className="space-y-2">
                   <Label htmlFor="create-subjects">Subjects *</Label>
                   {isLoadingTaxonomy ? (
-                    <div className="text-center py-2 text-sm">Loading subjects...</div>
+                    <div className="text-center py-2 text-sm">
+                      Loading subjects...
+                    </div>
                   ) : (
                     <Select
                       value=""
                       onValueChange={(value) => {
-                        if (value && !createFormData.selectedSubjects.includes(value)) {
+                        if (
+                          value &&
+                          !createFormData.selectedSubjects.includes(value)
+                        ) {
                           handleCreateSubjectSelection(value);
                         }
                       }}
@@ -1673,7 +1799,9 @@ export function TuitionRequestsSection() {
                           <span>{subject}</span>
                           <button
                             type="button"
-                            onClick={() => handleCreateSubjectSelection(subject)}
+                            onClick={() =>
+                              handleCreateSubjectSelection(subject)
+                            }
                             className="text-red-500 hover:text-red-700 text-xs"
                           >
                             ×
@@ -1687,12 +1815,17 @@ export function TuitionRequestsSection() {
                 <div className="space-y-2">
                   <Label htmlFor="create-classes">Class Levels *</Label>
                   {isLoadingTaxonomy ? (
-                    <div className="text-center py-2 text-sm">Loading class levels...</div>
+                    <div className="text-center py-2 text-sm">
+                      Loading class levels...
+                    </div>
                   ) : (
                     <Select
                       value=""
                       onValueChange={(value) => {
-                        if (value && !createFormData.selectedClasses.includes(value)) {
+                        if (
+                          value &&
+                          !createFormData.selectedClasses.includes(value)
+                        ) {
                           handleCreateClassSelection(value);
                         }
                       }}
@@ -1703,7 +1836,10 @@ export function TuitionRequestsSection() {
                       </SelectTrigger>
                       <SelectContent>
                         {classLevels.map((classLevel) => (
-                          <SelectItem key={classLevel.id} value={classLevel.name}>
+                          <SelectItem
+                            key={classLevel.id}
+                            value={classLevel.name}
+                          >
                             {classLevel.name}
                           </SelectItem>
                         ))}
@@ -1712,30 +1848,41 @@ export function TuitionRequestsSection() {
                   )}
                   {createFormData.selectedClasses.length > 0 && (
                     <div className="mt-2 space-y-1">
-                      {createFormData.selectedClasses.map((className, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm"
-                        >
-                          <span>{className}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleCreateClassSelection(className)}
-                            className="text-red-500 hover:text-red-700 text-xs"
+                      {createFormData.selectedClasses.map(
+                        (className, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm"
                           >
-                            ×
-                          </button>
-                        </div>
-                      ))}
+                            <span>{className}</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCreateClassSelection(className)
+                              }
+                              className="text-red-500 hover:text-red-700 text-xs"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        )
+                      )}
                     </div>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="create-numberOfStudents">Number of Students *</Label>
+                  <Label htmlFor="create-numberOfStudents">
+                    Number of Students *
+                  </Label>
                   <Select
                     value={createFormData.numberOfStudents.toString()}
-                    onValueChange={(value) => handleCreateFormChange("numberOfStudents", parseInt(value))}
+                    onValueChange={(value) =>
+                      handleCreateFormChange(
+                        "numberOfStudents",
+                        parseInt(value)
+                      )
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select number of students" />
@@ -1757,10 +1904,14 @@ export function TuitionRequestsSection() {
               <h3 className="text-lg font-semibold">Tutoring Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="create-tutoringDuration">Duration per Session *</Label>
+                  <Label htmlFor="create-tutoringDuration">
+                    Duration per Session *
+                  </Label>
                   <Select
                     value={createFormData.tutoringDuration}
-                    onValueChange={(value) => handleCreateFormChange("tutoringDuration", value)}
+                    onValueChange={(value) =>
+                      handleCreateFormChange("tutoringDuration", value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select duration" />
@@ -1780,7 +1931,9 @@ export function TuitionRequestsSection() {
                   <Label htmlFor="create-tutoringDays">Days per Week *</Label>
                   <Select
                     value={createFormData.tutoringDays.toString()}
-                    onValueChange={(value) => handleCreateFormChange("tutoringDays", parseInt(value))}
+                    onValueChange={(value) =>
+                      handleCreateFormChange("tutoringDays", parseInt(value))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select days" />
@@ -1800,19 +1953,26 @@ export function TuitionRequestsSection() {
                 <div className="space-y-2">
                   <Label htmlFor="create-tutoringTime">Preferred Time *</Label>
                   <Input
-                    id="create-tutoringTime"
+                    id="tutoringTime"
+                    type="time"
                     value={createFormData.tutoringTime}
-                    onChange={(e) => handleCreateFormChange("tutoringTime", e.target.value)}
-                    placeholder="e.g., 4:00 PM - 6:00 PM"
-                    required
+                    onChange={(e) =>
+                      handleChange("tutoringTime", e.target.value)
+                    }
+                    className="w-full h-10 sm:h-11"
                   />
+                  <p className="text-xs text-gray-500">Tutoring Time *</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="create-tutorGenderPreference">Preferred Tutor Gender *</Label>
+                  <Label htmlFor="create-tutorGenderPreference">
+                    Preferred Tutor Gender *
+                  </Label>
                   <Select
                     value={createFormData.tutorGenderPreference}
-                    onValueChange={(value) => handleCreateFormChange("tutorGenderPreference", value)}
+                    onValueChange={(value) =>
+                      handleCreateFormChange("tutorGenderPreference", value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select preference" />
@@ -1838,7 +1998,12 @@ export function TuitionRequestsSection() {
                     type="number"
                     min="0"
                     value={createFormData.salaryRange.min}
-                    onChange={(e) => handleCreateSalaryRangeChange("min", parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handleCreateSalaryRangeChange(
+                        "min",
+                        parseInt(e.target.value)
+                      )
+                    }
                     required
                   />
                 </div>
@@ -1850,7 +2015,12 @@ export function TuitionRequestsSection() {
                     type="number"
                     min="0"
                     value={createFormData.salaryRange.max}
-                    onChange={(e) => handleCreateSalaryRangeChange("max", parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handleCreateSalaryRangeChange(
+                        "max",
+                        parseInt(e.target.value)
+                      )
+                    }
                     required
                   />
                 </div>
@@ -1859,9 +2029,14 @@ export function TuitionRequestsSection() {
                   <Checkbox
                     id="create-isSalaryNegotiable"
                     checked={createFormData.isSalaryNegotiable}
-                    onCheckedChange={(checked) => handleCreateFormChange("isSalaryNegotiable", checked)}
+                    onCheckedChange={(checked) =>
+                      handleCreateFormChange("isSalaryNegotiable", checked)
+                    }
                   />
-                  <Label htmlFor="create-isSalaryNegotiable" className="cursor-pointer">
+                  <Label
+                    htmlFor="create-isSalaryNegotiable"
+                    className="cursor-pointer"
+                  >
                     Salary is Negotiable
                   </Label>
                 </div>
@@ -1872,11 +2047,15 @@ export function TuitionRequestsSection() {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Additional Information</h3>
               <div className="space-y-2">
-                <Label htmlFor="create-extraInformation">Extra Information (Optional)</Label>
+                <Label htmlFor="create-extraInformation">
+                  Extra Information (Optional)
+                </Label>
                 <Textarea
                   id="create-extraInformation"
                   value={createFormData.extraInformation}
-                  onChange={(e) => handleCreateFormChange("extraInformation", e.target.value)}
+                  onChange={(e) =>
+                    handleCreateFormChange("extraInformation", e.target.value)
+                  }
                   placeholder="Any additional information..."
                   rows={3}
                 />
@@ -1886,7 +2065,9 @@ export function TuitionRequestsSection() {
                 <Textarea
                   id="create-adminNote"
                   value={createFormData.adminNote}
-                  onChange={(e) => handleCreateFormChange("adminNote", e.target.value)}
+                  onChange={(e) =>
+                    handleCreateFormChange("adminNote", e.target.value)
+                  }
                   placeholder="Internal admin notes..."
                   rows={2}
                 />
@@ -1925,7 +2106,9 @@ export function TuitionRequestsSection() {
                     <Label htmlFor="edit-studentGender">Student Gender</Label>
                     <Select
                       value={editFormData.studentGender || ""}
-                      onValueChange={(value) => handleEditFormChange("studentGender", value)}
+                      onValueChange={(value) =>
+                        handleEditFormChange("studentGender", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select gender" />
@@ -1942,7 +2125,9 @@ export function TuitionRequestsSection() {
                     <Input
                       id="edit-phoneNumber"
                       value={editFormData.phoneNumber || ""}
-                      onChange={(e) => handleEditFormChange("phoneNumber", e.target.value)}
+                      onChange={(e) =>
+                        handleEditFormChange("phoneNumber", e.target.value)
+                      }
                       placeholder="Enter phone number"
                     />
                   </div>
@@ -1964,7 +2149,10 @@ export function TuitionRequestsSection() {
                       </SelectTrigger>
                       <SelectContent>
                         {districtOptions.map((district: any) => (
-                          <SelectItem key={district.value} value={district.value}>
+                          <SelectItem
+                            key={district.value}
+                            value={district.value}
+                          >
                             {district.label}
                           </SelectItem>
                         ))}
@@ -1976,7 +2164,9 @@ export function TuitionRequestsSection() {
                     {availableAreasForEdit.length > 0 ? (
                       <Select
                         value={editFormData.area || ""}
-                        onValueChange={(value) => handleEditFormChange("area", value)}
+                        onValueChange={(value) =>
+                          handleEditFormChange("area", value)
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select area" />
@@ -1993,17 +2183,23 @@ export function TuitionRequestsSection() {
                       <Input
                         id="edit-area"
                         value={editFormData.area || ""}
-                        onChange={(e) => handleEditFormChange("area", e.target.value)}
+                        onChange={(e) =>
+                          handleEditFormChange("area", e.target.value)
+                        }
                         placeholder="Enter area"
                       />
                     )}
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="edit-detailedLocation">Detailed Location</Label>
+                    <Label htmlFor="edit-detailedLocation">
+                      Detailed Location
+                    </Label>
                     <Input
                       id="edit-detailedLocation"
                       value={editFormData.detailedLocation || ""}
-                      onChange={(e) => handleEditFormChange("detailedLocation", e.target.value)}
+                      onChange={(e) =>
+                        handleEditFormChange("detailedLocation", e.target.value)
+                      }
                       placeholder="Enter detailed location"
                     />
                   </div>
@@ -2018,7 +2214,9 @@ export function TuitionRequestsSection() {
                     <Label htmlFor="edit-medium">Medium</Label>
                     <Select
                       value={editFormData.medium || ""}
-                      onValueChange={(value) => handleEditFormChange("medium", value)}
+                      onValueChange={(value) =>
+                        handleEditFormChange("medium", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select medium" />
@@ -2035,7 +2233,9 @@ export function TuitionRequestsSection() {
                     <Input
                       id="edit-subject"
                       value={editFormData.subject || ""}
-                      onChange={(e) => handleEditFormChange("subject", e.target.value)}
+                      onChange={(e) =>
+                        handleEditFormChange("subject", e.target.value)
+                      }
                       placeholder="Enter subject"
                     />
                   </div>
@@ -2044,7 +2244,9 @@ export function TuitionRequestsSection() {
                     <Input
                       id="edit-studentClass"
                       value={editFormData.studentClass || ""}
-                      onChange={(e) => handleEditFormChange("studentClass", e.target.value)}
+                      onChange={(e) =>
+                        handleEditFormChange("studentClass", e.target.value)
+                      }
                       placeholder="Enter class level"
                     />
                   </div>
@@ -2052,14 +2254,20 @@ export function TuitionRequestsSection() {
                     <Label htmlFor="edit-tutoringType">Tutoring Type</Label>
                     <Select
                       value={editFormData.tutoringType || ""}
-                      onValueChange={(value) => handleEditFormChange("tutoringType", value)}
+                      onValueChange={(value) =>
+                        handleEditFormChange("tutoringType", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select tutoring type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Home Tutoring">Home Tutoring</SelectItem>
-                        <SelectItem value="Online Tutoring">Online Tutoring</SelectItem>
+                        <SelectItem value="Home Tutoring">
+                          Home Tutoring
+                        </SelectItem>
+                        <SelectItem value="Online Tutoring">
+                          Online Tutoring
+                        </SelectItem>
                         <SelectItem value="Both">Both</SelectItem>
                       </SelectContent>
                     </Select>
@@ -2072,13 +2280,20 @@ export function TuitionRequestsSection() {
                 <h3 className="text-lg font-semibold">Tutoring Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="edit-numberOfStudents">Number of Students</Label>
+                    <Label htmlFor="edit-numberOfStudents">
+                      Number of Students
+                    </Label>
                     <Input
                       id="edit-numberOfStudents"
                       type="number"
                       min="1"
                       value={editFormData.numberOfStudents || 1}
-                      onChange={(e) => handleEditFormChange("numberOfStudents", parseInt(e.target.value))}
+                      onChange={(e) =>
+                        handleEditFormChange(
+                          "numberOfStudents",
+                          parseInt(e.target.value)
+                        )
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -2089,7 +2304,12 @@ export function TuitionRequestsSection() {
                       min="1"
                       max="7"
                       value={editFormData.tutoringDays || 1}
-                      onChange={(e) => handleEditFormChange("tutoringDays", parseInt(e.target.value))}
+                      onChange={(e) =>
+                        handleEditFormChange(
+                          "tutoringDays",
+                          parseInt(e.target.value)
+                        )
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -2097,15 +2317,21 @@ export function TuitionRequestsSection() {
                     <Input
                       id="edit-tutoringTime"
                       value={editFormData.tutoringTime || ""}
-                      onChange={(e) => handleEditFormChange("tutoringTime", e.target.value)}
+                      onChange={(e) =>
+                        handleEditFormChange("tutoringTime", e.target.value)
+                      }
                       placeholder="e.g., 4:00 PM - 6:00 PM"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="edit-tutoringDuration">Duration per Session</Label>
+                    <Label htmlFor="edit-tutoringDuration">
+                      Duration per Session
+                    </Label>
                     <Select
                       value={editFormData.tutoringDuration || ""}
-                      onValueChange={(value) => handleEditFormChange("tutoringDuration", value)}
+                      onValueChange={(value) =>
+                        handleEditFormChange("tutoringDuration", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select duration" />
@@ -2128,10 +2354,14 @@ export function TuitionRequestsSection() {
                 <h3 className="text-lg font-semibold">Tutor Preferences</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="edit-tutorGenderPreference">Preferred Tutor Gender</Label>
+                    <Label htmlFor="edit-tutorGenderPreference">
+                      Preferred Tutor Gender
+                    </Label>
                     <Select
                       value={editFormData.tutorGenderPreference || ""}
-                      onValueChange={(value) => handleEditFormChange("tutorGenderPreference", value)}
+                      onValueChange={(value) =>
+                        handleEditFormChange("tutorGenderPreference", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select preference" />
@@ -2150,7 +2380,12 @@ export function TuitionRequestsSection() {
                       type="number"
                       min="0"
                       value={editFormData.salaryRange?.min || 0}
-                      onChange={(e) => handleEditSalaryRangeChange("min", parseInt(e.target.value))}
+                      onChange={(e) =>
+                        handleEditSalaryRangeChange(
+                          "min",
+                          parseInt(e.target.value)
+                        )
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -2160,16 +2395,26 @@ export function TuitionRequestsSection() {
                       type="number"
                       min="0"
                       value={editFormData.salaryRange?.max || 0}
-                      onChange={(e) => handleEditSalaryRangeChange("max", parseInt(e.target.value))}
+                      onChange={(e) =>
+                        handleEditSalaryRangeChange(
+                          "max",
+                          parseInt(e.target.value)
+                        )
+                      }
                     />
                   </div>
                   <div className="space-y-2 flex items-center gap-2 mt-6">
                     <Switch
                       id="edit-isSalaryNegotiable"
                       checked={editFormData.isSalaryNegotiable || false}
-                      onCheckedChange={(checked) => handleEditFormChange("isSalaryNegotiable", checked)}
+                      onCheckedChange={(checked) =>
+                        handleEditFormChange("isSalaryNegotiable", checked)
+                      }
                     />
-                    <Label htmlFor="edit-isSalaryNegotiable" className="cursor-pointer">
+                    <Label
+                      htmlFor="edit-isSalaryNegotiable"
+                      className="cursor-pointer"
+                    >
                       Salary is Negotiable
                     </Label>
                   </div>
@@ -2178,13 +2423,19 @@ export function TuitionRequestsSection() {
 
               {/* Additional Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Additional Information</h3>
+                <h3 className="text-lg font-semibold">
+                  Additional Information
+                </h3>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-extraInformation">Extra Information</Label>
+                  <Label htmlFor="edit-extraInformation">
+                    Extra Information
+                  </Label>
                   <Textarea
                     id="edit-extraInformation"
                     value={editFormData.extraInformation || ""}
-                    onChange={(e) => handleEditFormChange("extraInformation", e.target.value)}
+                    onChange={(e) =>
+                      handleEditFormChange("extraInformation", e.target.value)
+                    }
                     placeholder="Any additional information..."
                     rows={3}
                   />
@@ -2194,7 +2445,9 @@ export function TuitionRequestsSection() {
                   <Textarea
                     id="edit-adminNote"
                     value={editFormData.adminNote || ""}
-                    onChange={(e) => handleEditFormChange("adminNote", e.target.value)}
+                    onChange={(e) =>
+                      handleEditFormChange("adminNote", e.target.value)
+                    }
                     placeholder="Internal admin notes..."
                     rows={2}
                   />
@@ -2205,16 +2458,20 @@ export function TuitionRequestsSection() {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Status</h3>
                 <div className="flex gap-2">
-                  {(["Active", "Inactive", "Completed", "Assign"] as const).map((status) => (
-                    <Button
-                      key={status}
-                      variant={editFormData.status === status ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleEditFormChange("status", status)}
-                    >
-                      {status}
-                    </Button>
-                  ))}
+                  {(["Active", "Inactive", "Completed", "Assign"] as const).map(
+                    (status) => (
+                      <Button
+                        key={status}
+                        variant={
+                          editFormData.status === status ? "default" : "outline"
+                        }
+                        size="sm"
+                        onClick={() => handleEditFormChange("status", status)}
+                      >
+                        {status}
+                      </Button>
+                    )
+                  )}
                 </div>
               </div>
             </div>
@@ -2354,7 +2611,8 @@ export function TuitionRequestsSection() {
               <div className="space-y-2">
                 <Label>Additional Information</Label>
                 <div className="p-2 bg-gray-50 rounded-md min-h-[60px]">
-                  {selectedRequest.extraInformation || "No additional information"}
+                  {selectedRequest.extraInformation ||
+                    "No additional information"}
                 </div>
               </div>
 
@@ -2376,12 +2634,16 @@ export function TuitionRequestsSection() {
                 </div>
                 <div>
                   <Label>Created At</Label>
-                  <div className="mt-1">{new Date(selectedRequest.createdAt).toLocaleString()}</div>
+                  <div className="mt-1">
+                    {new Date(selectedRequest.createdAt).toLocaleString()}
+                  </div>
                 </div>
                 <div>
                   <Label>Last Updated</Label>
                   <div className="mt-1">
-                    {selectedRequest.updatedAt ? new Date(selectedRequest.updatedAt).toLocaleString() : "N/A"}
+                    {selectedRequest.updatedAt
+                      ? new Date(selectedRequest.updatedAt).toLocaleString()
+                      : "N/A"}
                   </div>
                 </div>
               </div>
@@ -2428,7 +2690,6 @@ export function TuitionRequestsSection() {
 
       {/* Other modals (Assign Tutor, Tutor Details, Assignments) remain the same */}
       {/* ... existing code for these modals ... */}
-      
     </div>
   );
 }

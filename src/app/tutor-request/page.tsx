@@ -70,20 +70,20 @@ export default function TutorRequestPage() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   // Redux queries for districts and categories
-  const { 
-    data: districtData, 
-    isLoading: isLoadingDistricts, 
-    error: districtError 
-  } = useGetAllDistrictsQuery(undefined, { 
-    refetchOnMountOrArgChange: true 
+  const {
+    data: districtData,
+    isLoading: isLoadingDistricts,
+    error: districtError,
+  } = useGetAllDistrictsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
   });
 
-  const { 
-    data: categoryData, 
-    isLoading: isLoadingCategories, 
-    error: categoryError 
-  } = useGetAllCategoryQuery(undefined, { 
-    refetchOnMountOrArgChange: true 
+  const {
+    data: categoryData,
+    isLoading: isLoadingCategories,
+    error: categoryError,
+  } = useGetAllCategoryQuery(undefined, {
+    refetchOnMountOrArgChange: true,
   });
 
   const [createTutorRequest, { isLoading: creating }] =
@@ -99,7 +99,7 @@ export default function TutorRequestPage() {
   // Form data state
   const [formData, setFormData] = useState<TutorRequestFormData>({
     phoneNumber: "",
-    userId: user?.id || "" as any,
+    userId: user?.id || ("" as any),
     studentGender: "" as any,
     district: "",
     area: "",
@@ -135,21 +135,21 @@ export default function TutorRequestPage() {
       const selectedDistrictData = districtData.data.find(
         (district: District) => district.name === selectedDistrict
       );
-      
+
       if (selectedDistrictData) {
         // Combine area and thana arrays from backend
         const allAreas = [
           ...(selectedDistrictData.area || []),
-          ...(selectedDistrictData.thana || [])
+          ...(selectedDistrictData.thana || []),
         ];
-        
+
         setAvailableAreas(allAreas);
         setAvailableThanas(selectedDistrictData.thana || []);
-        
+
         // Update form data with selected district
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          district: selectedDistrict
+          district: selectedDistrict,
         }));
       }
     } else {
@@ -279,10 +279,10 @@ export default function TutorRequestPage() {
     setSelectedDistrict(district);
     setSelectedAreas([]);
     setCustomArea("");
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       district: district,
-      area: "" // Clear area when district changes
+      area: "", // Clear area when district changes
     }));
   };
 
@@ -291,11 +291,11 @@ export default function TutorRequestPage() {
     if (!selectedAreas.includes(area)) {
       const newAreas = [...selectedAreas, area];
       setSelectedAreas(newAreas);
-      
+
       // Update form data with selected areas as comma-separated string
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        area: newAreas.join(", ")
+        area: newAreas.join(", "),
       }));
     }
   };
@@ -305,11 +305,11 @@ export default function TutorRequestPage() {
     if (customArea.trim() && !selectedAreas.includes(customArea.trim())) {
       const newAreas = [...selectedAreas, customArea.trim()];
       setSelectedAreas(newAreas);
-      
+
       // Update form data with selected areas as comma-separated string
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        area: newAreas.join(", ")
+        area: newAreas.join(", "),
       }));
       setCustomArea("");
     }
@@ -317,13 +317,13 @@ export default function TutorRequestPage() {
 
   // Remove area from selection
   const handleRemoveArea = (areaToRemove: string) => {
-    const newAreas = selectedAreas.filter(area => area !== areaToRemove);
+    const newAreas = selectedAreas.filter((area) => area !== areaToRemove);
     setSelectedAreas(newAreas);
-    
+
     // Update form data with selected areas as comma-separated string
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      area: newAreas.join(", ")
+      area: newAreas.join(", "),
     }));
   };
 
@@ -381,10 +381,11 @@ export default function TutorRequestPage() {
   };
 
   // Prepare district options for dropdown
-  const districtOptions = districtData?.data?.map((district: District) => ({
-    value: district.name,
-    label: district.name,
-  })) || [];
+  const districtOptions =
+    districtData?.data?.map((district: District) => ({
+      value: district.name,
+      label: district.name,
+    })) || [];
 
   // Submit form using Redux mutation
   const handleSubmit = async () => {
@@ -392,7 +393,7 @@ export default function TutorRequestPage() {
       setIsSubmitting(true);
 
       // Check if user is logged in - FIXED: changed condition
-      if(!user){
+      if (!user) {
         toast({
           title: "Login Required",
           description: "Please login to submit a tutor request",
@@ -493,29 +494,35 @@ export default function TutorRequestPage() {
         district: formData.district,
         area: formData.area,
         detailedLocation: formData.detailedLocation,
-        
+
         // JSON fields - need to be properly formatted
         selectedCategories: formData.selectedCategories || [],
         selectedSubjects: formData.selectedSubjects || [],
         selectedClasses: formData.selectedClasses || [],
-        
+
         // Additional required fields
         tutorGenderPreference: formData.tutorGenderPreference,
         isSalaryNegotiable: formData.isSalaryNegotiable,
-        
+
         // Salary range as JSON
         salaryRange: {
           min: parseInt(formData.salaryRange.min.toString()) || 0,
           max: parseInt(formData.salaryRange.max.toString()) || 0,
         },
-        
+
         // Optional fields
         extraInformation: formData.extraInformation || "",
-        
+
         // Subject and class for backward compatibility
-        subject: formData.selectedSubjects.length > 0 ? formData.selectedSubjects[0] : "",
-        studentClass: formData.selectedClasses.length > 0 ? formData.selectedClasses[0] : "",
-        
+        subject:
+          formData.selectedSubjects.length > 0
+            ? formData.selectedSubjects[0]
+            : "",
+        studentClass:
+          formData.selectedClasses.length > 0
+            ? formData.selectedClasses[0]
+            : "",
+
         // New fields
         medium: formData.medium,
         numberOfStudents: parseInt(formData.numberOfStudents.toString()) || 1,
@@ -523,7 +530,7 @@ export default function TutorRequestPage() {
         tutoringTime: formData.tutoringTime,
         tutoringDuration: formData.tutoringDuration,
         tutoringType: formData.tutoringType,
-        
+
         // User ID - only send if user is logged in
         userId: user?.id || null,
       };
@@ -535,7 +542,7 @@ export default function TutorRequestPage() {
       const result = await createTutorRequest(submitData);
       console.log("Response:", result);
 
-      if ('data' in result && result.data) {
+      if ("data" in result && result.data) {
         setShowSuccess(true);
         toast({
           title: "Request Submitted",
@@ -543,10 +550,11 @@ export default function TutorRequestPage() {
         });
       } else {
         // Check for specific error message
-        const errorMessage = (result.error as any)?.data?.message || 
-                           (result.error as any)?.data?.error?.message || 
-                           "Failed to submit tutor request";
-        
+        const errorMessage =
+          (result.error as any)?.data?.message ||
+          (result.error as any)?.data?.error?.message ||
+          "Failed to submit tutor request";
+
         toast({
           title: "Submission Failed",
           description: errorMessage,
@@ -557,7 +565,9 @@ export default function TutorRequestPage() {
       console.error("Error submitting tutor request:", error);
       toast({
         title: "Submission Error",
-        description: error.message || "An error occurred while submitting your request. Please try again.",
+        description:
+          error.message ||
+          "An error occurred while submitting your request. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -567,7 +577,7 @@ export default function TutorRequestPage() {
 
   // Reset form and go to dashboard
   const goToDashboard = () => {
-    router.push("/student");
+    router.push("/dashboard");
   };
 
   // If showing success message
@@ -784,15 +794,20 @@ export default function TutorRequestPage() {
                           <SelectValue placeholder="District *" />
                         </SelectTrigger>
                         <SelectContent>
-                          {districtOptions.map((district:any) => (
-                            <SelectItem key={district.value} value={district.value}>
+                          {districtOptions.map((district: any) => (
+                            <SelectItem
+                              key={district.value}
+                              value={district.value}
+                            >
                               {district.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                       {isLoadingDistricts && (
-                        <p className="text-xs text-gray-500">Loading districts...</p>
+                        <p className="text-xs text-gray-500">
+                          Loading districts...
+                        </p>
                       )}
                     </div>
 
@@ -823,7 +838,7 @@ export default function TutorRequestPage() {
                             onChange={(e) => setCustomArea(e.target.value)}
                             className="h-10 sm:h-11 bg-white/80 border-gray-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
                             onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
+                              if (e.key === "Enter") {
                                 e.preventDefault();
                                 handleAddCustomArea();
                               }
@@ -943,7 +958,9 @@ export default function TutorRequestPage() {
                         </SelectContent>
                       </Select>
                       {isLoadingCategories && (
-                        <p className="text-xs text-gray-500">Loading categories...</p>
+                        <p className="text-xs text-gray-500">
+                          Loading categories...
+                        </p>
                       )}
                       {formData.selectedCategories.length > 0 && (
                         <div className="mt-2 space-y-1">
@@ -1234,7 +1251,12 @@ export default function TutorRequestPage() {
                       <Button
                         type="button"
                         onClick={handleSubmit}
-                        disabled={isSubmitting || creating || selectedAreas.length === 0 || !user}
+                        disabled={
+                          isSubmitting ||
+                          creating ||
+                          selectedAreas.length === 0 ||
+                          !user
+                        }
                         className="bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base w-full h-10 sm:h-11"
                       >
                         {isSubmitting || creating ? "Submitting..." : "Submit"}
