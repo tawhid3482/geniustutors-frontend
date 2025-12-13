@@ -46,6 +46,8 @@ export const HeroSection = () => {
     refetchOnMountOrArgChange: true 
   });
 
+  // cons
+
   const { 
     data: districtJobsData, 
     isLoading: isLoadingDistricts, 

@@ -543,8 +543,8 @@ export default function TutorRequestPage() {
         });
       } else {
         // Check for specific error message
-        const errorMessage = result.error?.data?.message || 
-                           result.error?.data?.error?.message || 
+        const errorMessage = (result.error as any)?.data?.message || 
+                           (result.error as any)?.data?.error?.message || 
                            "Failed to submit tutor request";
         
         toast({

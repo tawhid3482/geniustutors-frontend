@@ -73,9 +73,9 @@ export const LoginDialog: React.FC<LoginDialogProps> = ({
           const userRole = verificationData.user?.role;
 
           if (userRole === "TUTOR") {
-            router.push("/tutor/dashboard");
+            router.push("/dashboard");
           } else {
-            router.push("/student/dashboard");
+            router.push("/dashboard");
           }
 
           setOpen(false);

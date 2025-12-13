@@ -93,6 +93,9 @@ export default function TuitionJobDetailsClient({
   const { user } = useAuth();
 
   // Use the RTK Query hook with the jobId
+
+  console.log(jobId)
+
   const {
     data: singleJobResponse,
     isLoading: rtkLoading,

@@ -103,17 +103,13 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
   const handleCheckPhoneExists = async (phone: string) => {
     try {
       const result = await checkPhoneNumber({ phone }).unwrap();
-      console.log("📞 Phone check response:", result);
 
       if (result.success && result.data && result.data.exists === true) {
-        console.log("❌ Phone number already exists");
         return true;
       }
 
-      console.log("✅ Phone number is available");
       return false;
     } catch (error: any) {
-      console.error("Error checking phone:", error);
 
       if (error?.data?.data?.exists === true) {
         return true;
@@ -275,7 +271,6 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
         thana: selectedThana || null,
       };
 
-      console.log("Registration Payload:", registrationPayload);
 
       // Send OTP for phone verification
       await sendOTP({
@@ -290,7 +285,6 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
         registrationPayload
       );
     } catch (error: any) {
-      console.error("❌ Error in tutor registration:", error);
 
       if (error?.data?.message) {
         toast.error(error.data.message);

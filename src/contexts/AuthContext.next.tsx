@@ -377,7 +377,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // For existing users logging in, go directly to dashboard
       switch (user.role) {
-        case 'admin':
+        case 'ADMIN':
           window.location.href = '/admin/dashboard';
           break;
         case 'manager':
@@ -386,11 +386,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         case 'super_admin':
           window.location.href = '/super-admin/dashboard';
           break;
-        case 'student':
-          window.location.href = '/student';
+        case 'STUDENT_GUARDIAN':
+          window.location.href = '/dashboard';
           break;
-        case 'tutor':
-          window.location.href = '/tutor';
+        case 'TUTOR':
+          window.location.href = '/dashboard';
           break;
         default:
           // For other roles, redirect to a general dashboard or home

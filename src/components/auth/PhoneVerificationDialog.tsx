@@ -22,7 +22,10 @@ import {
   useResendOtpMutation,
   useVerifyOtpMutation,
 } from "@/redux/features/phoneVerification/phoneVerificationApi";
-import { useCreateAuthMutation, useCreateStudentOrGuardianMutation } from "@/redux/features/auth/authApi";
+import {
+  useCreateAuthMutation,
+  useCreateStudentOrGuardianMutation,
+} from "@/redux/features/auth/authApi";
 import { useRouter } from "next/navigation";
 
 interface PhoneVerificationDialogProps {
@@ -58,7 +61,6 @@ export const PhoneVerificationDialog: React.FC<
   const [createAuth] = useCreateAuthMutation();
   const router = useRouter();
 
-
   // Timer countdown
   useEffect(() => {
     if (!open || timeLeft <= 0) return;
@@ -84,7 +86,7 @@ export const PhoneVerificationDialog: React.FC<
         phoneNumber,
         fullName,
         formData,
-        role: formData?.role
+        role: formData?.role,
       });
       setTimeLeft(300);
       setOtpCode("");
@@ -108,7 +110,7 @@ export const PhoneVerificationDialog: React.FC<
     }
 
     setLoading(true);
-    try {      
+    try {
       // First verify OTP
       const verifyResult = await verifyOtp({
         phone: phoneNumber,
@@ -121,7 +123,6 @@ export const PhoneVerificationDialog: React.FC<
 
       // If form data exists, create account after OTP verification
       if (formData) {
-        
         let createResult;
         const userRole = formData.role;
 
@@ -134,20 +135,19 @@ export const PhoneVerificationDialog: React.FC<
           throw new Error("Invalid user role");
         }
 
-        console.log(createResult)
-        
         if (createResult.success) {
-          
           setIsVerified(true);
           const roleName = userRole === "TUTOR" ? "TUTOR" : "STUDENT_GUARDIAN";
-          toast.success(`Phone number verified and ${roleName} account created successfully!`);
-
+          toast.success(
+            `Phone number verified and ${roleName} account created successfully!`
+          );
+          router.push("/");
           // Wait a moment to show success state
           setTimeout(() => {
             // Pass the user and token data to parent component
             onVerificationSuccess({
               user: createResult.data.user,
-              token: createResult.data.token
+              token: createResult.data.token,
             });
             onOpenChange(false);
           }, 1500);
@@ -164,7 +164,7 @@ export const PhoneVerificationDialog: React.FC<
           onOpenChange(false);
         }, 1500);
       }
-    } catch (error: any) {      
+    } catch (error: any) {
       if (error?.data?.message) {
         toast.error(error.data.message);
       } else if (error.message) {
@@ -220,7 +220,7 @@ export const PhoneVerificationDialog: React.FC<
     if (!formData?.role) {
       return "Phone verified successfully!";
     }
-    
+
     const roleName = formData.role === "TUTOR" ? "TUTOR" : "STUDENT_GUARDIAN";
     return `${roleName} account created successfully!`;
   };

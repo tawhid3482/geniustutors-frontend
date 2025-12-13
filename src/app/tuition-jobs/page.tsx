@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
@@ -6,14 +6,48 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MapPin, Clock, DollarSign, BookOpen, Search, LayoutGrid, List, Filter, RefreshCw, User, Users, Home, Monitor, Globe, AlertTriangle, Wifi, Sparkles } from "lucide-react";
+import {
+  MapPin,
+  Clock,
+  DollarSign,
+  BookOpen,
+  Search,
+  LayoutGrid,
+  List,
+  Filter,
+  RefreshCw,
+  User,
+  Users,
+  Home,
+  Monitor,
+  Globe,
+  AlertTriangle,
+  Wifi,
+  Sparkles,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext.next";
 import { tuitionJobsService, TuitionJob } from "@/services/tuitionJobsService";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Pagination } from "@/components/ui/pagination";
 import { useGetAllDistrictsQuery } from "@/redux/features/district/districtApi";
@@ -23,7 +57,7 @@ import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
 import { SUBJECT_OPTIONS } from "@/data/mockData";
 
 export default function TuitionJobs() {
-  const { user, profile, signOut } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -31,16 +65,18 @@ export default function TuitionJobs() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
+  const [selectedThana, setSelectedThana] = useState<string>("all");
   const [selectedArea, setSelectedArea] = useState<string>("all");
   const [selectedJobType, setSelectedJobType] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  
-  // console.log("Selected Tutoring Type:", selectedJobType);
 
-  // Available areas based on selected district
+  // Available thanas and areas based on selected district
+  const [availableThanas, setAvailableThanas] = useState<string[]>([]);
   const [availableAreas, setAvailableAreas] = useState<string[]>([]);
 
-  const [salaryRange, setSalaryRange] = useState<[number, number]>([0, 1000000]);
+  const [salaryRange, setSalaryRange] = useState<[number, number]>([
+    0, 1000000,
+  ]);
   const [urgentOnly, setUrgentOnly] = useState(false);
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [newListingsOnly, setNewListingsOnly] = useState(false);
@@ -53,33 +89,28 @@ export default function TuitionJobs() {
   const [totalCount, setTotalCount] = useState<number>(0);
 
   // Redux data fetching
-  const { data: districtData, isLoading: districtLoading } = useGetAllDistrictsQuery(undefined);
-  const { data: areaData, isLoading: areaLoading } = useGetAllAreaQuery(undefined);
-  const { data: jobsData, isLoading: jobsLoading, refetch: refetchJobs } = useGetAllTutorRequestsForPublicQuery(undefined);
-  const { data: categoryData, isLoading: categoryLoading } = useGetAllCategoryQuery(undefined);
-
-
-  // Debug logs
-  useEffect(() => {
-    if (jobsData?.data) {
-      console.log("Sample job tutoring types:", jobsData?.data?.map((job: any) => ({
-        id: job.id,
-        tutoringType: job.tutoringType,
-        studentName: job.studentName
-      })).slice(0, 3));
-    }
-  }, [jobsData]);
+  const { data: districtData, isLoading: districtLoading } =
+    useGetAllDistrictsQuery(undefined);
+  const { data: areaData, isLoading: areaLoading } =
+    useGetAllAreaQuery(undefined);
+  const {
+    data: jobsData,
+    isLoading: jobsLoading,
+    refetch: refetchJobs,
+  } = useGetAllTutorRequestsForPublicQuery(undefined);
+  const { data: categoryData, isLoading: categoryLoading } =
+    useGetAllCategoryQuery(undefined);
 
   // Process jobs data from Redux
   useEffect(() => {
     if (jobsData?.data) {
       setJobs(jobsData?.data);
       setIsLoading(false);
-      
+
       // Set pagination if available
-      if (jobsData?.data?.pagination) {
-        setTotalPages(jobsData?.data?.pagination.pages || 1);
-        setTotalCount(jobsData?.data?.pagination.total || jobsData?.data?.data?.length);
+      if (jobsData?.pagination) {
+        setTotalPages(jobsData?.pagination.pages || 1);
+        setTotalCount(jobsData?.pagination.total || jobsData?.data?.length);
       } else {
         setTotalPages(1);
         setTotalCount(jobsData?.data?.length);
@@ -91,47 +122,143 @@ export default function TuitionJobs() {
     }
   }, [jobsData, jobsLoading]);
 
+  // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedSubject, selectedDistrict, selectedArea, selectedJobType, selectedCategory]);
+  }, [
+    selectedSubject,
+    selectedDistrict,
+    selectedThana,
+    selectedArea,
+    selectedJobType,
+    selectedCategory,
+  ]);
 
+  // Handle URL parameters
   useEffect(() => {
-    const categoryFromUrl = searchParams.get('category');
-    const districtFromUrl = searchParams.get('district');
-    
+    const categoryFromUrl = searchParams.get("category");
+    const districtFromUrl = searchParams.get("district");
+
     if (categoryFromUrl) {
       setSelectedCategory(categoryFromUrl);
     }
-    
+
     if (districtFromUrl) {
       setSelectedDistrict(districtFromUrl);
     }
   }, [searchParams]);
 
+  // Update available thanas and areas when district is selected
   useEffect(() => {
-    if (areaData?.data) {
-      const allAreaNames = areaData?.data?.flatMap((area:any) => area.name);
-      setAvailableAreas(Array.from(new Set(allAreaNames)));
-      setSelectedArea('all');
-    } else {
-      if (areaData?.data?.data) {
-        const allAreaNames = areaData?.data.flatMap((area:any) => area.name);
-        setAvailableAreas(Array.from(new Set(allAreaNames)));
+    if (selectedDistrict !== "all" && districtData?.data) {
+      // Find the selected district from district data
+      const district = districtData.data.find(
+        (d: any) => d.name === selectedDistrict
+      );
+
+      if (district) {
+        // Set thanas for the selected district
+        setAvailableThanas(district.thana || []);
+        setAvailableAreas(district.area || []);
       } else {
+        setAvailableThanas([]);
         setAvailableAreas([]);
       }
-      setSelectedArea('all');
+    } else {
+      // If 'all' is selected or no district data, reset the lists
+      setAvailableThanas([]);
+      setAvailableAreas([]);
     }
-  }, [areaData]);
 
-  // Initialize available areas when area data loads
-  useEffect(() => {
-    if (areaData?.data?.data) {
-      const allAreaNames = areaData?.data.flatMap((area:any) => area.name);
-      setAvailableAreas(Array.from(new Set(allAreaNames)));
-    }
-  }, [areaData]);
+    // Reset thana and area when district changes
+    setSelectedThana("all");
+    setSelectedArea("all");
+  }, [selectedDistrict, districtData]);
 
+  // Extract districts from district data - FIXED
+  const districts =
+    districtData?.data?.map((district: any) => district.name) || [];
+
+  // Extract categories from category data
+  const categories = categoryData?.data || [];
+
+  // Filter jobs based on search query and selected filters
+  const filteredJobs = jobs.filter((job: any) => {
+    const matchesSearch =
+      (job.subject &&
+        job.subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (job.studentClass &&
+        job.studentClass.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (job.district &&
+        job.district.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (job.area &&
+        job.area.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (job.detailedLocation &&
+        job.detailedLocation
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())) ||
+      (job.studentName &&
+        job.studentName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (job.tutorRequestId &&
+        job.tutorRequestId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (job.selectedSubjects &&
+        job.selectedSubjects.some((subject: string) =>
+          subject.toLowerCase().includes(searchQuery.toLowerCase())
+        )) ||
+      (job.phoneNumber && job.phoneNumber.includes(searchQuery));
+
+    const matchesSubject =
+      selectedSubject === "all" ||
+      job.subject === selectedSubject ||
+      (job.selectedSubjects && job.selectedSubjects.includes(selectedSubject));
+
+    const matchesDistrict =
+      selectedDistrict === "all" || job.district === selectedDistrict;
+    const matchesThana = selectedThana === "all" || job.thana === selectedThana;
+    const matchesArea = selectedArea === "all" || job.area === selectedArea;
+    const matchesCategory =
+      selectedCategory === "all" ||
+      (job.selectedCategories &&
+        job.selectedCategories.includes(selectedCategory));
+
+    const matchesJobType =
+      selectedJobType === "all" || job.tutoringType === selectedJobType;
+
+    // Salary filtering
+    const jobMinSalary = job.salaryRange?.min || 0;
+    const jobMaxSalary = job.salaryRange?.max || 0;
+
+    const salaryOverlap =
+      jobMinSalary <= salaryRange[1] && jobMaxSalary >= salaryRange[0];
+    const extremeSalary = jobMinSalary > 1000000 || jobMaxSalary > 1000000;
+    const matchesSalary = salaryOverlap || extremeSalary;
+
+    const matchesUrgent = !urgentOnly;
+    const matchesRemote =
+      !remoteOnly ||
+      job.tutoringType === "Online Tutoring" ||
+      job.tutoringType === "Both";
+    const matchesNew =
+      !newListingsOnly ||
+      new Date().getTime() - new Date(job.createdAt).getTime() <
+        7 * 24 * 60 * 60 * 1000;
+
+    return (
+      matchesSearch &&
+      matchesSubject &&
+      matchesDistrict &&
+      matchesThana &&
+      matchesArea &&
+      matchesCategory &&
+      matchesJobType &&
+      matchesSalary &&
+      matchesUrgent &&
+      matchesRemote &&
+      matchesNew
+    );
+  });
+
+  // Handle search
   const handleSearch = (value: string) => {
     setSearchQuery(value);
   };
@@ -140,117 +267,63 @@ export default function TuitionJobs() {
   const handleApplyForJob = async (jobId: string, jobTitle: string) => {
     if (!user) {
       toast({
-        title: 'Authentication Required',
-        description: 'Please log in to apply for tuition jobs.',
-        variant: 'destructive'
+        title: "Authentication Required",
+        description: "Please log in to apply for tuition jobs.",
+        variant: "destructive",
       });
       return;
     }
 
-    if (user.role !== 'tutor') {
+    if (user.role !== "tutor") {
       toast({
-        title: 'Access Denied',
-        description: 'Only tutors can apply for tuition jobs.',
-        variant: 'destructive'
+        title: "Access Denied",
+        description: "Only tutors can apply for tuition jobs.",
+        variant: "destructive",
       });
       return;
     }
 
     try {
       setApplying(jobId);
-      const response = await tuitionJobsService.applyForJob(jobId, `I am interested in teaching ${jobTitle}.`);
-      
+      const response = await tuitionJobsService.applyForJob(
+        jobId,
+        `I am interested in teaching ${jobTitle}.`
+      );
+
       if (response.success) {
         toast({
-          title: 'Application Submitted',
-          description: response.message || 'Your application has been submitted successfully!',
+          title: "Application Submitted",
+          description:
+            response.message ||
+            "Your application has been submitted successfully!",
         });
       } else {
         toast({
-          title: 'Application Failed',
-          description: response.message || 'Failed to submit application',
-          variant: 'destructive'
+          title: "Application Failed",
+          description: response.message || "Failed to submit application",
+          variant: "destructive",
         });
       }
     } catch (error: any) {
-      // console.error('Error applying for job:', error);
       toast({
-        title: 'Application Error',
-        description: error.message || 'An error occurred while applying for the job.',
-        variant: 'destructive'
+        title: "Application Error",
+        description:
+          error.message || "An error occurred while applying for the job.",
+        variant: "destructive",
       });
     } finally {
       setApplying(null);
     }
   };
 
-  // Extract districts from district data
-  const districts = districtData?.data?.[0]?.name || [];
-
-  // Extract categories from category data
-  const categories = categoryData?.data || [];
-
-  // Filter jobs based on search query and selected filters
-  const filteredJobs = jobs.filter((job:any) => {
-    const matchesSearch = 
-      (job.subject && job.subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (job.studentClass && job.studentClass.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (job.district && job.district.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (job.area && job.area.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (job.postOffice && job.postOffice.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (job.studentName && job.studentName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (job.selectedSubjects && job.selectedSubjects.some((subject: string) => 
-        subject.toLowerCase().includes(searchQuery.toLowerCase())
-      ));
-    
-    const matchesSubject = selectedSubject === 'all' || 
-      job.subject === selectedSubject || 
-      (job.selectedSubjects && job.selectedSubjects.includes(selectedSubject));
-    
-    const matchesDistrict = selectedDistrict === 'all' || job.district === selectedDistrict;
-    const matchesArea = selectedArea === 'all' || job.area === selectedArea;
-    const matchesCategory = selectedCategory === 'all' || 
-      (job.selectedCategories && job.selectedCategories.includes(selectedCategory));
-    
-    // FIXED: Tutoring Type Filter
-    const matchesJobType = selectedJobType === 'all' || job.tutoringType === selectedJobType;
-    
-    // Salary filtering
-    const jobMinSalary = job.salaryRange?.min || job.salaryRangeMin || 0;
-    const jobMaxSalary = job.salaryRange?.max || job.salaryRangeMax || 0;
-    
-    const salaryOverlap = jobMinSalary <= salaryRange[1] && jobMaxSalary >= salaryRange[0];
-    const extremeSalary = jobMinSalary > 1000000 || jobMaxSalary > 1000000;
-    const matchesSalary = salaryOverlap || extremeSalary;
-    
-    const matchesUrgent = !urgentOnly || job.urgent === true;
-    const matchesRemote = !remoteOnly || job.tutoringType === 'Online Tutoring' || job.tutoringType === 'Both';
-    const matchesNew = !newListingsOnly || (new Date().getTime() - new Date(job.createdAt).getTime()) < (7 * 24 * 60 * 60 * 1000);
-    
-    const allMatches = matchesSearch && matchesSubject && matchesDistrict && matchesArea && 
-                      matchesCategory && matchesJobType && matchesSalary && matchesUrgent && 
-                      matchesRemote && matchesNew;
-
-    // Debug logging for tutoring type filter
-    if (selectedJobType !== 'all' && jobs.length > 0) {
-      console.log('Tutoring Type Filter Debug:', {
-        jobId: job.id,
-        jobTutoringType: job.tutoringType,
-        selectedJobType,
-        matchesJobType,
-        allMatches
-      });
-    }
-    
-    return allMatches;
-  });
-
   return (
     <div className="container mx-auto py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6">
       {/* Page Header */}
       <div className="mb-4 sm:mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold">Tuition Jobs</h1>
-        <p className="text-muted-foreground mt-1 text-sm sm:text-base">Find the perfect tutoring opportunity</p>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+          Find the perfect tutoring opportunity
+        </p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
@@ -265,7 +338,7 @@ export default function TuitionJobs() {
             </CardHeader>
             <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
               {/* Category Filter */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="category" className="text-sm font-bold text-green-600">Category</Label>
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                   <SelectTrigger id="category" className="h-10 sm:h-11 font-bold">
@@ -280,19 +353,38 @@ export default function TuitionJobs() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
 
               {/* Subject Filter */}
               <div className="space-y-2">
-                <Label htmlFor="subject" className="text-sm font-bold text-green-600">Subject</Label>
-                <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                  <SelectTrigger id="subject" className="h-10 sm:h-11 font-bold">
+                <Label
+                  htmlFor="subject"
+                  className="text-sm font-bold text-green-600"
+                >
+                  Subject
+                </Label>
+                <Select
+                  value={selectedSubject}
+                  onValueChange={setSelectedSubject}
+                >
+                  <SelectTrigger
+                    id="subject"
+                    className="h-10 sm:h-11 font-bold"
+                  >
                     <SelectValue placeholder="All Subjects" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all" className="font-bold">All Subjects</SelectItem>
-                    {SUBJECT_OPTIONS.filter(subject => subject !== 'All Subjects').map((subject) => (
-                      <SelectItem key={subject} value={subject} className="font-bold">
+                    <SelectItem value="all" className="font-bold">
+                      All Subjects
+                    </SelectItem>
+                    {SUBJECT_OPTIONS.filter(
+                      (subject) => subject !== "All Subjects"
+                    ).map((subject) => (
+                      <SelectItem
+                        key={subject}
+                        value={subject}
+                        className="font-bold"
+                      >
                         {subject}
                       </SelectItem>
                     ))}
@@ -302,15 +394,32 @@ export default function TuitionJobs() {
 
               {/* District Filter */}
               <div className="space-y-2">
-                <Label htmlFor="district" className="text-sm font-bold text-green-600">District</Label>
-                <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
-                  <SelectTrigger id="district" className="h-10 sm:h-11 font-bold">
+                <Label
+                  htmlFor="district"
+                  className="text-sm font-bold text-green-600"
+                >
+                  District
+                </Label>
+                <Select
+                  value={selectedDistrict}
+                  onValueChange={setSelectedDistrict}
+                >
+                  <SelectTrigger
+                    id="district"
+                    className="h-10 sm:h-11 font-bold"
+                  >
                     <SelectValue placeholder="All Districts" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all" className="font-bold">All Districts</SelectItem>
+                    <SelectItem value="all" className="font-bold">
+                      All Districts
+                    </SelectItem>
                     {districts.map((district: string) => (
-                      <SelectItem key={district} value={district} className="font-bold">
+                      <SelectItem
+                        key={district}
+                        value={district}
+                        className="font-bold"
+                      >
                         {district}
                       </SelectItem>
                     ))}
@@ -318,16 +427,80 @@ export default function TuitionJobs() {
                 </Select>
               </div>
 
-              {/* Area Filter */}
+              {/* Thana Filter - Only shows when district is selected */}
               <div className="space-y-2">
-                <Label htmlFor="area" className="text-sm font-bold text-green-600">Area</Label>
-                <Select value={selectedArea} onValueChange={setSelectedArea} disabled={availableAreas.length === 0}>
-                  <SelectTrigger id="area" className="h-10 sm:h-11 font-bold">
-                    <SelectValue placeholder={availableAreas.length === 0 ? "Loading areas..." : "All Areas"} />
+                <Label
+                  htmlFor="thana"
+                  className="text-sm font-bold text-green-600"
+                >
+                  Thana
+                </Label>
+                <Select
+                  value={selectedThana}
+                  onValueChange={setSelectedThana}
+                  disabled={
+                    selectedDistrict === "all" || availableThanas.length === 0
+                  }
+                >
+                  <SelectTrigger id="thana" className="h-10 sm:h-11 font-bold">
+                    <SelectValue
+                      placeholder={
+                        selectedDistrict === "all"
+                          ? "Select district first"
+                          : availableThanas.length === 0
+                          ? "No thanas available"
+                          : "All Thanas"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all" className="font-bold">All Areas</SelectItem>
-                    {availableAreas.map((area) => (
+                    <SelectItem value="all" className="font-bold">
+                      All Thanas
+                    </SelectItem>
+                    {availableThanas.map((thana: string) => (
+                      <SelectItem
+                        key={thana}
+                        value={thana}
+                        className="font-bold"
+                      >
+                        {thana}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Area Filter - Only shows when district is selected */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="area"
+                  className="text-sm font-bold text-green-600"
+                >
+                  Area
+                </Label>
+                <Select
+                  value={selectedArea}
+                  onValueChange={setSelectedArea}
+                  disabled={
+                    selectedDistrict === "all" || availableAreas.length === 0
+                  }
+                >
+                  <SelectTrigger id="area" className="h-10 sm:h-11 font-bold">
+                    <SelectValue
+                      placeholder={
+                        selectedDistrict === "all"
+                          ? "Select district first"
+                          : availableAreas.length === 0
+                          ? "No areas available"
+                          : "All Areas"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="font-bold">
+                      All Areas
+                    </SelectItem>
+                    {availableAreas.map((area: string) => (
                       <SelectItem key={area} value={area} className="font-bold">
                         {area}
                       </SelectItem>
@@ -336,11 +509,22 @@ export default function TuitionJobs() {
                 </Select>
               </div>
 
-              {/* FIXED: Tutoring Type Filter */}
+              {/* Tutoring Type Filter */}
               <div className="space-y-2">
-                <Label htmlFor="jobType" className="text-sm font-bold text-green-600">Tutoring Type</Label>
-                <Select value={selectedJobType} onValueChange={setSelectedJobType}>
-                  <SelectTrigger id="jobType" className="h-10 sm:h-11 font-bold">
+                <Label
+                  htmlFor="jobType"
+                  className="text-sm font-bold text-green-600"
+                >
+                  Tutoring Type
+                </Label>
+                <Select
+                  value={selectedJobType}
+                  onValueChange={setSelectedJobType}
+                >
+                  <SelectTrigger
+                    id="jobType"
+                    className="h-10 sm:h-11 font-bold"
+                  >
                     <div className="flex items-center">
                       <SelectValue placeholder="All Types" />
                     </div>
@@ -376,35 +560,51 @@ export default function TuitionJobs() {
 
               {/* Salary Range */}
               <div className="space-y-2">
-                <Label className="text-sm font-bold text-green-600">Salary Range (BDT)</Label>
+                <Label className="text-sm font-bold text-green-600">
+                  Salary Range (BDT)
+                </Label>
                 <div className="flex items-center gap-2">
-                  <Input 
-                    type="number" 
-                    placeholder="Min" 
-                    value={salaryRange[0]} 
-                    onChange={(e) => setSalaryRange([parseInt(e.target.value) || 0, salaryRange[1]])}
+                  <Input
+                    type="number"
+                    placeholder="Min"
+                    value={salaryRange[0]}
+                    onChange={(e) =>
+                      setSalaryRange([
+                        parseInt(e.target.value) || 0,
+                        salaryRange[1],
+                      ])
+                    }
                     className="h-10 sm:h-11 text-sm font-bold"
                   />
                   <span className="text-sm font-bold">to</span>
-                  <Input 
-                    type="number" 
-                    placeholder="Max" 
-                    value={salaryRange[1]} 
-                    onChange={(e) => setSalaryRange([salaryRange[0], parseInt(e.target.value) || 0])}
+                  <Input
+                    type="number"
+                    placeholder="Max"
+                    value={salaryRange[1]}
+                    onChange={(e) =>
+                      setSalaryRange([
+                        salaryRange[0],
+                        parseInt(e.target.value) || 0,
+                      ])
+                    }
                     className="h-10 sm:h-11 text-sm font-bold"
                   />
                 </div>
-                {jobs.filter((job:any) => {
-                  const jobMinSalary = job.salaryRange?.min || job.salaryRangeMin || 0;
-                  const jobMaxSalary = job.salaryRange?.max || job.salaryRangeMax || 0;
+                {jobs.filter((job: any) => {
+                  const jobMinSalary = job.salaryRange?.min || 0;
+                  const jobMaxSalary = job.salaryRange?.max || 0;
                   return jobMinSalary > 1000000 || jobMaxSalary > 1000000;
                 }).length > 0 && (
                   <p className="text-xs text-orange-600 bg-orange-50 p-2 rounded border border-orange-200 font-bold">
-                    💡 <strong>Note:</strong> There are {jobs.filter((job:any) => {
-                      const jobMinSalary = job.salaryRange?.min || job.salaryRangeMin || 0;
-                      const jobMaxSalary = job.salaryRange?.max || job.salaryRangeMax || 0;
-                      return jobMinSalary > 1000000 || jobMaxSalary > 1000000;
-                    }).length} job(s) with salaries above ৳1M that are always visible.
+                    💡 <strong>Note:</strong> There are{" "}
+                    {
+                      jobs.filter((job: any) => {
+                        const jobMinSalary = job.salaryRange?.min || 0;
+                        const jobMaxSalary = job.salaryRange?.max || 0;
+                        return jobMinSalary > 1000000 || jobMaxSalary > 1000000;
+                      }).length
+                    }{" "}
+                    job(s) with salaries above ৳1M that are always visible.
                   </p>
                 )}
               </div>
@@ -412,34 +612,49 @@ export default function TuitionJobs() {
               {/* Checkbox Filters */}
               <div className="hidden sm:block space-y-3 sm:space-y-4">
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="urgent" 
+                  <Checkbox
+                    id="urgent"
                     checked={urgentOnly}
-                    onCheckedChange={(checked) => setUrgentOnly(checked === true)}
+                    onCheckedChange={(checked) =>
+                      setUrgentOnly(checked === true)
+                    }
                   />
-                  <Label htmlFor="urgent" className="text-sm font-bold text-green-600 flex items-center">
+                  <Label
+                    htmlFor="urgent"
+                    className="text-sm font-bold text-green-600 flex items-center"
+                  >
                     <AlertTriangle className="mr-2 h-4 w-4 text-red-500" />
                     Urgent Positions
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="remote" 
+                  <Checkbox
+                    id="remote"
                     checked={remoteOnly}
-                    onCheckedChange={(checked) => setRemoteOnly(checked === true)}
+                    onCheckedChange={(checked) =>
+                      setRemoteOnly(checked === true)
+                    }
                   />
-                  <Label htmlFor="remote" className="text-sm font-bold text-green-600 flex items-center">
+                  <Label
+                    htmlFor="remote"
+                    className="text-sm font-bold text-green-600 flex items-center"
+                  >
                     <Wifi className="mr-2 h-4 w-4 text-blue-500" />
                     Remote Available
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="newListings" 
+                  <Checkbox
+                    id="newListings"
                     checked={newListingsOnly}
-                    onCheckedChange={(checked) => setNewListingsOnly(checked === true)}
+                    onCheckedChange={(checked) =>
+                      setNewListingsOnly(checked === true)
+                    }
                   />
-                  <Label htmlFor="newListings" className="text-sm font-bold text-green-600 flex items-center">
+                  <Label
+                    htmlFor="newListings"
+                    className="text-sm font-bold text-green-600 flex items-center"
+                  >
                     <Sparkles className="mr-2 h-4 w-4 text-green-500" />
                     New Listings
                   </Label>
@@ -447,12 +662,13 @@ export default function TuitionJobs() {
               </div>
 
               {/* Reset Filters Button */}
-              <Button 
-                className="w-full h-10 sm:h-11 font-bold" 
-                variant="outline" 
+              <Button
+                className="w-full h-10 sm:h-11 font-bold"
+                variant="outline"
                 onClick={() => {
                   setSelectedSubject("all");
                   setSelectedDistrict("all");
+                  setSelectedThana("all");
                   setSelectedArea("all");
                   setSelectedJobType("all");
                   setSelectedCategory("all");
@@ -476,12 +692,19 @@ export default function TuitionJobs() {
             <div>
               <p className="text-sm text-muted-foreground">
                 {isLoading ? (
-                  <span className="flex items-center"><RefreshCw className="h-3 w-3 mr-2 animate-spin" /> Loading jobs...</span>
+                  <span className="flex items-center">
+                    <RefreshCw className="h-3 w-3 mr-2 animate-spin" /> Loading
+                    jobs...
+                  </span>
                 ) : (
-                  <>Showing <span className="font-medium">{filteredJobs.length}</span> of <span className="font-medium">{totalCount}</span> jobs</>
+                  <>
+                    Showing{" "}
+                    <span className="font-medium">{filteredJobs.length}</span>{" "}
+                    of <span className="font-medium">{totalCount}</span> jobs
+                  </>
                 )}
               </p>
-              {selectedCategory !== 'all' && (
+              {selectedCategory !== "all" && (
                 <div className="mt-2 flex items-center gap-2 flex-wrap">
                   <Badge variant="secondary" className="text-xs sm:text-sm">
                     Filtered by: {selectedCategory}
@@ -489,14 +712,14 @@ export default function TuitionJobs() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setSelectedCategory('all')}
+                    onClick={() => setSelectedCategory("all")}
                     className="h-6 px-2 text-xs"
                   >
                     Clear Category
                   </Button>
                 </div>
               )}
-              {selectedJobType !== 'all' && (
+              {selectedJobType !== "all" && (
                 <div className="mt-2 flex items-center gap-2 flex-wrap">
                   <Badge variant="secondary" className="text-xs sm:text-sm">
                     Tutoring Type: {selectedJobType}
@@ -504,7 +727,7 @@ export default function TuitionJobs() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setSelectedJobType('all')}
+                    onClick={() => setSelectedJobType("all")}
                     className="h-6 px-2 text-xs"
                   >
                     Clear Type
@@ -512,10 +735,10 @@ export default function TuitionJobs() {
                 </div>
               )}
             </div>
-            
+
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Button 
-                variant={viewMode === "grid" ? "default" : "outline"} 
+              <Button
+                variant={viewMode === "grid" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setViewMode("grid")}
                 className="flex items-center gap-1 flex-1 sm:flex-none"
@@ -523,8 +746,8 @@ export default function TuitionJobs() {
                 <LayoutGrid className="h-4 w-4" />
                 <span className="hidden sm:inline">Grid</span>
               </Button>
-              <Button 
-                variant={viewMode === "list" ? "default" : "outline"} 
+              <Button
+                variant={viewMode === "list" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setViewMode("list")}
                 className="flex items-center gap-1 flex-1 sm:flex-none"
@@ -539,7 +762,9 @@ export default function TuitionJobs() {
                 disabled={isLoading}
                 className="flex items-center gap-1"
               >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+                />
                 <span className="hidden sm:inline">Refresh</span>
               </Button>
             </div>
@@ -549,7 +774,7 @@ export default function TuitionJobs() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by subject, location, or student name..."
+              placeholder="Search by subject, location, ID, or phone number..."
               className="pl-10 h-11 font-bold"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
@@ -584,30 +809,42 @@ export default function TuitionJobs() {
               <div className="text-center py-8 sm:py-12">
                 <BookOpen className="h-12 w-12 mx-auto text-gray-400" />
                 <h3 className="mt-4 text-lg font-medium">No jobs found</h3>
-                <p className="mt-1 text-muted-foreground text-sm sm:text-base">Try adjusting your filters or search terms</p>
+                <p className="mt-1 text-muted-foreground text-sm sm:text-base">
+                  Try adjusting your filters or search terms
+                </p>
                 {jobs.length > 0 && (
                   <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg max-w-md mx-auto">
                     <p className="text-sm text-orange-800">
-                      <strong>Tip:</strong> There are {jobs.length} total jobs available. 
-                      {jobs.filter((job:any) => {
-                        const jobMinSalary = job.salaryRange?.min || job.salaryRangeMin || 0;
-                        const jobMaxSalary = job.salaryRange?.max || job.salaryRangeMax || 0;
+                      <strong>Tip:</strong> There are {jobs.length} total jobs
+                      available.
+                      {jobs.filter((job: any) => {
+                        const jobMinSalary = job.salaryRange?.min || 0;
+                        const jobMaxSalary = job.salaryRange?.max || 0;
                         return jobMinSalary > 1000000 || jobMaxSalary > 1000000;
                       }).length > 0 && (
-                        <span> {jobs.filter((job:any) => {
-                          const jobMinSalary = job.salaryRange?.min || job.salaryRangeMin || 0;
-                          const jobMaxSalary = job.salaryRange?.max || job.salaryRangeMax || 0;
-                          return jobMinSalary > 1000000 || jobMaxSalary > 1000000;
-                        }).length} of them have high salaries and are always visible.</span>
+                        <span>
+                          {" "}
+                          {
+                            jobs.filter((job: any) => {
+                              const jobMinSalary = job.salaryRange?.min || 0;
+                              const jobMaxSalary = job.salaryRange?.max || 0;
+                              return (
+                                jobMinSalary > 1000000 || jobMaxSalary > 1000000
+                              );
+                            }).length
+                          }{" "}
+                          of them have high salaries and are always visible.
+                        </span>
                       )}
                     </p>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="mt-2"
                       onClick={() => {
                         setSelectedSubject("all");
                         setSelectedDistrict("all");
+                        setSelectedThana("all");
                         setSelectedArea("all");
                         setSelectedJobType("all");
                         setSelectedCategory("all");
@@ -624,20 +861,30 @@ export default function TuitionJobs() {
                 )}
               </div>
             ) : (
-              <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6" : "space-y-4"}>
-                {filteredJobs.map((job:any) => (
-                  <Card key={job.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
+              <div
+                className={
+                  viewMode === "grid"
+                    ? "grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6"
+                    : "space-y-4"
+                }
+              >
+                {filteredJobs.map((job: any) => (
+                  <Card
+                    key={job.id}
+                    className="overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full"
+                  >
                     <CardHeader className="pb-2 p-4 sm:p-6">
                       <div className="flex justify-between items-start">
                         <CardTitle className="text-lg sm:text-xl font-bold text-black">
-                          {job.studentName ? `${job.studentName}'s Request` : 'Tuition Job Request'}
+                          Tuition Request #{job.tutorRequestId}
                         </CardTitle>
                         <Badge variant="outline" className="text-xs text-black">
-                          {job.tutoringType || 'Tutoring Request'}
+                          {job.tutoringType || "Tutoring Request"}
                         </Badge>
                       </div>
                       <p className="text-xs sm:text-sm font-bold text-black mt-1">
-                        {job.studentClass && `Class ${job.studentClass} • `}ID: {job.tutorRequestId}
+                        {job.studentClass && `Class ${job.studentClass} • `}
+                        Phone: {job.phoneNumber}
                       </p>
                     </CardHeader>
                     <CardContent className="flex flex-col flex-grow p-4 sm:p-6">
@@ -647,107 +894,138 @@ export default function TuitionJobs() {
                           <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
                             <BookOpen className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                             <span className="font-bold text-black">
-                              {job.subject || (job.selectedSubjects && job.selectedSubjects.join(', ')) || 'Multiple Subjects'}
+                              {job.subject ||
+                                (job.selectedSubjects &&
+                                  job.selectedSubjects.join(", ")) ||
+                                "Multiple Subjects"}
                             </span>
                           </div>
-                          
+
                           {/* Location */}
                           <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
                             <MapPin className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                             <span className="font-bold text-green-600">
                               {job.district && `${job.district}`}
                               {job.area && `, ${job.area}`}
-                              {job.detailedLocation && ` • ${job.detailedLocation}`}
+                              {job.detailedLocation &&
+                                ` • ${job.detailedLocation}`}
                             </span>
                           </div>
-                          
+
                           {/* Student Info */}
                           <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
                             <Users className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                             <span className="font-bold text-black">
-                              {job.numberOfStudents ? `${job.numberOfStudents} student(s)` : '1 student'} • 
-                              {job.studentGender && ` ${job.studentGender}`}
+                              {job.numberOfStudents
+                                ? `${job.numberOfStudents} student(s)`
+                                : "1 student"}{" "}
+                              •{job.studentGender && ` ${job.studentGender}`}
                             </span>
                           </div>
-                          
+
                           {/* Tutor Preference */}
                           <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
                             <User className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                             <span className="font-bold text-green-600">
-                              Preferred: {job.tutorGenderPreference || job.preferredTeacherGender || 'Any'} teacher
+                              Preferred: {job.tutorGenderPreference || "Any"}{" "}
+                              teacher
                             </span>
                           </div>
-                          
+
                           {/* Salary */}
                           <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
                             <DollarSign className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                             <span className="font-bold text-green-600">
-                              ৳{(job.salaryRange?.min || job.salaryRangeMin || 0).toLocaleString()} - ৳{(job.salaryRange?.max || job.salaryRangeMax || 0).toLocaleString()}
-                              {job.isSalaryNegotiable && ' (Negotiable)'}
+                              ৳{(job.salaryRange?.min || 0).toLocaleString()} -
+                              ৳{(job.salaryRange?.max || 0).toLocaleString()}
+                              {job.isSalaryNegotiable && " (Negotiable)"}
                             </span>
                           </div>
-                          
+
                           {/* Schedule */}
                           {(job.tutoringDays || job.tutoringTime) && (
                             <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
                               <Clock className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                               <span className="font-bold text-green-600">
-                                {job.tutoringDays && `${job.tutoringDays} days/week`}
+                                {job.tutoringDays &&
+                                  `${job.tutoringDays} days/week`}
                                 {job.tutoringTime && ` • ${job.tutoringTime}`}
                               </span>
                             </div>
                           )}
                         </div>
-                        
+
                         {/* Categories */}
-                        {job.selectedCategories && job.selectedCategories.length > 0 && (
-                          <div className="mt-2">
-                            <p className="text-xs font-bold text-black mb-1">Categories:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {job.selectedCategories.map((category: string, index: number) => (
-                                <Badge key={index} variant="secondary" className="text-xs">
-                                  {category}
-                                </Badge>
-                              ))}
+                        {job.selectedCategories &&
+                          job.selectedCategories.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-xs font-bold text-black mb-1">
+                                Categories:
+                              </p>
+                              <div className="flex flex-wrap gap-1">
+                                {job.selectedCategories.map(
+                                  (category: string, index: number) => (
+                                    <Badge
+                                      key={index}
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      {category}
+                                    </Badge>
+                                  )
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
-                        
+                          )}
+
                         {/* Extra Information */}
                         {job.extraInformation && (
                           <div className="mt-2">
-                            <p className="text-xs sm:text-sm font-bold text-black">Additional Information:</p>
-                            <p className="text-xs sm:text-sm font-bold text-black">{job.extraInformation}</p>
+                            <p className="text-xs sm:text-sm font-bold text-black">
+                              Additional Information:
+                            </p>
+                            <p className="text-xs sm:text-sm font-bold text-black">
+                              {job.extraInformation}
+                            </p>
                           </div>
                         )}
-                        
+
                         {/* Admin Note */}
                         {job.adminNote && (
                           <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
-                            <p className="text-xs sm:text-sm font-bold text-blue-800">Admin Note:</p>
-                            <p className="text-xs sm:text-sm text-blue-700">{job.adminNote}</p>
+                            <p className="text-xs sm:text-sm font-bold text-blue-800">
+                              Admin Note:
+                            </p>
+                            <p className="text-xs sm:text-sm text-blue-700">
+                              {job.adminNote}
+                            </p>
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="flex justify-between items-center pt-2 mt-4">
                         <div className="text-xs font-bold text-black">
                           Posted: {new Date(job.createdAt).toLocaleDateString()}
                         </div>
                         <div className="flex items-center gap-2">
-                          {((job.salaryRange?.min || job.salaryRangeMin || 0) > 1000000 || 
-                            (job.salaryRange?.max || job.salaryRangeMax || 0) > 1000000) && (
+                          {((job.salaryRange?.min || 0) > 1000000 ||
+                            (job.salaryRange?.max || 0) > 1000000) && (
                             <Badge variant="destructive" className="text-xs">
                               High Salary
                             </Badge>
                           )}
-                          <Badge variant={job.status === "Active" ? "default" : "secondary"} className="text-xs">
-                            {job.status || 'Active'}
+                          <Badge
+                            variant={
+                              job.status === "Active" ? "default" : "secondary"
+                            }
+                            className="text-xs"
+                          >
+                            {job.status || "Active"}
                           </Badge>
                         </div>
                       </div>
-                      
-                      <Button 
+
+                      <Button
                         className="w-full bg-green-600 hover:bg-green-700 text-white text-sm mt-4"
                         onClick={() => router.push(`/tuition-jobs/${job.id}`)}
                       >
@@ -760,15 +1038,18 @@ export default function TuitionJobs() {
             )}
 
             {/* Pagination */}
-            {!isLoading && !error && filteredJobs.length > 0 && totalPages > 1 && (
-              <div className="flex justify-center mt-8">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={(page) => setCurrentPage(page)}
-                />
-              </div>
-            )}
+            {!isLoading &&
+              !error &&
+              filteredJobs.length > 0 &&
+              totalPages > 1 && (
+                <div className="flex justify-center mt-8">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => setCurrentPage(page)}
+                  />
+                </div>
+              )}
           </div>
         </div>
       </div>
