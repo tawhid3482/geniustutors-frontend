@@ -20,12 +20,12 @@ import { TutorSignupForm } from "./TutorSignupForm";
 
 interface LoginDialogProps {
   children: React.ReactNode;
-  defaultRole?: "STUDENT_GUARDIAN" | "TUTOR";
+  defaultRole?: "TUTOR" | "STUDENT_GUARDIAN";
 }
 
 export const LoginDialog: React.FC<LoginDialogProps> = ({
   children,
-  defaultRole = "STUDENT_GUARDIAN",
+  defaultRole = "TUTOR", // এখানে DEFAULT হিসেবে TUTOR সেট করুন
 }) => {
   const [open, setOpen] = useState(false);
   const [defaultTab, setDefaultTab] = useState("login");
@@ -167,7 +167,7 @@ export const LoginDialog: React.FC<LoginDialogProps> = ({
 
           <TabsContent value="signup" className="space-y-4 mt-6">
             <SignupFormContainer
-              defaultRole={defaultRole}
+              defaultRole={defaultRole} // এখানে prop পাস করুন
               onPhoneVerification={handlePhoneVerification}
             />
           </TabsContent>
@@ -189,7 +189,7 @@ export const LoginDialog: React.FC<LoginDialogProps> = ({
 
 // Component to handle role selection and render appropriate form
 const SignupFormContainer: React.FC<{
-  defaultRole: "STUDENT_GUARDIAN" | "TUTOR";
+  defaultRole: "TUTOR" | "STUDENT_GUARDIAN";
   onPhoneVerification: (
     phoneNumber: string,
     fullName: string,
@@ -197,8 +197,8 @@ const SignupFormContainer: React.FC<{
   ) => void;
 }> = ({ defaultRole, onPhoneVerification }) => {
   const [selectedRole, setSelectedRole] = useState<
-    "STUDENT_GUARDIAN" | "TUTOR"
-  >(defaultRole);
+    "TUTOR" | "STUDENT_GUARDIAN"
+  >(defaultRole); // defaultRole ব্যবহার করুন
 
   return (
     <div className="space-y-4">
@@ -208,7 +208,7 @@ const SignupFormContainer: React.FC<{
           Create a profile as a*
         </label>
         <div className="flex gap-4">
-           <label className="flex items-center space-x-3 cursor-pointer group">
+          <label className="flex items-center space-x-3 cursor-pointer group">
             <div className="relative">
               <input
                 type="checkbox"
@@ -280,8 +280,6 @@ const SignupFormContainer: React.FC<{
               Student/Guardian
             </span>
           </label>
-
-         
         </div>
       </div>
 

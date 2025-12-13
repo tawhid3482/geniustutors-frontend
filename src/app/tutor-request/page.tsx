@@ -48,7 +48,6 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { taxonomyService, Category } from "@/services/taxonomyService";
-import { useGetAllAreaQuery } from "@/redux/features/area/areaApi";
 import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
 import { useCreateTutorRequestsMutation } from "@/redux/features/tutorRequest/tutorRequestApi";
 import { useGetAllDistrictsQuery } from "@/redux/features/district/districtApi";
@@ -56,15 +55,10 @@ import { useGetAllDistrictsQuery } from "@/redux/features/district/districtApi";
 // Define types based on your backend response
 interface District {
   id: string;
-  name: string[];
+  name: string;
+  thana: string[];
+  area: string[];
   createdAt: string;
-  color?: string;
-}
-
-interface Area {
-  id: string;
-  name: string[];
-  districtId: string;
   color?: string;
 }
 
@@ -75,20 +69,12 @@ export default function TutorRequestPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Redux queries for districts, areas and categories
+  // Redux queries for districts and categories
   const { 
     data: districtData, 
     isLoading: isLoadingDistricts, 
     error: districtError 
   } = useGetAllDistrictsQuery(undefined, { 
-    refetchOnMountOrArgChange: true 
-  });
-
-  const { 
-    data: areaData, 
-    isLoading: isLoadingAreas, 
-    error: areaError 
-  } = useGetAllAreaQuery(undefined, { 
     refetchOnMountOrArgChange: true 
   });
 
@@ -100,14 +86,15 @@ export default function TutorRequestPage() {
     refetchOnMountOrArgChange: true 
   });
 
-
-
-
   const [createTutorRequest, { isLoading: creating }] =
     useCreateTutorRequestsMutation();
 
-    // console.log(user?.id)
-
+  // District and area state
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+  const [availableAreas, setAvailableAreas] = useState<string[]>([]);
+  const [availableThanas, setAvailableThanas] = useState<string[]>([]);
+  const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
+  const [customArea, setCustomArea] = useState<string>("");
 
   // Form data state
   const [formData, setFormData] = useState<TutorRequestFormData>({
@@ -142,8 +129,34 @@ export default function TutorRequestPage() {
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [isLoadingTaxonomy, setIsLoadingTaxonomy] = useState(false);
 
-
-    // console.log(categories)
+  // Effect to update areas when district changes
+  useEffect(() => {
+    if (districtData?.data && selectedDistrict) {
+      const selectedDistrictData = districtData.data.find(
+        (district: District) => district.name === selectedDistrict
+      );
+      
+      if (selectedDistrictData) {
+        // Combine area and thana arrays from backend
+        const allAreas = [
+          ...(selectedDistrictData.area || []),
+          ...(selectedDistrictData.thana || [])
+        ];
+        
+        setAvailableAreas(allAreas);
+        setAvailableThanas(selectedDistrictData.thana || []);
+        
+        // Update form data with selected district
+        setFormData(prev => ({
+          ...prev,
+          district: selectedDistrict
+        }));
+      }
+    } else {
+      setAvailableAreas([]);
+      setAvailableThanas([]);
+    }
+  }, [selectedDistrict, districtData]);
 
   // Process categories from categoryData
   useEffect(() => {
@@ -152,13 +165,10 @@ export default function TutorRequestPage() {
       const processedCategories = categoryData?.data.map((category: any) => ({
         id: category.id,
         name: category.name,
-        // Add other properties as needed
-        // description:category.description,
         subjects: category.subjects || [],
         classLevels: category.classLevels || [],
       }));
       setCategories(processedCategories);
-      // console.log("Processed Categories:", processedCategories);
     }
   }, [categoryData]);
 
@@ -264,6 +274,59 @@ export default function TutorRequestPage() {
     }
   }, [formData.selectedCategories, fetchMultiCategoryTaxonomy]);
 
+  // Handle district selection
+  const handleDistrictChange = (district: string) => {
+    setSelectedDistrict(district);
+    setSelectedAreas([]);
+    setCustomArea("");
+    setFormData(prev => ({
+      ...prev,
+      district: district,
+      area: "" // Clear area when district changes
+    }));
+  };
+
+  // Handle area selection from dropdown
+  const handleAreaSelect = (area: string) => {
+    if (!selectedAreas.includes(area)) {
+      const newAreas = [...selectedAreas, area];
+      setSelectedAreas(newAreas);
+      
+      // Update form data with selected areas as comma-separated string
+      setFormData(prev => ({
+        ...prev,
+        area: newAreas.join(", ")
+      }));
+    }
+  };
+
+  // Handle custom area addition
+  const handleAddCustomArea = () => {
+    if (customArea.trim() && !selectedAreas.includes(customArea.trim())) {
+      const newAreas = [...selectedAreas, customArea.trim()];
+      setSelectedAreas(newAreas);
+      
+      // Update form data with selected areas as comma-separated string
+      setFormData(prev => ({
+        ...prev,
+        area: newAreas.join(", ")
+      }));
+      setCustomArea("");
+    }
+  };
+
+  // Remove area from selection
+  const handleRemoveArea = (areaToRemove: string) => {
+    const newAreas = selectedAreas.filter(area => area !== areaToRemove);
+    setSelectedAreas(newAreas);
+    
+    // Update form data with selected areas as comma-separated string
+    setFormData(prev => ({
+      ...prev,
+      area: newAreas.join(", ")
+    }));
+  };
+
   // Handle form field changes
   const handleChange = (field: keyof TutorRequestFormData, value: any) => {
     setFormData((prev) => ({
@@ -317,30 +380,40 @@ export default function TutorRequestPage() {
     });
   };
 
+  // Prepare district options for dropdown
+  const districtOptions = districtData?.data?.map((district: District) => ({
+    value: district.name,
+    label: district.name,
+  })) || [];
+
   // Submit form using Redux mutation
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
 
-      // Prepare submit data
-      const submitData = {
-        ...formData,
-        userId: user?.id || "" as any,
-        // No need to split district and area anymore since they are plain input
-      };
+      // Check if user is logged in - FIXED: changed condition
+      if(!user){
+        toast({
+          title: "Login Required",
+          description: "Please login to submit a tutor request",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
-      // Validate form data (same validation logic as before)
+      // Validate form data
       if (
-        !submitData.phoneNumber ||
-        !submitData.studentGender ||
-        !submitData.district ||
-        !submitData.area ||
-        !submitData.tutorGenderPreference ||
-        !submitData.medium ||
-        !submitData.tutoringType ||
-        !submitData.tutoringDuration ||
-        !submitData.tutoringDays ||
-        !submitData.numberOfStudents
+        !formData.phoneNumber ||
+        !formData.studentGender ||
+        !formData.district ||
+        !formData.area ||
+        !formData.tutorGenderPreference ||
+        !formData.medium ||
+        !formData.tutoringType ||
+        !formData.tutoringDuration ||
+        !formData.tutoringDays ||
+        !formData.numberOfStudents
       ) {
         toast({
           title: "Missing Information",
@@ -351,7 +424,7 @@ export default function TutorRequestPage() {
         return;
       }
 
-      if ((submitData.selectedCategories || []).length === 0) {
+      if ((formData.selectedCategories || []).length === 0) {
         toast({
           title: "Missing Information",
           description: "Please select at least one category",
@@ -362,8 +435,8 @@ export default function TutorRequestPage() {
       }
 
       if (
-        (submitData.selectedSubjects || []).length === 0 ||
-        (submitData.selectedClasses || []).length === 0
+        (formData.selectedSubjects || []).length === 0 ||
+        (formData.selectedClasses || []).length === 0
       ) {
         toast({
           title: "Missing Information",
@@ -374,7 +447,7 @@ export default function TutorRequestPage() {
         return;
       }
 
-      if (!submitData.tutoringTime) {
+      if (!formData.tutoringTime) {
         toast({
           title: "Missing Information",
           description: "Please select tutoring time",
@@ -385,10 +458,10 @@ export default function TutorRequestPage() {
       }
 
       if (
-        !submitData.salaryRange.min ||
-        !submitData.salaryRange.max ||
-        submitData.salaryRange.min === "" ||
-        submitData.salaryRange.max === ""
+        !formData.salaryRange.min ||
+        !formData.salaryRange.max ||
+        formData.salaryRange.min === "" ||
+        formData.salaryRange.max === ""
       ) {
         toast({
           title: "Missing Information",
@@ -400,8 +473,8 @@ export default function TutorRequestPage() {
       }
 
       if (
-        parseInt(submitData.salaryRange.min.toString()) >
-        parseInt(submitData.salaryRange.max.toString())
+        parseInt(formData.salaryRange.min.toString()) >
+        parseInt(formData.salaryRange.max.toString())
       ) {
         toast({
           title: "Invalid Salary Range",
@@ -412,10 +485,55 @@ export default function TutorRequestPage() {
         return;
       }
 
+      // Prepare submit data according to your Prisma model
+      const submitData = {
+        // Required fields from model
+        phoneNumber: formData.phoneNumber,
+        studentGender: formData.studentGender,
+        district: formData.district,
+        area: formData.area,
+        detailedLocation: formData.detailedLocation,
+        
+        // JSON fields - need to be properly formatted
+        selectedCategories: formData.selectedCategories || [],
+        selectedSubjects: formData.selectedSubjects || [],
+        selectedClasses: formData.selectedClasses || [],
+        
+        // Additional required fields
+        tutorGenderPreference: formData.tutorGenderPreference,
+        isSalaryNegotiable: formData.isSalaryNegotiable,
+        
+        // Salary range as JSON
+        salaryRange: {
+          min: parseInt(formData.salaryRange.min.toString()) || 0,
+          max: parseInt(formData.salaryRange.max.toString()) || 0,
+        },
+        
+        // Optional fields
+        extraInformation: formData.extraInformation || "",
+        
+        // Subject and class for backward compatibility
+        subject: formData.selectedSubjects.length > 0 ? formData.selectedSubjects[0] : "",
+        studentClass: formData.selectedClasses.length > 0 ? formData.selectedClasses[0] : "",
+        
+        // New fields
+        medium: formData.medium,
+        numberOfStudents: parseInt(formData.numberOfStudents.toString()) || 1,
+        tutoringDays: parseInt(formData.tutoringDays.toString()) || 1,
+        tutoringTime: formData.tutoringTime,
+        tutoringDuration: formData.tutoringDuration,
+        tutoringType: formData.tutoringType,
+        
+        // User ID - only send if user is logged in
+        userId: user?.id || null,
+      };
+
+      // Log the data for debugging
+      console.log("Submitting data:", JSON.stringify(submitData, null, 2));
+
       // Use Redux mutation to create tutor request
-      console.log("submit",submitData)
       const result = await createTutorRequest(submitData);
-      console.log(result)
+      console.log("Response:", result);
 
       if ('data' in result && result.data) {
         setShowSuccess(true);
@@ -424,18 +542,22 @@ export default function TutorRequestPage() {
           description: "Your tutor request has been submitted successfully!",
         });
       } else {
+        // Check for specific error message
+        const errorMessage = result.error?.data?.message || 
+                           result.error?.data?.error?.message || 
+                           "Failed to submit tutor request";
+        
         toast({
           title: "Submission Failed",
-          description: "Failed to submit tutor request",
+          description: errorMessage,
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting tutor request:", error);
       toast({
         title: "Submission Error",
-        description:
-          "An error occurred while submitting your request. Please try again.",
+        description: error.message || "An error occurred while submitting your request. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -648,31 +770,102 @@ export default function TutorRequestPage() {
                   </div>
                 </div>
 
-                {/* Location Information Section - Changed District and Area to plain Input */}
+                {/* Location Information Section */}
                 <div className="space-y-4 sm:space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                    {/* District - Plain Input (no dropdown) */}
+                    {/* District - Dropdown from backend */}
                     <div className="space-y-2">
-                      <Input
-                        id="district"
-                        value={formData.district}
-                        onChange={(e) =>
-                          handleChange("district", e.target.value)
-                        }
-                        placeholder="District *"
-                        className="w-full h-10 sm:h-11"
-                      />
+                      <Select
+                        value={selectedDistrict}
+                        onValueChange={handleDistrictChange}
+                        disabled={isLoadingDistricts}
+                      >
+                        <SelectTrigger className="h-10 sm:h-11">
+                          <SelectValue placeholder="District *" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {districtOptions.map((district:any) => (
+                            <SelectItem key={district.value} value={district.value}>
+                              {district.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {isLoadingDistricts && (
+                        <p className="text-xs text-gray-500">Loading districts...</p>
+                      )}
                     </div>
 
-                    {/* Area - Plain Input (no dropdown) */}
+                    {/* Area - Dynamic dropdown based on selected district */}
                     <div className="space-y-2">
-                      <Input
-                        id="area"
-                        value={formData.area}
-                        onChange={(e) => handleChange("area", e.target.value)}
-                        placeholder="Area *"
-                        className="w-full h-10 sm:h-11"
-                      />
+                      <div className="space-y-2">
+                        {/* Area selection dropdown */}
+                        {availableAreas.length > 0 && (
+                          <Select onValueChange={handleAreaSelect}>
+                            <SelectTrigger className="h-10 sm:h-11">
+                              <SelectValue placeholder="Select area *" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableAreas.map((area: string) => (
+                                <SelectItem key={area} value={area}>
+                                  {area}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+
+                        {/* Custom area input */}
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Or type custom area name"
+                            value={customArea}
+                            onChange={(e) => setCustomArea(e.target.value)}
+                            className="h-10 sm:h-11 bg-white/80 border-gray-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddCustomArea();
+                              }
+                            }}
+                            disabled={!selectedDistrict}
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleAddCustomArea}
+                            className="bg-green-600 hover:bg-green-700 text-white h-10 sm:h-11"
+                            disabled={!customArea.trim() || !selectedDistrict}
+                          >
+                            Add
+                          </Button>
+                        </div>
+
+                        {/* Selected areas display */}
+                        {selectedAreas.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-xs font-medium text-green-800 mb-1">
+                              Selected Areas ({selectedAreas.length}):
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {selectedAreas.map((area) => (
+                                <div
+                                  key={area}
+                                  className="flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs"
+                                >
+                                  <span>{area}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveArea(area)}
+                                    className="ml-1 text-red-500 hover:text-red-700"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -717,7 +910,7 @@ export default function TutorRequestPage() {
                   </div>
                 </div>
 
-                {/* Academic Information Section - Same as before */}
+                {/* Academic Information Section */}
                 <div className="space-y-4 sm:space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     <div className="space-y-2">
@@ -901,7 +1094,7 @@ export default function TutorRequestPage() {
                         onChange={(e) =>
                           handleChange(
                             "numberOfStudents",
-                            parseInt(e.target.value) || ""
+                            parseInt(e.target.value) || 1
                           )
                         }
                         placeholder="Total Students*"
@@ -975,11 +1168,12 @@ export default function TutorRequestPage() {
                       <Input
                         id="salaryMin"
                         type="number"
+                        min="0"
                         value={formData.salaryRange.min || ""}
                         onChange={(e) =>
                           handleChange("salaryRange", {
                             ...formData.salaryRange,
-                            min: parseInt(e.target.value) || "",
+                            min: parseInt(e.target.value) || 0,
                           })
                         }
                         placeholder="Minimum Salary *"
@@ -993,11 +1187,12 @@ export default function TutorRequestPage() {
                       <Input
                         id="salaryMax"
                         type="number"
+                        min="0"
                         value={formData.salaryRange.max || ""}
                         onChange={(e) =>
                           handleChange("salaryRange", {
                             ...formData.salaryRange,
-                            max: parseInt(e.target.value) || "",
+                            max: parseInt(e.target.value) || 0,
                           })
                         }
                         placeholder="Maximum Salary *"
@@ -1039,7 +1234,7 @@ export default function TutorRequestPage() {
                       <Button
                         type="button"
                         onClick={handleSubmit}
-                        disabled={isSubmitting || creating}
+                        disabled={isSubmitting || creating || selectedAreas.length === 0 || !user}
                         className="bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base w-full h-10 sm:h-11"
                       >
                         {isSubmitting || creating ? "Submitting..." : "Submit"}
@@ -1047,6 +1242,11 @@ export default function TutorRequestPage() {
                           <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
                         )}
                       </Button>
+                      {/* {!user && (
+                        <p className="text-xs text-red-500 mt-1">
+                          Please login to submit a request
+                        </p>
+                      )} */}
                     </div>
                   </div>
                 </div>

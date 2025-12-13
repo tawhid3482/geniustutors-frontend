@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,22 +12,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import {
-  Eye,
-  EyeOff,
-  Mail,
-  Lock,
-  User,
-  Phone,
-} from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react";
 import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
-import { useGetAllAreaQuery } from "@/redux/features/area/areaApi";
-import { useCheckPhoneNumberMutation } from '@/redux/features/auth/authApi';
-import { useSendOtpMutation } from '@/redux/features/phoneVerification/phoneVerificationApi';
-import { CreatableMultiSelect } from "@/components/ui/creatable-multi-select"; 
+import { useCheckPhoneNumberMutation } from "@/redux/features/auth/authApi";
+import { useSendOtpMutation } from "@/redux/features/phoneVerification/phoneVerificationApi";
+import { CreatableMultiSelect } from "@/components/ui/creatable-multi-select";
+import { useGetAllDistrictsQuery } from "@/redux/features/district/districtApi";
 
 interface TutorSignupFormProps {
-  onPhoneVerification: (phoneNumber: string, fullName: string, formData?: any) => void;
+  onPhoneVerification: (
+    phoneNumber: string,
+    fullName: string,
+    formData?: any
+  ) => void;
   onSuccess?: () => void;
 }
 
@@ -40,8 +37,8 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
 
   // RTK Queries
   const { data: categoryData } = useGetAllCategoryQuery(undefined);
-  const { data: areaData } = useGetAllAreaQuery(undefined);
-  
+  const { data: districtData } = useGetAllDistrictsQuery(undefined);
+
   // RTK Query mutations for phone verification
   const [checkPhoneNumber] = useCheckPhoneNumberMutation();
   const [sendOTP] = useSendOtpMutation();
@@ -64,26 +61,64 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
     confirmPassword: "",
   });
 
+  // District and area state
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+  const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
+  const [customArea, setCustomArea] = useState<string>("");
+  const [availableAreas, setAvailableAreas] = useState<string[]>([]);
+  const [availableThanas, setAvailableThanas] = useState<string[]>([]);
+  const [selectedThana, setSelectedThana] = useState<string>("");
+
+  // Effect to update areas when district changes
+  useEffect(() => {
+    if (districtData?.data && selectedDistrict) {
+      const selectedDistrictData = districtData.data.find(
+        (district: any) => district.name === selectedDistrict
+      );
+
+      if (selectedDistrictData) {
+        // Combine area and thana arrays from backend
+        const allAreas = [
+          ...(selectedDistrictData.area || []),
+          ...(selectedDistrictData.thana || []),
+        ];
+
+        setAvailableAreas(allAreas);
+        setAvailableThanas(selectedDistrictData.thana || []);
+      }
+    } else {
+      setAvailableAreas([]);
+      setAvailableThanas([]);
+    }
+  }, [selectedDistrict, districtData]);
+
+  // Prepare district options for dropdown
+  const districtOptions =
+    districtData?.data?.map((district: any) => ({
+      value: district.name,
+      label: district.name,
+    })) || [];
+
   // Check if phone number already exists using RTK Query
   const handleCheckPhoneExists = async (phone: string) => {
     try {
       const result = await checkPhoneNumber({ phone }).unwrap();
-      console.log('📞 Phone check response:', result);
-      
+      console.log("📞 Phone check response:", result);
+
       if (result.success && result.data && result.data.exists === true) {
-        console.log('❌ Phone number already exists');
+        console.log("❌ Phone number already exists");
         return true;
       }
-      
-      console.log('✅ Phone number is available');
+
+      console.log("✅ Phone number is available");
       return false;
     } catch (error: any) {
-      console.error('Error checking phone:', error);
-      
+      console.error("Error checking phone:", error);
+
       if (error?.data?.data?.exists === true) {
         return true;
       }
-      
+
       return false;
     }
   };
@@ -106,22 +141,57 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
     setTutorFormData((prev) => ({ ...prev, background: backgrounds }));
   };
 
+  // Handle district selection
+  const handleDistrictChange = (district: string) => {
+    setSelectedDistrict(district);
+    setSelectedAreas([]);
+    setSelectedThana("");
+    setCustomArea("");
+  };
+
+  // Handle area selection
+  const handleAreaSelect = (area: string) => {
+    if (!selectedAreas.includes(area)) {
+      const newAreas = [...selectedAreas, area];
+      setSelectedAreas(newAreas);
+      handlePreferredAreasChange(newAreas);
+    }
+  };
+
+  // Handle custom area addition
+  const handleAddCustomArea = () => {
+    if (customArea.trim() && !selectedAreas.includes(customArea.trim())) {
+      const newAreas = [...selectedAreas, customArea.trim()];
+      setSelectedAreas(newAreas);
+      handlePreferredAreasChange(newAreas);
+      setCustomArea("");
+    }
+  };
+
+  // Remove area from selection
+  const handleRemoveArea = (areaToRemove: string) => {
+    const newAreas = selectedAreas.filter((area) => area !== areaToRemove);
+    setSelectedAreas(newAreas);
+    handlePreferredAreasChange(newAreas);
+  };
+
+  // Handle thana selection
+  const handleThanaChange = (thana: string) => {
+    setSelectedThana(thana);
+    // Add thana to areas if not already added
+    if (!selectedAreas.includes(thana)) {
+      const newAreas = [...selectedAreas, thana];
+      setSelectedAreas(newAreas);
+      handlePreferredAreasChange(newAreas);
+    }
+  };
+
   // Prepare categories for CreatableMultiSelect
   const categoryOptions =
     categoryData?.data?.map((category: any) => ({
       value: category.name,
       label: category.name,
     })) || [];
-
-  // Prepare areas for CreatableMultiSelect
-  const areaOptions =
-    areaData?.data?.flatMap(
-      (area: any) =>
-        area.name?.map((areaName: string) => ({
-          value: areaName,
-          label: areaName,
-        })) || []
-    ) || [];
 
   // Tutor registration with phone verification
   const handleTutorSubmit = async (e: React.FormEvent) => {
@@ -133,13 +203,19 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
       !tutorFormData.phone ||
       !tutorFormData.universityName ||
       !tutorFormData.departmentName ||
-      tutorFormData.preferredAreas.length === 0 ||
+      selectedAreas.length === 0 ||
       tutorFormData.background.length === 0 ||
       !tutorFormData.gender ||
       !tutorFormData.password ||
       !tutorFormData.confirmPassword
     ) {
       toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Validate district selection
+    if (!selectedDistrict) {
+      toast.error("Please select a district");
       return;
     }
 
@@ -164,9 +240,11 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
 
     try {
       const phoneExists = await handleCheckPhoneExists(tutorFormData.phone);
-      
+
       if (phoneExists) {
-        throw new Error('An account with this phone number already exists. Please use a different phone number or try logging in.');
+        throw new Error(
+          "An account with this phone number already exists. Please use a different phone number or try logging in."
+        );
       }
 
       // Normalize phone number
@@ -177,7 +255,7 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
         normalizedPhone = "0" + tutorFormData.phone.slice(3);
       }
 
-      // Build registration payload
+      // Build registration payload with district information
       const registrationPayload = {
         fullName: tutorFormData.fullName,
         email: tutorFormData.email || null,
@@ -189,31 +267,37 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
         Institute_name: tutorFormData.universityName,
         department_name: tutorFormData.departmentName,
         year: tutorFormData.universityYear || null,
-        preferred_areas: tutorFormData.preferredAreas,
+        preferred_areas: selectedAreas,
         religion: tutorFormData.religion || null,
         nationality: tutorFormData.nationality,
         background: tutorFormData.background,
+        district: selectedDistrict,
+        thana: selectedThana || null,
       };
-      console.log(registrationPayload)
+
+      console.log("Registration Payload:", registrationPayload);
 
       // Send OTP for phone verification
-      await sendOTP({ 
-        phone: normalizedPhone, 
-        name: tutorFormData.fullName 
+      await sendOTP({
+        phone: normalizedPhone,
+        name: tutorFormData.fullName,
       }).unwrap();
 
       // Proceed to phone verification
-      onPhoneVerification(normalizedPhone, tutorFormData.fullName, registrationPayload);
-      
+      onPhoneVerification(
+        normalizedPhone,
+        tutorFormData.fullName,
+        registrationPayload
+      );
     } catch (error: any) {
-      console.error('❌ Error in tutor registration:', error);
-      
+      console.error("❌ Error in tutor registration:", error);
+
       if (error?.data?.message) {
         toast.error(error.data.message);
       } else if (error.message) {
         toast.error(error.message);
       } else {
-        toast.error('Signup failed. Please try again.');
+        toast.error("Signup failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -372,24 +456,120 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
           />
         </div>
 
-        {/* Preferred Areas - Creatable MultiSelect */}
+        {/* District Selection */}
         <div className="space-y-2">
-          <Label
-            htmlFor="preferredAreas"
-            className="text-sm font-semibold text-green-800"
-          >
+          <Label className="text-sm font-semibold text-green-800">
+            District *
+          </Label>
+          <Select value={selectedDistrict} onValueChange={handleDistrictChange}>
+            <SelectTrigger className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm">
+              <SelectValue placeholder="Select your district" />
+            </SelectTrigger>
+            <SelectContent>
+              {districtOptions.map((district: any) => (
+                <SelectItem key={district.value} value={district.value}>
+                  {district.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Thana Selection (if district has thana) */}
+        {availableThanas.length > 0 && (
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-green-800">
+              Thana
+            </Label>
+            <Select value={selectedThana} onValueChange={handleThanaChange}>
+              <SelectTrigger className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm">
+                <SelectValue placeholder="Select a thana (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableThanas.map((thana: string) => (
+                  <SelectItem key={thana} value={thana}>
+                    {thana}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Area Selection */}
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold text-green-800">
             Preferred Areas *
           </Label>
-          <CreatableMultiSelect
-            value={tutorFormData.preferredAreas}
-            onValueChange={handlePreferredAreasChange}
-            placeholder="Select areas or type to add new..."
-            options={areaOptions}
-            maxSelections={5}
-            className="border-green-200 focus:border-green-500"
-          />
+          <div className="space-y-2">
+            {/* Select from available areas */}
+            {availableAreas.length > 0 && (
+              <Select onValueChange={handleAreaSelect}>
+                <SelectTrigger className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm">
+                  <SelectValue placeholder="Select from available areas" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableAreas.map((area: string) => (
+                    <SelectItem key={area} value={area}>
+                      {area}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Custom area input */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Or type custom area name"
+                value={customArea}
+                onChange={(e) => setCustomArea(e.target.value)}
+                className="h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddCustomArea();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                onClick={handleAddCustomArea}
+                className="bg-green-600 hover:bg-green-700 text-white"
+                disabled={!customArea.trim()}
+              >
+                Add
+              </Button>
+            </div>
+
+            {/* Selected areas display */}
+            {selectedAreas.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm font-medium text-green-800 mb-1">
+                  Selected Areas ({selectedAreas.length}):
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedAreas.map((area) => (
+                    <div
+                      key={area}
+                      className="flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
+                    >
+                      <span>{area}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveArea(area)}
+                        className="ml-1 text-red-500 hover:text-red-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <p className="text-xs text-gray-500">
-            Type to search existing areas or add new ones
+            Select from dropdown or add custom area. Minimum 1 area required.
           </p>
         </div>
 
@@ -465,13 +645,13 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
           <CreatableMultiSelect
             value={tutorFormData.background}
             onValueChange={handleBackgroundChange}
-            placeholder="Select teaching categories or type to add new..."
+            placeholder="background."
             options={categoryOptions}
             maxSelections={5}
             className="border-green-200 focus:border-green-500"
           />
           <p className="text-xs text-gray-500">
-            Type to search existing categories or add new ones
+            Type to search existing subjects or add new ones
           </p>
         </div>
       </div>

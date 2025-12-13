@@ -37,7 +37,7 @@ export const Navbar = ({
   onRegister,
   onLogout,
   LoginComponent,
-  RegisterComponent,
+  RegisterComponent
 }: NavbarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [websiteInfo, setWebsiteInfo] = useState({
@@ -74,6 +74,9 @@ export const Navbar = ({
   const handleDashboard = async () => {
     router.push("/dashboard");
   };
+  const handleRegistration = async()=>{
+    router.push("/registration")
+  }
 
   // console.log(user)
 
@@ -203,6 +206,7 @@ export const Navbar = ({
                 {RegisterComponent ? (
                   <RegisterComponent>
                     <Button
+                    // onClick={handleRegistration}
                       variant="hero"
                       className="text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-semibold shadow-lg hover:shadow-green-500/25 transform hover:scale-105 hover:-translate-y-0.5 transition-all duration-300 ease-out border-0 hover:border-green-400"
                       data-auth-type="register"
