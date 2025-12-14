@@ -1573,9 +1573,9 @@ export function TuitionRequestsSection() {
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Male">Male</SelectItem>
-                      <SelectItem value="Female">Female</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="any">Any</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1978,9 +1978,9 @@ export function TuitionRequestsSection() {
                       <SelectValue placeholder="Select preference" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Any">Any</SelectItem>
-                      <SelectItem value="Male">Male</SelectItem>
-                      <SelectItem value="Female">Female</SelectItem>
+                      <SelectItem value="any">Any</SelectItem>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -2114,9 +2114,9 @@ export function TuitionRequestsSection() {
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="any">Any</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -2367,9 +2367,9 @@ export function TuitionRequestsSection() {
                         <SelectValue placeholder="Select preference" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Any">Any</SelectItem>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="any">Any</SelectItem>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
