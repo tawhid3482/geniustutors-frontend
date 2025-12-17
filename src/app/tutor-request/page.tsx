@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -23,17 +22,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { SearchableSelect } from "@/components/ui/searchable-select";
-
 import { Separator } from "@/components/ui/separator";
 import { SUBJECT_OPTIONS, CLASS_LEVELS } from "@/data/mockData";
 import mediumOptions from "@/data/mediumOptions.json";
 import {
-  tutorRequestService,
   TutorRequestFormData,
-  TutorRequest,
 } from "@/services/tutorRequestService";
 import { useAuth } from "@/contexts/AuthContext.next";
 
@@ -89,10 +83,11 @@ export default function TutorRequestPage() {
   const [createTutorRequest, { isLoading: creating }] =
     useCreateTutorRequestsMutation();
 
-  // District and area state
+  // District, thana and area state
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
-  const [availableAreas, setAvailableAreas] = useState<string[]>([]);
+  const [selectedThana, setSelectedThana] = useState<string>("");
   const [availableThanas, setAvailableThanas] = useState<string[]>([]);
+  const [availableAreas, setAvailableAreas] = useState<string[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [customArea, setCustomArea] = useState<string>("");
 
@@ -103,6 +98,7 @@ export default function TutorRequestPage() {
     studentGender: "" as any,
     district: "",
     area: "",
+    thana: "",
     detailedLocation: "",
     selectedCategories: [],
     selectedSubjects: [],
@@ -129,7 +125,7 @@ export default function TutorRequestPage() {
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [isLoadingTaxonomy, setIsLoadingTaxonomy] = useState(false);
 
-  // Effect to update areas when district changes
+  // Effect to update thanas when district changes
   useEffect(() => {
     if (districtData?.data && selectedDistrict) {
       const selectedDistrictData = districtData.data.find(
@@ -137,26 +133,51 @@ export default function TutorRequestPage() {
       );
 
       if (selectedDistrictData) {
-        // Combine area and thana arrays from backend
-        const allAreas = [
-          ...(selectedDistrictData.area || []),
-          ...(selectedDistrictData.thana || []),
-        ];
-
-        setAvailableAreas(allAreas);
+        // Set available thanas from backend
         setAvailableThanas(selectedDistrictData.thana || []);
+        
+        // Clear selected thana and areas when district changes
+        setSelectedThana("");
+        setSelectedAreas([]);
+        setCustomArea("");
+        setAvailableAreas([]);
 
-        // Update form data with selected district
+        // Update form data with selected district and clear thana
         setFormData((prev) => ({
           ...prev,
           district: selectedDistrict,
+          thana: "", // Clear thana when district changes
+          area: "", // Clear area when district changes
         }));
       }
     } else {
-      setAvailableAreas([]);
       setAvailableThanas([]);
+      setAvailableAreas([]);
+      setSelectedThana("");
+      setSelectedAreas([]);
     }
   }, [selectedDistrict, districtData]);
+
+  // Effect to update areas when thana changes
+  useEffect(() => {
+    if (districtData?.data && selectedDistrict && selectedThana) {
+      const selectedDistrictData = districtData.data.find(
+        (district: District) => district.name === selectedDistrict
+      );
+
+      if (selectedDistrictData) {
+        // Only show areas for the selected district
+        setAvailableAreas(selectedDistrictData.area || []);
+        
+        // Clear selected areas when thana changes
+        setSelectedAreas([]);
+        setCustomArea("");
+      }
+    } else {
+      setAvailableAreas([]);
+      setSelectedAreas([]);
+    }
+  }, [selectedThana, selectedDistrict, districtData]);
 
   // Process categories from categoryData
   useEffect(() => {
@@ -277,12 +298,18 @@ export default function TutorRequestPage() {
   // Handle district selection
   const handleDistrictChange = (district: string) => {
     setSelectedDistrict(district);
+  };
+
+  // Handle thana selection
+  const handleThanaChange = (thana: string) => {
+    setSelectedThana(thana);
     setSelectedAreas([]);
     setCustomArea("");
+    
+    // Update form data with selected thana
     setFormData((prev) => ({
       ...prev,
-      district: district,
-      area: "", // Clear area when district changes
+      thana: thana
     }));
   };
 
@@ -387,12 +414,27 @@ export default function TutorRequestPage() {
       label: district.name,
     })) || [];
 
+  // Update form data when selections change
+  useEffect(() => {
+    if (selectedDistrict) {
+      setFormData((prev) => ({
+        ...prev,
+        district: selectedDistrict,
+      }));
+    }
+  }, [selectedDistrict]);
+
   // Submit form using Redux mutation
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
 
-      // Check if user is logged in - FIXED: changed condition
+      // Debug logging
+      console.log("Form data before submission:", formData);
+      console.log("Selected thana:", selectedThana);
+      console.log("FormData.thana:", formData.thana);
+
+      // Check if user is logged in
       if (!user) {
         toast({
           title: "Login Required",
@@ -408,6 +450,7 @@ export default function TutorRequestPage() {
         !formData.phoneNumber ||
         !formData.studentGender ||
         !formData.district ||
+        !formData.thana || // thana validation added
         !formData.area ||
         !formData.tutorGenderPreference ||
         !formData.medium ||
@@ -418,7 +461,7 @@ export default function TutorRequestPage() {
       ) {
         toast({
           title: "Missing Information",
-          description: "Please fill in all required fields",
+          description: "Please fill in all required fields (including thana)",
           variant: "destructive",
         });
         setIsSubmitting(false);
@@ -492,6 +535,7 @@ export default function TutorRequestPage() {
         phoneNumber: formData.phoneNumber,
         studentGender: formData.studentGender,
         district: formData.district,
+        thana: formData.thana, // Ensure thana is included
         area: formData.area,
         detailedLocation: formData.detailedLocation,
 
@@ -627,7 +671,7 @@ export default function TutorRequestPage() {
                 </div>
                 <h3 className="font-medium text-gray-800">Location</h3>
                 <p className="text-sm text-gray-600">
-                  {formData.area}, {formData.district}
+                  {formData.area}, {formData.thana}, {formData.district}
                 </p>
               </div>
               <div className="bg-white p-4 rounded-lg shadow-sm border border-green-100">
@@ -780,7 +824,7 @@ export default function TutorRequestPage() {
                   </div>
                 </div>
 
-                {/* Location Information Section */}
+                {/* Location Information Section - Sequential Selection */}
                 <div className="space-y-4 sm:space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     {/* District - Dropdown from backend */}
@@ -811,76 +855,82 @@ export default function TutorRequestPage() {
                       )}
                     </div>
 
-                    {/* Area - Dynamic dropdown based on selected district */}
+                    {/* Thana - Only shown after district is selected */}
                     <div className="space-y-2">
-                      <div className="space-y-2">
-                        {/* Area selection dropdown */}
-                        {availableAreas.length > 0 && (
-                          <Select onValueChange={handleAreaSelect}>
-                            <SelectTrigger className="h-10 sm:h-11">
-                              <SelectValue placeholder="Select area *" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableAreas.map((area: string) => (
-                                <SelectItem key={area} value={area}>
-                                  {area}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
+                      <Select
+                        value={selectedThana}
+                        onValueChange={handleThanaChange}
+                        disabled={!selectedDistrict}
+                      >
+                        <SelectTrigger className="h-10 sm:h-11">
+                          <SelectValue placeholder="Thana *" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableThanas.map((thana: string) => (
+                            <SelectItem key={thana} value={thana}>
+                              {thana}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {!selectedDistrict && (
+                        <p className="text-xs text-gray-500">
+                          Select district first
+                        </p>
+                      )}
+                    </div>
 
-                        {/* Custom area input */}
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Or type custom area name"
-                            value={customArea}
-                            onChange={(e) => setCustomArea(e.target.value)}
-                            className="h-10 sm:h-11 bg-white/80 border-gray-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
-                            onKeyPress={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                handleAddCustomArea();
-                              }
-                            }}
-                            disabled={!selectedDistrict}
-                          />
-                          <Button
-                            type="button"
-                            onClick={handleAddCustomArea}
-                            className="bg-green-600 hover:bg-green-700 text-white h-10 sm:h-11"
-                            disabled={!customArea.trim() || !selectedDistrict}
-                          >
-                            Add
-                          </Button>
-                        </div>
+                    {/* Area - Only shown after thana is selected */}
+                    <div className="space-y-2">
+                      {selectedThana ? (
+                        <>
+                          {/* Area selection dropdown */}
+                          {availableAreas.length > 0 && (
+                            <Select onValueChange={handleAreaSelect}>
+                              <SelectTrigger className="h-10 sm:h-11">
+                                <SelectValue placeholder="Select area *" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableAreas.map((area: string) => (
+                                  <SelectItem key={area} value={area}>
+                                    {area}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
 
-                        {/* Selected areas display */}
-                        {selectedAreas.length > 0 && (
-                          <div className="mt-2">
-                            <p className="text-xs font-medium text-green-800 mb-1">
-                              Selected Areas ({selectedAreas.length}):
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {selectedAreas.map((area) => (
-                                <div
-                                  key={area}
-                                  className="flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs"
-                                >
-                                  <span>{area}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveArea(area)}
-                                    className="ml-1 text-red-500 hover:text-red-700"
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
+                          {/* Custom area input */}
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Or type custom area name"
+                              value={customArea}
+                              onChange={(e) => setCustomArea(e.target.value)}
+                              className="h-10 sm:h-11 bg-white/80 border-gray-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+                              onKeyPress={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  handleAddCustomArea();
+                                }
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              onClick={handleAddCustomArea}
+                              className="bg-green-600 hover:bg-green-700 text-white h-10 sm:h-11"
+                              disabled={!customArea.trim()}
+                            >
+                              Add
+                            </Button>
                           </div>
-                        )}
-                      </div>
+                        </>
+                      ) : (
+                        <div className="h-10 sm:h-11 flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
+                          <p className="text-sm text-gray-500">
+                            Select thana first
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -900,29 +950,33 @@ export default function TutorRequestPage() {
                         </SelectContent>
                       </Select>
                     </div>
-
-                    <div className="space-y-2">
-                      <Select
-                        value={formData.tutoringType || ""}
-                        onValueChange={(value) =>
-                          handleChange("tutoringType", value)
-                        }
-                      >
-                        <SelectTrigger className="h-10 sm:h-11">
-                          <SelectValue placeholder="Tutoring Type *" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Home Tutoring">
-                            Home Tutoring
-                          </SelectItem>
-                          <SelectItem value="Online Tutoring">
-                            Online Tutoring
-                          </SelectItem>
-                          <SelectItem value="Both">Both</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
                   </div>
+
+                  {/* Selected areas display - Shown when areas are selected */}
+                  {selectedAreas.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs font-medium text-green-800 mb-1">
+                        Selected Areas ({selectedAreas.length}):
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedAreas.map((area) => (
+                          <div
+                            key={area}
+                            className="flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs"
+                          >
+                            <span>{area}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveArea(area)}
+                              className="ml-1 text-red-500 hover:text-red-700"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Academic Information Section */}
@@ -1102,6 +1156,33 @@ export default function TutorRequestPage() {
                     </div>
 
                     <div className="space-y-2">
+                      <Select
+                        value={formData.tutoringType || ""}
+                        onValueChange={(value) =>
+                          handleChange("tutoringType", value)
+                        }
+                      >
+                        <SelectTrigger className="h-10 sm:h-11">
+                          <SelectValue placeholder="Tutoring Type *" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Home Tutoring">
+                            Home Tutoring
+                          </SelectItem>
+                          <SelectItem value="Online Tutoring">
+                            Online Tutoring
+                          </SelectItem>
+                          <SelectItem value="Both">Both</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tutoring Details Section */}
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                    <div className="space-y-2">
                       <Input
                         id="numberOfStudents"
                         type="number"
@@ -1118,12 +1199,7 @@ export default function TutorRequestPage() {
                         className="w-full h-11"
                       />
                     </div>
-                  </div>
-                </div>
 
-                {/* Tutoring Details Section */}
-                <div className="space-y-4 sm:space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     <div className="space-y-2">
                       <Select
                         value={formData.tutoringDuration || ""}
@@ -1180,7 +1256,9 @@ export default function TutorRequestPage() {
                       />
                       <p className="text-xs text-gray-500">Tutoring Time *</p>
                     </div>
+                  </div>
 
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     <div className="space-y-2">
                       <Input
                         id="salaryMin"
@@ -1197,9 +1275,7 @@ export default function TutorRequestPage() {
                         className="w-full h-10 sm:h-11"
                       />
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     <div className="space-y-2">
                       <Input
                         id="salaryMax"
@@ -1246,31 +1322,33 @@ export default function TutorRequestPage() {
                         />
                       </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <Button
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={
-                          isSubmitting ||
-                          creating ||
-                          selectedAreas.length === 0 ||
-                          !user
-                        }
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base w-full h-10 sm:h-11"
-                      >
-                        {isSubmitting || creating ? "Submitting..." : "Submit"}
-                        {!(isSubmitting || creating) && (
-                          <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 ml-2" />
-                        )}
-                      </Button>
-                      {/* {!user && (
-                        <p className="text-xs text-red-500 mt-1">
-                          Please login to submit a request
-                        </p>
-                      )} */}
-                    </div>
                   </div>
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex justify-center mt-6">
+                  <Button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={
+                      isSubmitting ||
+                      creating ||
+                      selectedAreas.length === 0 ||
+                      !user ||
+                      !formData.thana // Disable if thana is not selected
+                    }
+                    className="bg-green-600 hover:bg-green-700 text-white px-8 sm:px-12 py-3 sm:py-4 text-base sm:text-lg w-full max-w-md"
+                  >
+                    {isSubmitting || creating ? "Submitting..." : "Submit Tutor Request"}
+                    {!(isSubmitting || creating) && (
+                      <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 ml-2" />
+                    )}
+                  </Button>
+                  {!formData.thana && selectedDistrict && (
+                    <p className="text-xs text-red-500 mt-2 text-center w-full">
+                      Please select a thana
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -1305,7 +1383,7 @@ export default function TutorRequestPage() {
                       </h4>
                       <p className="text-gray-600 text-xs">
                         After fill up the form the information will be sent to
-                        tutorsheba support team. They will review/ verify the
+                        genius-tutors support team. They will review/ verify the
                         info and will publish on the available tuitions section.
                       </p>
                     </div>

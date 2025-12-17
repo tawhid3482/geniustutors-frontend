@@ -634,12 +634,12 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
             htmlFor="background"
             className="text-sm font-semibold text-green-800"
           >
-            Background *
+           Curriculum *
           </Label>
           <CreatableMultiSelect
             value={tutorFormData.background}
             onValueChange={handleBackgroundChange}
-            placeholder="background."
+            placeholder="curriculum."
             options={categoryOptions}
             maxSelections={5}
             className="border-green-200 focus:border-green-500"

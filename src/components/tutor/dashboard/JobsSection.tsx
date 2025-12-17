@@ -440,12 +440,7 @@ const JobsSection = () => {
                       <Eye className="h-4 w-4 mr-2" />
                       View Details
                     </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                    >
-                      Apply Now
-                    </Button>
+                  
                     <div className="text-xs text-gray-500 text-center mt-2">
                       {job.tutorRequestId}
                     </div>
@@ -518,7 +513,7 @@ const JobsSection = () => {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleViewDetails(job.id)}
+                          onClick={() => handleViewDetails(job.id)}
                         className="text-blue-600 hover:text-blue-800"
                       >
                         View

@@ -6,6 +6,7 @@ export interface TutorRequestFormData {
   studentGender: 'male' | 'female' | 'both';
   district: string;
   area: string;
+  thana:string;
   detailedLocation: string;
   selectedCategories: string[];
   selectedSubjects: string[];

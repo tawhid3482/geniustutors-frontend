@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,17 +37,6 @@ import { useAuth } from "@/contexts/AuthContext.next";
 import { tuitionJobsService, TuitionJob } from "@/services/tuitionJobsService";
 import { useToast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Pagination } from "@/components/ui/pagination";
 import { useGetAllDistrictsQuery } from "@/redux/features/district/districtApi";
@@ -55,6 +44,24 @@ import { useGetAllAreaQuery } from "@/redux/features/area/areaApi";
 import { useGetAllTutorRequestsForPublicQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
 import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
 import { SUBJECT_OPTIONS } from "@/data/mockData";
+
+// Helper function to convert area string to array
+const parseAreaString = (areaString: string): string[] => {
+  if (!areaString || typeof areaString !== "string") return [];
+  // Split by comma and trim whitespace
+  return areaString.split(',').map(area => area.trim()).filter(area => area.length > 0);
+};
+
+// Helper function to check if area array contains selected area
+const doesAreaContainSelection = (jobArea: string, selectedArea: string): boolean => {
+  if (selectedArea === "all") return true;
+  if (!jobArea) return false;
+  
+  const areas = parseAreaString(jobArea);
+  return areas.some(area => 
+    area.toLowerCase() === selectedArea.toLowerCase()
+  );
+};
 
 export default function TuitionJobs() {
   const { user } = useAuth();
@@ -91,6 +98,7 @@ export default function TuitionJobs() {
   // Redux data fetching
   const { data: districtData, isLoading: districtLoading } =
     useGetAllDistrictsQuery(undefined);
+
   const { data: areaData, isLoading: areaLoading } =
     useGetAllAreaQuery(undefined);
   const {
@@ -98,6 +106,7 @@ export default function TuitionJobs() {
     isLoading: jobsLoading,
     refetch: refetchJobs,
   } = useGetAllTutorRequestsForPublicQuery(undefined);
+
   const { data: categoryData, isLoading: categoryLoading } =
     useGetAllCategoryQuery(undefined);
 
@@ -175,7 +184,32 @@ export default function TuitionJobs() {
     setSelectedArea("all");
   }, [selectedDistrict, districtData]);
 
-  // Extract districts from district data - FIXED
+  // Get all unique areas from all jobs for dropdown when "all" districts is selected
+  const allUniqueAreasFromJobs = useMemo(() => {
+    const areas = new Set<string>();
+    
+    if (jobs.length > 0) {
+      jobs.forEach((job: any) => {
+        if (job.area) {
+          const parsedAreas = parseAreaString(job.area);
+          parsedAreas.forEach(area => areas.add(area));
+        }
+      });
+    }
+    
+    return Array.from(areas).sort();
+  }, [jobs]);
+
+  // Get areas for dropdown based on selection
+  const areasForDropdown = useMemo(() => {
+    if (selectedDistrict === "all") {
+      return allUniqueAreasFromJobs;
+    } else {
+      return availableAreas;
+    }
+  }, [selectedDistrict, availableAreas, allUniqueAreasFromJobs]);
+
+  // Extract districts from district data
   const districts =
     districtData?.data?.map((district: any) => district.name) || [];
 
@@ -197,8 +231,8 @@ export default function TuitionJobs() {
         job.detailedLocation
           .toLowerCase()
           .includes(searchQuery.toLowerCase())) ||
-      (job.studentName &&
-        job.studentName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (job.user?.fullName &&
+        job.user.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (job.tutorRequestId &&
         job.tutorRequestId.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (job.selectedSubjects &&
@@ -214,8 +248,12 @@ export default function TuitionJobs() {
 
     const matchesDistrict =
       selectedDistrict === "all" || job.district === selectedDistrict;
+    
     const matchesThana = selectedThana === "all" || job.thana === selectedThana;
-    const matchesArea = selectedArea === "all" || job.area === selectedArea;
+    
+    // FIXED: Area matching using helper function
+    const matchesArea = doesAreaContainSelection(job.area, selectedArea);
+    
     const matchesCategory =
       selectedCategory === "all" ||
       (job.selectedCategories &&
@@ -337,24 +375,6 @@ export default function TuitionJobs() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
-              {/* Category Filter */}
-              {/* <div className="space-y-2">
-                <Label htmlFor="category" className="text-sm font-bold text-green-600">Category</Label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger id="category" className="h-10 sm:h-11 font-bold">
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="font-bold">All Categories</SelectItem>
-                    {categories.map((category: any) => (
-                      <SelectItem key={category.id} value={category.name} className="font-bold">
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div> */}
-
               {/* Subject Filter */}
               <div className="space-y-2">
                 <Label
@@ -470,7 +490,7 @@ export default function TuitionJobs() {
                 </Select>
               </div>
 
-              {/* Area Filter - Only shows when district is selected */}
+              {/* Area Filter - FIXED VERSION */}
               <div className="space-y-2">
                 <Label
                   htmlFor="area"
@@ -481,18 +501,16 @@ export default function TuitionJobs() {
                 <Select
                   value={selectedArea}
                   onValueChange={setSelectedArea}
-                  disabled={
-                    selectedDistrict === "all" || availableAreas.length === 0
-                  }
+                  disabled={areasForDropdown.length === 0}
                 >
                   <SelectTrigger id="area" className="h-10 sm:h-11 font-bold">
                     <SelectValue
                       placeholder={
-                        selectedDistrict === "all"
-                          ? "Select district first"
-                          : availableAreas.length === 0
-                          ? "No areas available"
-                          : "All Areas"
+                        areasForDropdown.length === 0
+                          ? selectedDistrict === "all"
+                            ? "No areas in current jobs"
+                            : "No areas available"
+                          : "Select Area"
                       }
                     />
                   </SelectTrigger>
@@ -500,13 +518,18 @@ export default function TuitionJobs() {
                     <SelectItem value="all" className="font-bold">
                       All Areas
                     </SelectItem>
-                    {availableAreas.map((area: string) => (
+                    {areasForDropdown.map((area: string) => (
                       <SelectItem key={area} value={area} className="font-bold">
                         {area}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {selectedDistrict === "all" && areasForDropdown.length > 0 && (
+                  <p className="text-xs text-blue-600">
+                    Showing areas from all districts
+                  </p>
+                )}
               </div>
 
               {/* Tutoring Type Filter */}
@@ -734,6 +757,21 @@ export default function TuitionJobs() {
                   </Button>
                 </div>
               )}
+              {selectedArea !== "all" && (
+                <div className="mt-2 flex items-center gap-2 flex-wrap">
+                  <Badge variant="secondary" className="text-xs sm:text-sm">
+                    Area: {selectedArea}
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedArea("all")}
+                    className="h-6 px-2 text-xs"
+                  >
+                    Clear Area
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -906,9 +944,10 @@ export default function TuitionJobs() {
                             <MapPin className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                             <span className="font-bold text-green-600">
                               {job.district && `${job.district}`}
-                              {job.area && `, ${job.area}`}
+                              {job.thana && `, ${job.thana}`}
+                              {job.area && ` • ${job.area}`}
                               {job.detailedLocation &&
-                                ` • ${job.detailedLocation}`}
+                                ` (${job.detailedLocation})`}
                             </span>
                           </div>
 
