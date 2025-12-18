@@ -123,10 +123,10 @@ export default function TuitionJobs() {
   const [error, setError] = useState<string | null>(null);
   const [applying, setApplying] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  
+
   // Items per page constant
   const ITEMS_PER_PAGE = 6;
-  
+
   // No longer need totalPages and totalCount from API
   // We'll calculate them based on filteredJobs
 
@@ -287,9 +287,13 @@ export default function TuitionJobs() {
             .toLowerCase()
             .includes(searchQuery.toLowerCase())) ||
         (job.user?.fullName &&
-          job.user.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          job.user.fullName
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())) ||
         (job.tutorRequestId &&
-          job.tutorRequestId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          job.tutorRequestId
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())) ||
         (job.selectedSubjects &&
           job.selectedSubjects.some((subject: string) =>
             subject.toLowerCase().includes(searchQuery.toLowerCase())
@@ -299,7 +303,8 @@ export default function TuitionJobs() {
       const matchesSubject =
         selectedSubject === "all" ||
         job.subject === selectedSubject ||
-        (job.selectedSubjects && job.selectedSubjects.includes(selectedSubject));
+        (job.selectedSubjects &&
+          job.selectedSubjects.includes(selectedSubject));
 
       const matchesClass =
         selectedClass === "all" ||
@@ -315,7 +320,8 @@ export default function TuitionJobs() {
       const matchesDistrict =
         selectedDistrict === "all" || job.district === selectedDistrict;
 
-      const matchesThana = selectedThana === "all" || job.thana === selectedThana;
+      const matchesThana =
+        selectedThana === "all" || job.thana === selectedThana;
 
       const matchesArea = doesAreaContainSelection(job.area, selectedArea);
 
@@ -434,7 +440,8 @@ export default function TuitionJobs() {
               59,
               999
             );
-            matchesDate = jobDate >= firstDayOfMonth && jobDate <= lastDayOfMonth;
+            matchesDate =
+              jobDate >= firstDayOfMonth && jobDate <= lastDayOfMonth;
             break;
           case "lastMonth":
             const firstDayOfLastMonth = new Date(
@@ -596,7 +603,7 @@ export default function TuitionJobs() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     // Scroll to top when page changes
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -621,6 +628,119 @@ export default function TuitionJobs() {
             </CardHeader>
             <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
               {/* Class Filter */}
+
+              {/* Date Filter Section */}
+              <div className="space-y-3">
+                <Label className="text-sm font-bold text-green-600">
+                  Search By Date
+                </Label>
+
+                <Select
+                  value={dateFilterType}
+                  onValueChange={(
+                    value: "none" | "specific" | "range" | "relative"
+                  ) => setDateFilterType(value)}
+                >
+                  <SelectTrigger className="h-10 sm:h-11 font-bold">
+                    <div className="flex items-center">
+                      <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="তারিখ ফিল্টার টাইপ" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="font-bold">
+                      NO filter by date
+                    </SelectItem>
+                    <SelectItem value="specific" className="font-bold">
+                      Fixed date
+                    </SelectItem>
+                    <SelectItem value="range" className="font-bold">
+                      Date range
+                    </SelectItem>
+                    <SelectItem value="relative" className="font-bold">
+                      Relative date
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* নির্দিষ্ট তারিখ */}
+                {dateFilterType === "specific" && (
+                  <div className="space-y-2">
+                    <Input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="h-10 sm:h-11 font-bold"
+                    />
+                  </div>
+                )}
+
+                {/* তারিখ রেঞ্জ */}
+                {dateFilterType === "range" && (
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-black">
+                        Start Date
+                      </Label>
+                      <Input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="h-10 sm:h-11 font-bold"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-black">
+                        Last Date
+                      </Label>
+                      <Input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="h-10 sm:h-11 font-bold"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* আপেক্ষিক তারিখ */}
+                {dateFilterType === "relative" && (
+                  <div className="space-y-2">
+                    <Select
+                      value={relativeDateFilter}
+                      onValueChange={setRelativeDateFilter}
+                    >
+                      <SelectTrigger className="h-10 sm:h-11 font-bold">
+                        <SelectValue placeholder="সময়কাল নির্বাচন করুন" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="today" className="font-bold">
+                          Today
+                        </SelectItem>
+                        <SelectItem value="yesterday" className="font-bold">
+                          Yesterday
+                        </SelectItem>
+                        <SelectItem value="last7days" className="font-bold">
+                          Last 7 day
+                        </SelectItem>
+                        <SelectItem value="last30days" className="font-bold">
+                          Last 30 day
+                        </SelectItem>
+                        <SelectItem value="last90days" className="font-bold">
+                          Last 90 day
+                        </SelectItem>
+                        <SelectItem value="thisMonth" className="font-bold">
+                          This month
+                        </SelectItem>
+                        <SelectItem value="lastMonth" className="font-bold">
+                          last month
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label
                   htmlFor="class"
@@ -840,7 +960,6 @@ export default function TuitionJobs() {
                     ))}
                   </SelectContent>
                 </Select>
-              
               </div>
 
               {/* Tutoring Type Filter */}
@@ -891,120 +1010,6 @@ export default function TuitionJobs() {
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Date Filter Section */}
-              <div className="space-y-3">
-                <Label className="text-sm font-bold text-green-600">
-                  Search By Date
-                </Label>
-
-                <Select
-                  value={dateFilterType}
-                  onValueChange={(
-                    value: "none" | "specific" | "range" | "relative"
-                  ) => setDateFilterType(value)}
-                >
-                  <SelectTrigger className="h-10 sm:h-11 font-bold">
-                    <div className="flex items-center">
-                      <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <SelectValue placeholder="তারিখ ফিল্টার টাইপ" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none" className="font-bold">
-                      NO filter by date
-                    </SelectItem>
-                    <SelectItem value="specific" className="font-bold">
-                      Fixed date
-                    </SelectItem>
-                    <SelectItem value="range" className="font-bold">
-                      Date range
-                    </SelectItem>
-                    <SelectItem value="relative" className="font-bold">
-                      Relative date
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* নির্দিষ্ট তারিখ */}
-                {dateFilterType === "specific" && (
-                  <div className="space-y-2">
-                    <Input
-                      type="date"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className="h-10 sm:h-11 font-bold"
-                    />
-                  </div>
-                )}
-
-                {/* তারিখ রেঞ্জ */}
-                {dateFilterType === "range" && (
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold text-black">
-                       Start Date
-                      </Label>
-                      <Input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="h-10 sm:h-11 font-bold"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold text-black">
-                       Last Date
-                      </Label>
-                      <Input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="h-10 sm:h-11 font-bold"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* আপেক্ষিক তারিখ */}
-                {dateFilterType === "relative" && (
-                  <div className="space-y-2">
-                    <Select
-                      value={relativeDateFilter}
-                      onValueChange={setRelativeDateFilter}
-                    >
-                      <SelectTrigger className="h-10 sm:h-11 font-bold">
-                        <SelectValue placeholder="সময়কাল নির্বাচন করুন" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="today" className="font-bold">
-                          Today
-                        </SelectItem>
-                        <SelectItem value="yesterday" className="font-bold">
-                          Yesterday
-                        </SelectItem>
-                        <SelectItem value="last7days" className="font-bold">
-                         Last 7 day
-                        </SelectItem>
-                        <SelectItem value="last30days" className="font-bold">
-                          Last 30 day
-                        </SelectItem>
-                        <SelectItem value="last90days" className="font-bold">
-                          Last 90 day
-                        </SelectItem>
-                        <SelectItem value="thisMonth" className="font-bold">
-                          This month
-                        </SelectItem>
-                        <SelectItem value="lastMonth" className="font-bold">
-                         last month
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              
 
               {/* Checkbox Filters */}
               <div className="hidden sm:block space-y-3 sm:space-y-4">
@@ -1085,12 +1090,16 @@ export default function TuitionJobs() {
                   <>
                     Showing{" "}
                     <span className="font-medium">
-                      {paginatedJobs.length > 0 
-                        ? `${(currentPage - 1) * ITEMS_PER_PAGE + 1}-${Math.min(currentPage * ITEMS_PER_PAGE, filteredJobs.length)}`
-                        : "0"
-                      }
+                      {paginatedJobs.length > 0
+                        ? `${(currentPage - 1) * ITEMS_PER_PAGE + 1}-${Math.min(
+                            currentPage * ITEMS_PER_PAGE,
+                            filteredJobs.length
+                          )}`
+                        : "0"}
                     </span>{" "}
-                    of <span className="font-medium">{filteredJobs.length}</span> jobs
+                    of{" "}
+                    <span className="font-medium">{filteredJobs.length}</span>{" "}
+                    jobs
                     {filteredJobs.length !== jobs.length && (
                       <span className="text-xs text-muted-foreground ml-2">
                         (from {jobs.length} total)
@@ -1382,7 +1391,10 @@ export default function TuitionJobs() {
                           <CardTitle className="text-lg sm:text-xl font-bold text-black">
                             Tuition Request #{job.tutorRequestId}
                           </CardTitle>
-                          <Badge variant="outline" className="text-xs text-black">
+                          <Badge
+                            variant="outline"
+                            className="text-xs text-black"
+                          >
                             {job.tutoringType || "Tutoring Request"}
                           </Badge>
                         </div>
@@ -1454,8 +1466,9 @@ export default function TuitionJobs() {
                             <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
                               <DollarSign className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                               <span className="font-bold text-green-600">
-                                ৳{(job.salaryRange?.min || 0).toLocaleString()} -
-                                ৳{(job.salaryRange?.max || 0).toLocaleString()}
+                                ৳{(job.salaryRange?.min || 0).toLocaleString()}{" "}
+                                - ৳
+                                {(job.salaryRange?.max || 0).toLocaleString()}
                                 {job.isSalaryNegotiable && " (Negotiable)"}
                               </span>
                             </div>
@@ -1532,7 +1545,8 @@ export default function TuitionJobs() {
 
                         <div className="flex justify-between items-center pt-2 mt-4">
                           <div className="text-xs font-bold text-black">
-                            Posted: {new Date(job.createdAt).toLocaleDateString()}
+                            Posted:{" "}
+                            {new Date(job.createdAt).toLocaleDateString()}
                           </div>
                           <div className="flex items-center gap-2">
                             {((job.salaryRange?.min || 0) > 1000000 ||
@@ -1543,7 +1557,9 @@ export default function TuitionJobs() {
                             )}
                             <Badge
                               variant={
-                                job.status === "Active" ? "default" : "secondary"
+                                job.status === "Active"
+                                  ? "default"
+                                  : "secondary"
                               }
                               className="text-xs"
                             >
