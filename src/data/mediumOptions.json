@@ -1,8 +1,8 @@
 {
   "mediums": [
     {
-      "value": "Bangla Medium",
-      "label": "Bangla Medium"
+      "value": "Bangla Version",
+      "label": "Bangla Version"
     },
     {
       "value": "English Version",
@@ -12,45 +12,58 @@
       "value": "English Medium",
       "label": "English Medium"
     },
-    {
-      "value": "Religious Studies",
-      "label": "Religious Studies"
-    },
+ 
     {
       "value": "Admission Test",
       "label": "Admission Test"
     },
-    {
-      "value": "Professional Skill Development",
-      "label": "Professional Skill Development"
+       {
+      "value": "Religious Studies",
+      "label": "Religious Studies"
     },
-    {
-      "value": "Arts",
-      "label": "Arts"
+       {
+      "value": "Pre-School",
+      "label": "Pre-School"
     },
-    {
-      "value": "Special Skill Development",
-      "label": "Special Skill Development"
+       {
+      "value": "IELTS Preparation",
+      "label": "IELTS Preparation"
     },
-    {
-      "value": "Uni Help",
-      "label": "Uni Help"
+
+       {
+      "value": "Madrasa Board",
+      "label": "Madrasa Board"
     },
-    {
+  {
       "value": "Language Learning",
       "label": "Language Learning"
     },
-    {
-      "value": "Test Preparation",
-      "label": "Test Preparation"
+
+       {
+      "value": "Arts & Crafts",
+      "label": "Arts & Crafts"
     },
-    {
-      "value": "Madrasa Medium",
-      "label": "Madrasa Medium"
+
+       {
+      "value": "Guitar/Music & Dance",
+      "label": "Guitar/Music & Dance"
+    },
+       {
+      "value": "Diploma",
+      "label": "Diploma"
+    },
+       {
+      "value": "University Programme",
+      "label": "University Programme"
+    },
+       {
+      "value": "Handwriting",
+      "label": "Handwriting"
     },
     {
       "value": "Special Child Education",
       "label": "Special Child Education"
     }
+  
   ]
 }

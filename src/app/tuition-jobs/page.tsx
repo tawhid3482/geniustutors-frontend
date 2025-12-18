@@ -38,6 +38,7 @@ import {
   Sparkles,
   GraduationCap,
   BookType,
+  Calendar,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext.next";
 import { tuitionJobsService, TuitionJob } from "@/services/tuitionJobsService";
@@ -54,18 +55,32 @@ import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
 const parseAreaString = (areaString: string): string[] => {
   if (!areaString || typeof areaString !== "string") return [];
   // Split by comma and trim whitespace
-  return areaString.split(',').map(area => area.trim()).filter(area => area.length > 0);
+  return areaString
+    .split(",")
+    .map((area) => area.trim())
+    .filter((area) => area.length > 0);
 };
 
 // Helper function to check if area array contains selected area
-const doesAreaContainSelection = (jobArea: string, selectedArea: string): boolean => {
+const doesAreaContainSelection = (
+  jobArea: string,
+  selectedArea: string
+): boolean => {
   if (selectedArea === "all") return true;
   if (!jobArea) return false;
-  
+
   const areas = parseAreaString(jobArea);
-  return areas.some(area => 
-    area.toLowerCase() === selectedArea.toLowerCase()
+  return areas.some(
+    (area) => area.toLowerCase() === selectedArea.toLowerCase()
   );
+};
+
+// Helper function to format date to YYYY-MM-DD
+const formatDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
 
 export default function TuitionJobs() {
@@ -83,6 +98,15 @@ export default function TuitionJobs() {
   const [selectedArea, setSelectedArea] = useState<string>("all");
   const [selectedJobType, setSelectedJobType] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  // Date filter states
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [dateFilterType, setDateFilterType] = useState<
+    "none" | "specific" | "range" | "relative"
+  >("none");
+  const [relativeDateFilter, setRelativeDateFilter] = useState<string>("all");
 
   // Available thanas and areas based on selected district
   const [availableThanas, setAvailableThanas] = useState<string[]>([]);
@@ -153,6 +177,11 @@ export default function TuitionJobs() {
     selectedArea,
     selectedJobType,
     selectedCategory,
+    dateFilterType,
+    selectedDate,
+    startDate,
+    endDate,
+    relativeDateFilter,
   ]);
 
   // Handle URL parameters
@@ -209,16 +238,16 @@ export default function TuitionJobs() {
   // Get all unique areas from all jobs for dropdown when "all" districts is selected
   const allUniqueAreasFromJobs = useMemo(() => {
     const areas = new Set<string>();
-    
+
     if (jobs.length > 0) {
       jobs.forEach((job: any) => {
         if (job.area) {
           const parsedAreas = parseAreaString(job.area);
-          parsedAreas.forEach(area => areas.add(area));
+          parsedAreas.forEach((area) => areas.add(area));
         }
       });
     }
-    
+
     return Array.from(areas).sort();
   }, [jobs]);
 
@@ -270,23 +299,24 @@ export default function TuitionJobs() {
       job.subject === selectedSubject ||
       (job.selectedSubjects && job.selectedSubjects.includes(selectedSubject));
 
-    const matchesClass = 
-      selectedClass === "all" || 
+    const matchesClass =
+      selectedClass === "all" ||
       job.studentClass === selectedClass ||
       (job.selectedClasses && job.selectedClasses.includes(selectedClass));
 
-    const matchesMedium = 
-      selectedMedium === "all" || 
+    const matchesMedium =
+      selectedMedium === "all" ||
       job.medium === selectedMedium ||
-      (job.selectedCategories && job.selectedCategories.includes(selectedMedium));
+      (job.selectedCategories &&
+        job.selectedCategories.includes(selectedMedium));
 
     const matchesDistrict =
       selectedDistrict === "all" || job.district === selectedDistrict;
-    
+
     const matchesThana = selectedThana === "all" || job.thana === selectedThana;
-    
+
     const matchesArea = doesAreaContainSelection(job.area, selectedArea);
-    
+
     const matchesCategory =
       selectedCategory === "all" ||
       (job.selectedCategories &&
@@ -314,6 +344,119 @@ export default function TuitionJobs() {
       new Date().getTime() - new Date(job.createdAt).getTime() <
         7 * 24 * 60 * 60 * 1000;
 
+    // Date filtering
+    const jobDate = new Date(job.createdAt);
+    const today = new Date();
+
+    let matchesDate = true;
+
+    if (dateFilterType === "specific" && selectedDate) {
+      const selected = new Date(selectedDate);
+      matchesDate =
+        jobDate.getDate() === selected.getDate() &&
+        jobDate.getMonth() === selected.getMonth() &&
+        jobDate.getFullYear() === selected.getFullYear();
+    }
+
+    if (dateFilterType === "range" && startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      // Set end date to end of day
+      end.setHours(23, 59, 59, 999);
+      matchesDate = jobDate >= start && jobDate <= end;
+    }
+
+    if (dateFilterType === "relative") {
+      const oneDay = 24 * 60 * 60 * 1000;
+
+      switch (relativeDateFilter) {
+        case "today":
+          const todayStart = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate()
+          );
+          const todayEnd = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+            23,
+            59,
+            59,
+            999
+          );
+          matchesDate = jobDate >= todayStart && jobDate <= todayEnd;
+          break;
+        case "yesterday":
+          const yesterday = new Date(today.getTime() - oneDay);
+          const yesterdayStart = new Date(
+            yesterday.getFullYear(),
+            yesterday.getMonth(),
+            yesterday.getDate()
+          );
+          const yesterdayEnd = new Date(
+            yesterday.getFullYear(),
+            yesterday.getMonth(),
+            yesterday.getDate(),
+            23,
+            59,
+            59,
+            999
+          );
+          matchesDate = jobDate >= yesterdayStart && jobDate <= yesterdayEnd;
+          break;
+        case "last7days":
+          const sevenDaysAgo = new Date(today.getTime() - 7 * oneDay);
+          matchesDate = jobDate >= sevenDaysAgo;
+          break;
+        case "last30days":
+          const thirtyDaysAgo = new Date(today.getTime() - 30 * oneDay);
+          matchesDate = jobDate >= thirtyDaysAgo;
+          break;
+        case "last90days":
+          const ninetyDaysAgo = new Date(today.getTime() - 90 * oneDay);
+          matchesDate = jobDate >= ninetyDaysAgo;
+          break;
+        case "thisMonth":
+          const firstDayOfMonth = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            1
+          );
+          const lastDayOfMonth = new Date(
+            today.getFullYear(),
+            today.getMonth() + 1,
+            0,
+            23,
+            59,
+            59,
+            999
+          );
+          matchesDate = jobDate >= firstDayOfMonth && jobDate <= lastDayOfMonth;
+          break;
+        case "lastMonth":
+          const firstDayOfLastMonth = new Date(
+            today.getFullYear(),
+            today.getMonth() - 1,
+            1
+          );
+          const lastDayOfLastMonth = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            0,
+            23,
+            59,
+            59,
+            999
+          );
+          matchesDate =
+            jobDate >= firstDayOfLastMonth && jobDate <= lastDayOfLastMonth;
+          break;
+        default:
+          matchesDate = true;
+      }
+    }
+
     return (
       matchesSearch &&
       matchesSubject &&
@@ -327,7 +470,8 @@ export default function TuitionJobs() {
       matchesSalary &&
       matchesUrgent &&
       matchesRemote &&
-      matchesNew
+      matchesNew &&
+      matchesDate
     );
   });
 
@@ -351,6 +495,13 @@ export default function TuitionJobs() {
     setUrgentOnly(false);
     setRemoteOnly(false);
     setNewListingsOnly(false);
+
+    // Reset date filters
+    setSelectedDate("");
+    setStartDate("");
+    setEndDate("");
+    setDateFilterType("none");
+    setRelativeDateFilter("all");
   };
 
   // Handle job application
@@ -435,14 +586,8 @@ export default function TuitionJobs() {
                 >
                   Class Level
                 </Label>
-                <Select
-                  value={selectedClass}
-                  onValueChange={setSelectedClass}
-                >
-                  <SelectTrigger
-                    id="class"
-                    className="h-10 sm:h-11 font-bold"
-                  >
+                <Select value={selectedClass} onValueChange={setSelectedClass}>
+                  <SelectTrigger id="class" className="h-10 sm:h-11 font-bold">
                     <div className="flex items-center">
                       <GraduationCap className="mr-2 h-4 w-4 text-muted-foreground" />
                       <SelectValue placeholder="All Classes" />
@@ -477,10 +622,7 @@ export default function TuitionJobs() {
                   value={selectedMedium}
                   onValueChange={setSelectedMedium}
                 >
-                  <SelectTrigger
-                    id="medium"
-                    className="h-10 sm:h-11 font-bold"
-                  >
+                  <SelectTrigger id="medium" className="h-10 sm:h-11 font-bold">
                     <div className="flex items-center">
                       <BookType className="mr-2 h-4 w-4 text-muted-foreground" />
                       <SelectValue placeholder="All Mediums" />
@@ -712,6 +854,118 @@ export default function TuitionJobs() {
                 </Select>
               </div>
 
+              {/* Date Filter Section */}
+              <div className="space-y-3">
+                <Label className="text-sm font-bold text-green-600">
+                  Search By Date
+                </Label>
+
+                <Select
+                  value={dateFilterType}
+                  onValueChange={(
+                    value: "none" | "specific" | "range" | "relative"
+                  ) => setDateFilterType(value)}
+                >
+                  <SelectTrigger className="h-10 sm:h-11 font-bold">
+                    <div className="flex items-center">
+                      <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="তারিখ ফিল্টার টাইপ" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="font-bold">
+                      NO filter by date
+                    </SelectItem>
+                    <SelectItem value="specific" className="font-bold">
+                      Fixed date
+                    </SelectItem>
+                    <SelectItem value="range" className="font-bold">
+                      Date range
+                    </SelectItem>
+                    <SelectItem value="relative" className="font-bold">
+                      Relative date
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* নির্দিষ্ট তারিখ */}
+                {dateFilterType === "specific" && (
+                  <div className="space-y-2">
+                    <Input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="h-10 sm:h-11 font-bold"
+                    />
+                  </div>
+                )}
+
+                {/* তারিখ রেঞ্জ */}
+                {dateFilterType === "range" && (
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-black">
+                       Start Date
+                      </Label>
+                      <Input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="h-10 sm:h-11 font-bold"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-black">
+                       Last Date
+                      </Label>
+                      <Input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="h-10 sm:h-11 font-bold"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* আপেক্ষিক তারিখ */}
+                {dateFilterType === "relative" && (
+                  <div className="space-y-2">
+                    <Select
+                      value={relativeDateFilter}
+                      onValueChange={setRelativeDateFilter}
+                    >
+                      <SelectTrigger className="h-10 sm:h-11 font-bold">
+                        <SelectValue placeholder="সময়কাল নির্বাচন করুন" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="today" className="font-bold">
+                          Today
+                        </SelectItem>
+                        <SelectItem value="yesterday" className="font-bold">
+                          Yesterday
+                        </SelectItem>
+                        <SelectItem value="last7days" className="font-bold">
+                         Last 7 day
+                        </SelectItem>
+                        <SelectItem value="last30days" className="font-bold">
+                          Last 30 day
+                        </SelectItem>
+                        <SelectItem value="last90days" className="font-bold">
+                          Last 90 day
+                        </SelectItem>
+                        <SelectItem value="thisMonth" className="font-bold">
+                          This month
+                        </SelectItem>
+                        <SelectItem value="lastMonth" className="font-bold">
+                         last month
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+
               {/* Salary Range */}
               <div className="space-y-2">
                 <Label className="text-sm font-bold text-green-600">
@@ -846,7 +1100,7 @@ export default function TuitionJobs() {
                   </>
                 )}
               </p>
-              
+
               {/* Filter Badges */}
               <div className="mt-2 flex items-center gap-2 flex-wrap">
                 {selectedClass !== "all" && (
@@ -862,7 +1116,7 @@ export default function TuitionJobs() {
                     </Button>
                   </Badge>
                 )}
-                
+
                 {selectedMedium !== "all" && (
                   <Badge variant="secondary" className="text-xs sm:text-sm">
                     Medium: {selectedMedium}
@@ -876,7 +1130,7 @@ export default function TuitionJobs() {
                     </Button>
                   </Badge>
                 )}
-                
+
                 {selectedCategory !== "all" && (
                   <Badge variant="secondary" className="text-xs sm:text-sm">
                     Category: {selectedCategory}
@@ -890,7 +1144,7 @@ export default function TuitionJobs() {
                     </Button>
                   </Badge>
                 )}
-                
+
                 {selectedJobType !== "all" && (
                   <Badge variant="secondary" className="text-xs sm:text-sm">
                     Type: {selectedJobType}
@@ -904,7 +1158,7 @@ export default function TuitionJobs() {
                     </Button>
                   </Badge>
                 )}
-                
+
                 {selectedArea !== "all" && (
                   <Badge variant="secondary" className="text-xs sm:text-sm">
                     Area: {selectedArea}
@@ -918,12 +1172,74 @@ export default function TuitionJobs() {
                     </Button>
                   </Badge>
                 )}
-                
-                {(selectedClass !== "all" || 
-                  selectedMedium !== "all" || 
-                  selectedCategory !== "all" || 
-                  selectedJobType !== "all" || 
-                  selectedArea !== "all") && (
+
+                {/* Date Filter Badges */}
+                {dateFilterType === "specific" && selectedDate && (
+                  <Badge variant="secondary" className="text-xs sm:text-sm">
+                    Date: {new Date(selectedDate).toLocaleDateString()}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedDate("");
+                        setDateFilterType("none");
+                      }}
+                      className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                    >
+                      ×
+                    </Button>
+                  </Badge>
+                )}
+
+                {dateFilterType === "range" && startDate && endDate && (
+                  <Badge variant="secondary" className="text-xs sm:text-sm">
+                    Date Range: {new Date(startDate).toLocaleDateString()} -{" "}
+                    {new Date(endDate).toLocaleDateString()}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setStartDate("");
+                        setEndDate("");
+                        setDateFilterType("none");
+                      }}
+                      className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                    >
+                      ×
+                    </Button>
+                  </Badge>
+                )}
+
+                {dateFilterType === "relative" &&
+                  relativeDateFilter !== "all" && (
+                    <Badge variant="secondary" className="text-xs sm:text-sm">
+                      {relativeDateFilter === "today" && "Today"}
+                      {relativeDateFilter === "yesterday" && "Yesterday"}
+                      {relativeDateFilter === "last7days" && "Last 7 Days"}
+                      {relativeDateFilter === "last30days" && "Last 30 Days"}
+                      {relativeDateFilter === "last90days" && "Last 90 Days"}
+                      {relativeDateFilter === "thisMonth" && "This Month"}
+                      {relativeDateFilter === "lastMonth" && "Last Month"}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setRelativeDateFilter("all");
+                          setDateFilterType("none");
+                        }}
+                        className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                      >
+                        ×
+                      </Button>
+                    </Badge>
+                  )}
+
+                {(selectedClass !== "all" ||
+                  selectedMedium !== "all" ||
+                  selectedCategory !== "all" ||
+                  selectedJobType !== "all" ||
+                  selectedArea !== "all" ||
+                  dateFilterType !== "none") && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -974,8 +1290,8 @@ export default function TuitionJobs() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by subject, class, medium, location, ID, or phone number..."
-              className="pl-10 h-11 font-bold"
+              placeholder="Search  ID, or phone number..."
+              className="pl-10 h-11 font-bold border-2 border-green-600"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
             />
@@ -1155,6 +1471,15 @@ export default function TuitionJobs() {
                               </span>
                             </div>
                           )}
+
+                          {/* Posted Date */}
+                          <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+                            <Calendar className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="font-bold text-black">
+                              Posted:{" "}
+                              {new Date(job.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
 
                         {/* Categories */}
