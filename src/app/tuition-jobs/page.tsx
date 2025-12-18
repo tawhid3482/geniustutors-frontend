@@ -949,15 +949,21 @@ export default function TuitionJobs() {
                       }
                     />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="font-bold">
-                      All Areas
-                    </SelectItem>
-                    {areasForDropdown.map((area: string) => (
-                      <SelectItem key={area} value={area} className="font-bold">
-                        {area}
+                  <SelectContent className="max-h-80">
+                    <div className="pr-1 overflow-y-auto max-h-60 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+                      <SelectItem value="all" className="font-bold">
+                        All Areas
                       </SelectItem>
-                    ))}
+                      {areasForDropdown.map((area: string) => (
+                        <SelectItem
+                          key={area}
+                          value={area}
+                          className="font-bold"
+                        >
+                          {area}
+                        </SelectItem>
+                      ))}
+                    </div>
                   </SelectContent>
                 </Select>
               </div>
