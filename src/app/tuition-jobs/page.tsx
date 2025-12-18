@@ -123,8 +123,12 @@ export default function TuitionJobs() {
   const [error, setError] = useState<string | null>(null);
   const [applying, setApplying] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
-  const [totalCount, setTotalCount] = useState<number>(0);
+  
+  // Items per page constant
+  const ITEMS_PER_PAGE = 6;
+  
+  // No longer need totalPages and totalCount from API
+  // We'll calculate them based on filteredJobs
 
   // Extract medium options from JSON
   const mediumOptionsList = mediumOptions.mediums;
@@ -149,15 +153,6 @@ export default function TuitionJobs() {
     if (jobsData?.data) {
       setJobs(jobsData?.data);
       setIsLoading(false);
-
-      // Set pagination if available
-      if (jobsData?.pagination) {
-        setTotalPages(jobsData?.pagination.pages || 1);
-        setTotalCount(jobsData?.pagination.total || jobsData?.data?.length);
-      } else {
-        setTotalPages(1);
-        setTotalCount(jobsData?.data?.length);
-      }
     } else if (jobsLoading) {
       setIsLoading(true);
     } else {
@@ -182,6 +177,11 @@ export default function TuitionJobs() {
     startDate,
     endDate,
     relativeDateFilter,
+    searchQuery,
+    urgentOnly,
+    remoteOnly,
+    newListingsOnly,
+    salaryRange,
   ]);
 
   // Handle URL parameters
@@ -268,216 +268,250 @@ export default function TuitionJobs() {
   const categories = categoryData?.data || [];
 
   // Filter jobs based on search query and selected filters
-  const filteredJobs = jobs.filter((job: any) => {
-    const matchesSearch =
-      (job.subject &&
-        job.subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (job.studentClass &&
-        job.studentClass.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (job.medium &&
-        job.medium.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (job.district &&
-        job.district.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (job.area &&
-        job.area.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (job.detailedLocation &&
-        job.detailedLocation
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase())) ||
-      (job.user?.fullName &&
-        job.user.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (job.tutorRequestId &&
-        job.tutorRequestId.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (job.selectedSubjects &&
-        job.selectedSubjects.some((subject: string) =>
-          subject.toLowerCase().includes(searchQuery.toLowerCase())
-        )) ||
-      (job.phoneNumber && job.phoneNumber.includes(searchQuery));
+  const filteredJobs = useMemo(() => {
+    return jobs.filter((job: any) => {
+      const matchesSearch =
+        searchQuery === "" ||
+        (job.subject &&
+          job.subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (job.studentClass &&
+          job.studentClass.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (job.medium &&
+          job.medium.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (job.district &&
+          job.district.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (job.area &&
+          job.area.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (job.detailedLocation &&
+          job.detailedLocation
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())) ||
+        (job.user?.fullName &&
+          job.user.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (job.tutorRequestId &&
+          job.tutorRequestId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (job.selectedSubjects &&
+          job.selectedSubjects.some((subject: string) =>
+            subject.toLowerCase().includes(searchQuery.toLowerCase())
+          )) ||
+        (job.phoneNumber && job.phoneNumber.includes(searchQuery));
 
-    const matchesSubject =
-      selectedSubject === "all" ||
-      job.subject === selectedSubject ||
-      (job.selectedSubjects && job.selectedSubjects.includes(selectedSubject));
+      const matchesSubject =
+        selectedSubject === "all" ||
+        job.subject === selectedSubject ||
+        (job.selectedSubjects && job.selectedSubjects.includes(selectedSubject));
 
-    const matchesClass =
-      selectedClass === "all" ||
-      job.studentClass === selectedClass ||
-      (job.selectedClasses && job.selectedClasses.includes(selectedClass));
+      const matchesClass =
+        selectedClass === "all" ||
+        job.studentClass === selectedClass ||
+        (job.selectedClasses && job.selectedClasses.includes(selectedClass));
 
-    const matchesMedium =
-      selectedMedium === "all" ||
-      job.medium === selectedMedium ||
-      (job.selectedCategories &&
-        job.selectedCategories.includes(selectedMedium));
+      const matchesMedium =
+        selectedMedium === "all" ||
+        job.medium === selectedMedium ||
+        (job.selectedCategories &&
+          job.selectedCategories.includes(selectedMedium));
 
-    const matchesDistrict =
-      selectedDistrict === "all" || job.district === selectedDistrict;
+      const matchesDistrict =
+        selectedDistrict === "all" || job.district === selectedDistrict;
 
-    const matchesThana = selectedThana === "all" || job.thana === selectedThana;
+      const matchesThana = selectedThana === "all" || job.thana === selectedThana;
 
-    const matchesArea = doesAreaContainSelection(job.area, selectedArea);
+      const matchesArea = doesAreaContainSelection(job.area, selectedArea);
 
-    const matchesCategory =
-      selectedCategory === "all" ||
-      (job.selectedCategories &&
-        job.selectedCategories.includes(selectedCategory));
+      const matchesCategory =
+        selectedCategory === "all" ||
+        (job.selectedCategories &&
+          job.selectedCategories.includes(selectedCategory));
 
-    const matchesJobType =
-      selectedJobType === "all" || job.tutoringType === selectedJobType;
+      const matchesJobType =
+        selectedJobType === "all" || job.tutoringType === selectedJobType;
 
-    // Salary filtering
-    const jobMinSalary = job.salaryRange?.min || 0;
-    const jobMaxSalary = job.salaryRange?.max || 0;
+      // Salary filtering
+      const jobMinSalary = job.salaryRange?.min || 0;
+      const jobMaxSalary = job.salaryRange?.max || 0;
 
-    const salaryOverlap =
-      jobMinSalary <= salaryRange[1] && jobMaxSalary >= salaryRange[0];
-    const extremeSalary = jobMinSalary > 1000000 || jobMaxSalary > 1000000;
-    const matchesSalary = salaryOverlap || extremeSalary;
+      const salaryOverlap =
+        jobMinSalary <= salaryRange[1] && jobMaxSalary >= salaryRange[0];
+      const extremeSalary = jobMinSalary > 1000000 || jobMaxSalary > 1000000;
+      const matchesSalary = salaryOverlap || extremeSalary;
 
-    const matchesUrgent = !urgentOnly;
-    const matchesRemote =
-      !remoteOnly ||
-      job.tutoringType === "Online Tutoring" ||
-      job.tutoringType === "Both";
-    const matchesNew =
-      !newListingsOnly ||
-      new Date().getTime() - new Date(job.createdAt).getTime() <
-        7 * 24 * 60 * 60 * 1000;
+      const matchesUrgent = !urgentOnly || job.isUrgent;
+      const matchesRemote =
+        !remoteOnly ||
+        job.tutoringType === "Online Tutoring" ||
+        job.tutoringType === "Both";
+      const matchesNew =
+        !newListingsOnly ||
+        new Date().getTime() - new Date(job.createdAt).getTime() <
+          7 * 24 * 60 * 60 * 1000;
 
-    // Date filtering
-    const jobDate = new Date(job.createdAt);
-    const today = new Date();
+      // Date filtering
+      const jobDate = new Date(job.createdAt);
+      const today = new Date();
 
-    let matchesDate = true;
+      let matchesDate = true;
 
-    if (dateFilterType === "specific" && selectedDate) {
-      const selected = new Date(selectedDate);
-      matchesDate =
-        jobDate.getDate() === selected.getDate() &&
-        jobDate.getMonth() === selected.getMonth() &&
-        jobDate.getFullYear() === selected.getFullYear();
-    }
-
-    if (dateFilterType === "range" && startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      // Set end date to end of day
-      end.setHours(23, 59, 59, 999);
-      matchesDate = jobDate >= start && jobDate <= end;
-    }
-
-    if (dateFilterType === "relative") {
-      const oneDay = 24 * 60 * 60 * 1000;
-
-      switch (relativeDateFilter) {
-        case "today":
-          const todayStart = new Date(
-            today.getFullYear(),
-            today.getMonth(),
-            today.getDate()
-          );
-          const todayEnd = new Date(
-            today.getFullYear(),
-            today.getMonth(),
-            today.getDate(),
-            23,
-            59,
-            59,
-            999
-          );
-          matchesDate = jobDate >= todayStart && jobDate <= todayEnd;
-          break;
-        case "yesterday":
-          const yesterday = new Date(today.getTime() - oneDay);
-          const yesterdayStart = new Date(
-            yesterday.getFullYear(),
-            yesterday.getMonth(),
-            yesterday.getDate()
-          );
-          const yesterdayEnd = new Date(
-            yesterday.getFullYear(),
-            yesterday.getMonth(),
-            yesterday.getDate(),
-            23,
-            59,
-            59,
-            999
-          );
-          matchesDate = jobDate >= yesterdayStart && jobDate <= yesterdayEnd;
-          break;
-        case "last7days":
-          const sevenDaysAgo = new Date(today.getTime() - 7 * oneDay);
-          matchesDate = jobDate >= sevenDaysAgo;
-          break;
-        case "last30days":
-          const thirtyDaysAgo = new Date(today.getTime() - 30 * oneDay);
-          matchesDate = jobDate >= thirtyDaysAgo;
-          break;
-        case "last90days":
-          const ninetyDaysAgo = new Date(today.getTime() - 90 * oneDay);
-          matchesDate = jobDate >= ninetyDaysAgo;
-          break;
-        case "thisMonth":
-          const firstDayOfMonth = new Date(
-            today.getFullYear(),
-            today.getMonth(),
-            1
-          );
-          const lastDayOfMonth = new Date(
-            today.getFullYear(),
-            today.getMonth() + 1,
-            0,
-            23,
-            59,
-            59,
-            999
-          );
-          matchesDate = jobDate >= firstDayOfMonth && jobDate <= lastDayOfMonth;
-          break;
-        case "lastMonth":
-          const firstDayOfLastMonth = new Date(
-            today.getFullYear(),
-            today.getMonth() - 1,
-            1
-          );
-          const lastDayOfLastMonth = new Date(
-            today.getFullYear(),
-            today.getMonth(),
-            0,
-            23,
-            59,
-            59,
-            999
-          );
-          matchesDate =
-            jobDate >= firstDayOfLastMonth && jobDate <= lastDayOfLastMonth;
-          break;
-        default:
-          matchesDate = true;
+      if (dateFilterType === "specific" && selectedDate) {
+        const selected = new Date(selectedDate);
+        matchesDate =
+          jobDate.getDate() === selected.getDate() &&
+          jobDate.getMonth() === selected.getMonth() &&
+          jobDate.getFullYear() === selected.getFullYear();
       }
-    }
 
-    return (
-      matchesSearch &&
-      matchesSubject &&
-      matchesClass &&
-      matchesMedium &&
-      matchesDistrict &&
-      matchesThana &&
-      matchesArea &&
-      matchesCategory &&
-      matchesJobType &&
-      matchesSalary &&
-      matchesUrgent &&
-      matchesRemote &&
-      matchesNew &&
-      matchesDate
-    );
-  });
+      if (dateFilterType === "range" && startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        // Set end date to end of day
+        end.setHours(23, 59, 59, 999);
+        matchesDate = jobDate >= start && jobDate <= end;
+      }
+
+      if (dateFilterType === "relative") {
+        const oneDay = 24 * 60 * 60 * 1000;
+
+        switch (relativeDateFilter) {
+          case "today":
+            const todayStart = new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              today.getDate()
+            );
+            const todayEnd = new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              today.getDate(),
+              23,
+              59,
+              59,
+              999
+            );
+            matchesDate = jobDate >= todayStart && jobDate <= todayEnd;
+            break;
+          case "yesterday":
+            const yesterday = new Date(today.getTime() - oneDay);
+            const yesterdayStart = new Date(
+              yesterday.getFullYear(),
+              yesterday.getMonth(),
+              yesterday.getDate()
+            );
+            const yesterdayEnd = new Date(
+              yesterday.getFullYear(),
+              yesterday.getMonth(),
+              yesterday.getDate(),
+              23,
+              59,
+              59,
+              999
+            );
+            matchesDate = jobDate >= yesterdayStart && jobDate <= yesterdayEnd;
+            break;
+          case "last7days":
+            const sevenDaysAgo = new Date(today.getTime() - 7 * oneDay);
+            matchesDate = jobDate >= sevenDaysAgo;
+            break;
+          case "last30days":
+            const thirtyDaysAgo = new Date(today.getTime() - 30 * oneDay);
+            matchesDate = jobDate >= thirtyDaysAgo;
+            break;
+          case "last90days":
+            const ninetyDaysAgo = new Date(today.getTime() - 90 * oneDay);
+            matchesDate = jobDate >= ninetyDaysAgo;
+            break;
+          case "thisMonth":
+            const firstDayOfMonth = new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              1
+            );
+            const lastDayOfMonth = new Date(
+              today.getFullYear(),
+              today.getMonth() + 1,
+              0,
+              23,
+              59,
+              59,
+              999
+            );
+            matchesDate = jobDate >= firstDayOfMonth && jobDate <= lastDayOfMonth;
+            break;
+          case "lastMonth":
+            const firstDayOfLastMonth = new Date(
+              today.getFullYear(),
+              today.getMonth() - 1,
+              1
+            );
+            const lastDayOfLastMonth = new Date(
+              today.getFullYear(),
+              today.getMonth(),
+              0,
+              23,
+              59,
+              59,
+              999
+            );
+            matchesDate =
+              jobDate >= firstDayOfLastMonth && jobDate <= lastDayOfLastMonth;
+            break;
+          default:
+            matchesDate = true;
+        }
+      }
+
+      return (
+        matchesSearch &&
+        matchesSubject &&
+        matchesClass &&
+        matchesMedium &&
+        matchesDistrict &&
+        matchesThana &&
+        matchesArea &&
+        matchesCategory &&
+        matchesJobType &&
+        matchesSalary &&
+        matchesUrgent &&
+        matchesRemote &&
+        matchesNew &&
+        matchesDate
+      );
+    });
+  }, [
+    jobs,
+    searchQuery,
+    selectedSubject,
+    selectedClass,
+    selectedMedium,
+    selectedDistrict,
+    selectedThana,
+    selectedArea,
+    selectedJobType,
+    selectedCategory,
+    salaryRange,
+    urgentOnly,
+    remoteOnly,
+    newListingsOnly,
+    dateFilterType,
+    selectedDate,
+    startDate,
+    endDate,
+    relativeDateFilter,
+  ]);
+
+  // Calculate paginated jobs (6 per page)
+  const paginatedJobs = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredJobs.slice(startIndex, endIndex);
+  }, [filteredJobs, currentPage]);
+
+  // Calculate total pages based on filtered jobs
+  const totalFilteredPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
 
   // Handle search
   const handleSearch = (value: string) => {
     setSearchQuery(value);
+    setCurrentPage(1); // Reset to first page on search
   };
 
   // Reset all filters
@@ -495,6 +529,7 @@ export default function TuitionJobs() {
     setUrgentOnly(false);
     setRemoteOnly(false);
     setNewListingsOnly(false);
+    setCurrentPage(1);
 
     // Reset date filters
     setSelectedDate("");
@@ -555,6 +590,13 @@ export default function TuitionJobs() {
     } finally {
       setApplying(null);
     }
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -646,7 +688,7 @@ export default function TuitionJobs() {
               </div>
 
               {/* Subject Filter */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label
                   htmlFor="subject"
                   className="text-sm font-bold text-green-600"
@@ -683,7 +725,7 @@ export default function TuitionJobs() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
 
               {/* District Filter */}
               <div className="space-y-2">
@@ -798,11 +840,7 @@ export default function TuitionJobs() {
                     ))}
                   </SelectContent>
                 </Select>
-                {selectedDistrict === "all" && areasForDropdown.length > 0 && (
-                  <p className="text-xs text-blue-600">
-                    Showing areas from all districts
-                  </p>
-                )}
+              
               </div>
 
               {/* Tutoring Type Filter */}
@@ -966,56 +1004,7 @@ export default function TuitionJobs() {
                 )}
               </div>
 
-              {/* Salary Range */}
-              <div className="space-y-2">
-                <Label className="text-sm font-bold text-green-600">
-                  Salary Range (BDT)
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    placeholder="Min"
-                    value={salaryRange[0]}
-                    onChange={(e) =>
-                      setSalaryRange([
-                        parseInt(e.target.value) || 0,
-                        salaryRange[1],
-                      ])
-                    }
-                    className="h-10 sm:h-11 text-sm font-bold"
-                  />
-                  <span className="text-sm font-bold">to</span>
-                  <Input
-                    type="number"
-                    placeholder="Max"
-                    value={salaryRange[1]}
-                    onChange={(e) =>
-                      setSalaryRange([
-                        salaryRange[0],
-                        parseInt(e.target.value) || 0,
-                      ])
-                    }
-                    className="h-10 sm:h-11 text-sm font-bold"
-                  />
-                </div>
-                {jobs.filter((job: any) => {
-                  const jobMinSalary = job.salaryRange?.min || 0;
-                  const jobMaxSalary = job.salaryRange?.max || 0;
-                  return jobMinSalary > 1000000 || jobMaxSalary > 1000000;
-                }).length > 0 && (
-                  <p className="text-xs text-orange-600 bg-orange-50 p-2 rounded border border-orange-200 font-bold">
-                    💡 <strong>Note:</strong> There are{" "}
-                    {
-                      jobs.filter((job: any) => {
-                        const jobMinSalary = job.salaryRange?.min || 0;
-                        const jobMaxSalary = job.salaryRange?.max || 0;
-                        return jobMinSalary > 1000000 || jobMaxSalary > 1000000;
-                      }).length
-                    }{" "}
-                    job(s) with salaries above ৳1M that are always visible.
-                  </p>
-                )}
-              </div>
+              
 
               {/* Checkbox Filters */}
               <div className="hidden sm:block space-y-3 sm:space-y-4">
@@ -1095,8 +1084,18 @@ export default function TuitionJobs() {
                 ) : (
                   <>
                     Showing{" "}
-                    <span className="font-medium">{filteredJobs.length}</span>{" "}
-                    of <span className="font-medium">{totalCount}</span> jobs
+                    <span className="font-medium">
+                      {paginatedJobs.length > 0 
+                        ? `${(currentPage - 1) * ITEMS_PER_PAGE + 1}-${Math.min(currentPage * ITEMS_PER_PAGE, filteredJobs.length)}`
+                        : "0"
+                      }
+                    </span>{" "}
+                    of <span className="font-medium">{filteredJobs.length}</span> jobs
+                    {filteredJobs.length !== jobs.length && (
+                      <span className="text-xs text-muted-foreground ml-2">
+                        (from {jobs.length} total)
+                      </span>
+                    )}
                   </>
                 )}
               </p>
@@ -1365,218 +1364,217 @@ export default function TuitionJobs() {
                 )}
               </div>
             ) : (
-              <div
-                className={
-                  viewMode === "grid"
-                    ? "grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6"
-                    : "space-y-4"
-                }
-              >
-                {filteredJobs.map((job: any) => (
-                  <Card
-                    key={job.id}
-                    className="overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full"
-                  >
-                    <CardHeader className="pb-2 p-4 sm:p-6">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg sm:text-xl font-bold text-black">
-                          Tuition Request #{job.tutorRequestId}
-                        </CardTitle>
-                        <Badge variant="outline" className="text-xs text-black">
-                          {job.tutoringType || "Tutoring Request"}
-                        </Badge>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {job.medium && (
-                          <Badge variant="secondary" className="text-xs">
-                            <BookType className="mr-1 h-3 w-3" />
-                            {job.medium}
+              <>
+                <div
+                  className={
+                    viewMode === "grid"
+                      ? "grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6"
+                      : "space-y-4"
+                  }
+                >
+                  {paginatedJobs.map((job: any) => (
+                    <Card
+                      key={job.id}
+                      className="overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full"
+                    >
+                      <CardHeader className="pb-2 p-4 sm:p-6">
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-lg sm:text-xl font-bold text-black">
+                            Tuition Request #{job.tutorRequestId}
+                          </CardTitle>
+                          <Badge variant="outline" className="text-xs text-black">
+                            {job.tutoringType || "Tutoring Request"}
                           </Badge>
-                        )}
-                        {job.studentClass && (
-                          <Badge variant="secondary" className="text-xs">
-                            <GraduationCap className="mr-1 h-3 w-3" />
-                            {job.studentClass}
-                          </Badge>
-                        )}
-                        <span className="text-xs sm:text-sm font-bold text-black">
-                          Phone: {job.phoneNumber}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="flex flex-col flex-grow p-4 sm:p-6">
-                      <div className="space-y-2 flex-grow">
-                        <div className="space-y-2">
-                          {/* Subjects */}
-                          <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-                            <BookOpen className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="font-bold text-black">
-                              {job.subject ||
-                                (job.selectedSubjects &&
-                                  job.selectedSubjects.join(", ")) ||
-                                "Multiple Subjects"}
-                            </span>
-                          </div>
-
-                          {/* Location */}
-                          <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-                            <MapPin className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="font-bold text-green-600">
-                              {job.district && `${job.district}`}
-                              {job.thana && `, ${job.thana}`}
-                              {job.area && ` • ${job.area}`}
-                              {job.detailedLocation &&
-                                ` (${job.detailedLocation})`}
-                            </span>
-                          </div>
-
-                          {/* Student Info */}
-                          <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-                            <Users className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="font-bold text-black">
-                              {job.numberOfStudents
-                                ? `${job.numberOfStudents} student(s)`
-                                : "1 student"}{" "}
-                              •{job.studentGender && ` ${job.studentGender}`}
-                            </span>
-                          </div>
-
-                          {/* Tutor Preference */}
-                          <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-                            <User className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="font-bold text-green-600">
-                              Preferred: {job.tutorGenderPreference || "Any"}{" "}
-                              teacher
-                            </span>
-                          </div>
-
-                          {/* Salary */}
-                          <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-                            <DollarSign className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="font-bold text-green-600">
-                              ৳{(job.salaryRange?.min || 0).toLocaleString()} -
-                              ৳{(job.salaryRange?.max || 0).toLocaleString()}
-                              {job.isSalaryNegotiable && " (Negotiable)"}
-                            </span>
-                          </div>
-
-                          {/* Schedule */}
-                          {(job.tutoringDays || job.tutoringTime) && (
-                            <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-                              <Clock className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                              <span className="font-bold text-green-600">
-                                {job.tutoringDays &&
-                                  `${job.tutoringDays} days/week`}
-                                {job.tutoringTime && ` • ${job.tutoringTime}`}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Posted Date */}
-                          <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-                            <Calendar className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                            <span className="font-bold text-black">
-                              Posted:{" "}
-                              {new Date(job.createdAt).toLocaleDateString()}
-                            </span>
-                          </div>
                         </div>
-
-                        {/* Categories */}
-                        {job.selectedCategories &&
-                          job.selectedCategories.length > 0 && (
-                            <div className="mt-2">
-                              <p className="text-xs font-bold text-black mb-1">
-                                Categories:
-                              </p>
-                              <div className="flex flex-wrap gap-1">
-                                {job.selectedCategories.map(
-                                  (category: string, index: number) => (
-                                    <Badge
-                                      key={index}
-                                      variant="secondary"
-                                      className="text-xs"
-                                    >
-                                      {category}
-                                    </Badge>
-                                  )
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                        {/* Extra Information */}
-                        {job.extraInformation && (
-                          <div className="mt-2">
-                            <p className="text-xs sm:text-sm font-bold text-black">
-                              Additional Information:
-                            </p>
-                            <p className="text-xs sm:text-sm font-bold text-black">
-                              {job.extraInformation}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Admin Note */}
-                        {job.adminNote && (
-                          <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
-                            <p className="text-xs sm:text-sm font-bold text-blue-800">
-                              Admin Note:
-                            </p>
-                            <p className="text-xs sm:text-sm text-blue-700">
-                              {job.adminNote}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex justify-between items-center pt-2 mt-4">
-                        <div className="text-xs font-bold text-black">
-                          Posted: {new Date(job.createdAt).toLocaleDateString()}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {((job.salaryRange?.min || 0) > 1000000 ||
-                            (job.salaryRange?.max || 0) > 1000000) && (
-                            <Badge variant="destructive" className="text-xs">
-                              High Salary
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {job.medium && (
+                            <Badge variant="secondary" className="text-xs">
+                              <BookType className="mr-1 h-3 w-3" />
+                              {job.medium}
                             </Badge>
                           )}
-                          <Badge
-                            variant={
-                              job.status === "Active" ? "default" : "secondary"
-                            }
-                            className="text-xs"
-                          >
-                            {job.status || "Active"}
-                          </Badge>
+                          {job.studentClass && (
+                            <Badge variant="secondary" className="text-xs">
+                              <GraduationCap className="mr-1 h-3 w-3" />
+                              {job.studentClass}
+                            </Badge>
+                          )}
+                          <span className="text-xs sm:text-sm font-bold text-black">
+                            Phone: {job.phoneNumber}
+                          </span>
                         </div>
-                      </div>
+                      </CardHeader>
+                      <CardContent className="flex flex-col flex-grow p-4 sm:p-6">
+                        <div className="space-y-2 flex-grow">
+                          <div className="space-y-2">
+                            {/* Subjects */}
+                            <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+                              <BookOpen className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="font-bold text-black">
+                                {job.subject ||
+                                  (job.selectedSubjects &&
+                                    job.selectedSubjects.join(", ")) ||
+                                  "Multiple Subjects"}
+                              </span>
+                            </div>
 
-                      <Button
-                        className="w-full bg-green-600 hover:bg-green-700 text-white text-sm mt-4"
-                        onClick={() => router.push(`/tuition-jobs/${job.id}`)}
-                      >
-                        View Details
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                            {/* Location */}
+                            <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+                              <MapPin className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="font-bold text-green-600">
+                                {job.district && `${job.district}`}
+                                {job.thana && `, ${job.thana}`}
+                                {job.area && ` • ${job.area}`}
+                                {job.detailedLocation &&
+                                  ` (${job.detailedLocation})`}
+                              </span>
+                            </div>
 
-            {/* Pagination */}
-            {!isLoading &&
-              !error &&
-              filteredJobs.length > 0 &&
-              totalPages > 1 && (
-                <div className="flex justify-center mt-8">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={(page) => setCurrentPage(page)}
-                  />
+                            {/* Student Info */}
+                            <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+                              <Users className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="font-bold text-black">
+                                {job.numberOfStudents
+                                  ? `${job.numberOfStudents} student(s)`
+                                  : "1 student"}{" "}
+                                •{job.studentGender && ` ${job.studentGender}`}
+                              </span>
+                            </div>
+
+                            {/* Tutor Preference */}
+                            <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+                              <User className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="font-bold text-green-600">
+                                Preferred: {job.tutorGenderPreference || "Any"}{" "}
+                                teacher
+                              </span>
+                            </div>
+
+                            {/* Salary */}
+                            <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+                              <DollarSign className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="font-bold text-green-600">
+                                ৳{(job.salaryRange?.min || 0).toLocaleString()} -
+                                ৳{(job.salaryRange?.max || 0).toLocaleString()}
+                                {job.isSalaryNegotiable && " (Negotiable)"}
+                              </span>
+                            </div>
+
+                            {/* Schedule */}
+                            {(job.tutoringDays || job.tutoringTime) && (
+                              <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+                                <Clock className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="font-bold text-green-600">
+                                  {job.tutoringDays &&
+                                    `${job.tutoringDays} days/week`}
+                                  {job.tutoringTime && ` • ${job.tutoringTime}`}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Posted Date */}
+                            <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
+                              <Calendar className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="font-bold text-black">
+                                Posted:{" "}
+                                {new Date(job.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Categories */}
+                          {job.selectedCategories &&
+                            job.selectedCategories.length > 0 && (
+                              <div className="mt-2">
+                                <p className="text-xs font-bold text-black mb-1">
+                                  Categories:
+                                </p>
+                                <div className="flex flex-wrap gap-1">
+                                  {job.selectedCategories.map(
+                                    (category: string, index: number) => (
+                                      <Badge
+                                        key={index}
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        {category}
+                                      </Badge>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                          {/* Extra Information */}
+                          {job.extraInformation && (
+                            <div className="mt-2">
+                              <p className="text-xs sm:text-sm font-bold text-black">
+                                Additional Information:
+                              </p>
+                              <p className="text-xs sm:text-sm font-bold text-black">
+                                {job.extraInformation}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Admin Note */}
+                          {job.adminNote && (
+                            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                              <p className="text-xs sm:text-sm font-bold text-blue-800">
+                                Admin Note:
+                              </p>
+                              <p className="text-xs sm:text-sm text-blue-700">
+                                {job.adminNote}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex justify-between items-center pt-2 mt-4">
+                          <div className="text-xs font-bold text-black">
+                            Posted: {new Date(job.createdAt).toLocaleDateString()}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {((job.salaryRange?.min || 0) > 1000000 ||
+                              (job.salaryRange?.max || 0) > 1000000) && (
+                              <Badge variant="destructive" className="text-xs">
+                                High Salary
+                              </Badge>
+                            )}
+                            <Badge
+                              variant={
+                                job.status === "Active" ? "default" : "secondary"
+                              }
+                              className="text-xs"
+                            >
+                              {job.status || "Active"}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <Button
+                          className="w-full bg-green-600 hover:bg-green-700 text-white text-sm mt-4"
+                          onClick={() => router.push(`/tuition-jobs/${job.id}`)}
+                        >
+                          View Details
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              )}
+
+                {/* Pagination */}
+                {filteredJobs.length > 0 && totalFilteredPages > 1 && (
+                  <div className="flex justify-center mt-8">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalFilteredPages}
+                      onPageChange={handlePageChange}
+                    />
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
