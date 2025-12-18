@@ -365,7 +365,7 @@ export function TuitionRequestsSection() {
     try {
       const response = await updateTutorRequestStatus({
         id: requestId,
-        data: { status: newStatus.toLowerCase() },
+        data: { status: newStatus },
       }).unwrap();
 
       if (response.success) {

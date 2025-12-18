@@ -13,6 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+import mediumOptions from "@/data/mediumOptions.json";
+import { CLASS_LEVELS, SUBJECT_OPTIONS } from "@/data/mockData";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   MapPin,
@@ -32,6 +36,8 @@ import {
   AlertTriangle,
   Wifi,
   Sparkles,
+  GraduationCap,
+  BookType,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext.next";
 import { tuitionJobsService, TuitionJob } from "@/services/tuitionJobsService";
@@ -43,7 +49,6 @@ import { useGetAllDistrictsQuery } from "@/redux/features/district/districtApi";
 import { useGetAllAreaQuery } from "@/redux/features/area/areaApi";
 import { useGetAllTutorRequestsForPublicQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
 import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
-import { SUBJECT_OPTIONS } from "@/data/mockData";
 
 // Helper function to convert area string to array
 const parseAreaString = (areaString: string): string[] => {
@@ -71,6 +76,8 @@ export default function TuitionJobs() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
+  const [selectedClass, setSelectedClass] = useState<string>("all");
+  const [selectedMedium, setSelectedMedium] = useState<string>("all");
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
   const [selectedThana, setSelectedThana] = useState<string>("all");
   const [selectedArea, setSelectedArea] = useState<string>("all");
@@ -94,6 +101,9 @@ export default function TuitionJobs() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
+
+  // Extract medium options from JSON
+  const mediumOptionsList = mediumOptions.mediums;
 
   // Redux data fetching
   const { data: districtData, isLoading: districtLoading } =
@@ -136,6 +146,8 @@ export default function TuitionJobs() {
     setCurrentPage(1);
   }, [
     selectedSubject,
+    selectedClass,
+    selectedMedium,
     selectedDistrict,
     selectedThana,
     selectedArea,
@@ -147,6 +159,8 @@ export default function TuitionJobs() {
   useEffect(() => {
     const categoryFromUrl = searchParams.get("category");
     const districtFromUrl = searchParams.get("district");
+    const classFromUrl = searchParams.get("class");
+    const mediumFromUrl = searchParams.get("medium");
 
     if (categoryFromUrl) {
       setSelectedCategory(categoryFromUrl);
@@ -154,6 +168,14 @@ export default function TuitionJobs() {
 
     if (districtFromUrl) {
       setSelectedDistrict(districtFromUrl);
+    }
+
+    if (classFromUrl) {
+      setSelectedClass(classFromUrl);
+    }
+
+    if (mediumFromUrl) {
+      setSelectedMedium(mediumFromUrl);
     }
   }, [searchParams]);
 
@@ -223,6 +245,8 @@ export default function TuitionJobs() {
         job.subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (job.studentClass &&
         job.studentClass.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (job.medium &&
+        job.medium.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (job.district &&
         job.district.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (job.area &&
@@ -246,12 +270,21 @@ export default function TuitionJobs() {
       job.subject === selectedSubject ||
       (job.selectedSubjects && job.selectedSubjects.includes(selectedSubject));
 
+    const matchesClass = 
+      selectedClass === "all" || 
+      job.studentClass === selectedClass ||
+      (job.selectedClasses && job.selectedClasses.includes(selectedClass));
+
+    const matchesMedium = 
+      selectedMedium === "all" || 
+      job.medium === selectedMedium ||
+      (job.selectedCategories && job.selectedCategories.includes(selectedMedium));
+
     const matchesDistrict =
       selectedDistrict === "all" || job.district === selectedDistrict;
     
     const matchesThana = selectedThana === "all" || job.thana === selectedThana;
     
-    // FIXED: Area matching using helper function
     const matchesArea = doesAreaContainSelection(job.area, selectedArea);
     
     const matchesCategory =
@@ -284,6 +317,8 @@ export default function TuitionJobs() {
     return (
       matchesSearch &&
       matchesSubject &&
+      matchesClass &&
+      matchesMedium &&
       matchesDistrict &&
       matchesThana &&
       matchesArea &&
@@ -299,6 +334,23 @@ export default function TuitionJobs() {
   // Handle search
   const handleSearch = (value: string) => {
     setSearchQuery(value);
+  };
+
+  // Reset all filters
+  const resetFilters = () => {
+    setSelectedSubject("all");
+    setSelectedClass("all");
+    setSelectedMedium("all");
+    setSelectedDistrict("all");
+    setSelectedThana("all");
+    setSelectedArea("all");
+    setSelectedJobType("all");
+    setSelectedCategory("all");
+    setSalaryRange([0, 1000000]);
+    setSearchQuery("");
+    setUrgentOnly(false);
+    setRemoteOnly(false);
+    setNewListingsOnly(false);
   };
 
   // Handle job application
@@ -375,6 +427,82 @@ export default function TuitionJobs() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+              {/* Class Filter */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="class"
+                  className="text-sm font-bold text-green-600"
+                >
+                  Class Level
+                </Label>
+                <Select
+                  value={selectedClass}
+                  onValueChange={setSelectedClass}
+                >
+                  <SelectTrigger
+                    id="class"
+                    className="h-10 sm:h-11 font-bold"
+                  >
+                    <div className="flex items-center">
+                      <GraduationCap className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="All Classes" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="font-bold">
+                      All Classes
+                    </SelectItem>
+                    {CLASS_LEVELS.map((classLevel) => (
+                      <SelectItem
+                        key={classLevel}
+                        value={classLevel}
+                        className="font-bold"
+                      >
+                        {classLevel}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Medium Filter */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="medium"
+                  className="text-sm font-bold text-green-600"
+                >
+                  Medium
+                </Label>
+                <Select
+                  value={selectedMedium}
+                  onValueChange={setSelectedMedium}
+                >
+                  <SelectTrigger
+                    id="medium"
+                    className="h-10 sm:h-11 font-bold"
+                  >
+                    <div className="flex items-center">
+                      <BookType className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="All Mediums" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all" className="font-bold">
+                      All Mediums
+                    </SelectItem>
+                    {mediumOptionsList.map((medium) => (
+                      <SelectItem
+                        key={medium.value}
+                        value={medium.value}
+                        className="font-bold"
+                      >
+                        {medium.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Subject Filter */}
               <div className="space-y-2">
                 <Label
@@ -391,7 +519,10 @@ export default function TuitionJobs() {
                     id="subject"
                     className="h-10 sm:h-11 font-bold"
                   >
-                    <SelectValue placeholder="All Subjects" />
+                    <div className="flex items-center">
+                      <BookOpen className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="All Subjects" />
+                    </div>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all" className="font-bold">
@@ -490,7 +621,7 @@ export default function TuitionJobs() {
                 </Select>
               </div>
 
-              {/* Area Filter - FIXED VERSION */}
+              {/* Area Filter */}
               <div className="space-y-2">
                 <Label
                   htmlFor="area"
@@ -688,19 +819,7 @@ export default function TuitionJobs() {
               <Button
                 className="w-full h-10 sm:h-11 font-bold"
                 variant="outline"
-                onClick={() => {
-                  setSelectedSubject("all");
-                  setSelectedDistrict("all");
-                  setSelectedThana("all");
-                  setSelectedArea("all");
-                  setSelectedJobType("all");
-                  setSelectedCategory("all");
-                  setSalaryRange([0, 1000000]);
-                  setSearchQuery("");
-                  setUrgentOnly(false);
-                  setRemoteOnly(false);
-                  setNewListingsOnly(false);
-                }}
+                onClick={resetFilters}
               >
                 Reset Filters
               </Button>
@@ -727,51 +846,94 @@ export default function TuitionJobs() {
                   </>
                 )}
               </p>
-              {selectedCategory !== "all" && (
-                <div className="mt-2 flex items-center gap-2 flex-wrap">
+              
+              {/* Filter Badges */}
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                {selectedClass !== "all" && (
                   <Badge variant="secondary" className="text-xs sm:text-sm">
-                    Filtered by: {selectedCategory}
+                    Class: {selectedClass}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedClass("all")}
+                      className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                    >
+                      ×
+                    </Button>
                   </Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedCategory("all")}
-                    className="h-6 px-2 text-xs"
-                  >
-                    Clear Category
-                  </Button>
-                </div>
-              )}
-              {selectedJobType !== "all" && (
-                <div className="mt-2 flex items-center gap-2 flex-wrap">
+                )}
+                
+                {selectedMedium !== "all" && (
                   <Badge variant="secondary" className="text-xs sm:text-sm">
-                    Tutoring Type: {selectedJobType}
+                    Medium: {selectedMedium}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedMedium("all")}
+                      className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                    >
+                      ×
+                    </Button>
                   </Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedJobType("all")}
-                    className="h-6 px-2 text-xs"
-                  >
-                    Clear Type
-                  </Button>
-                </div>
-              )}
-              {selectedArea !== "all" && (
-                <div className="mt-2 flex items-center gap-2 flex-wrap">
+                )}
+                
+                {selectedCategory !== "all" && (
+                  <Badge variant="secondary" className="text-xs sm:text-sm">
+                    Category: {selectedCategory}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedCategory("all")}
+                      className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                    >
+                      ×
+                    </Button>
+                  </Badge>
+                )}
+                
+                {selectedJobType !== "all" && (
+                  <Badge variant="secondary" className="text-xs sm:text-sm">
+                    Type: {selectedJobType}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedJobType("all")}
+                      className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                    >
+                      ×
+                    </Button>
+                  </Badge>
+                )}
+                
+                {selectedArea !== "all" && (
                   <Badge variant="secondary" className="text-xs sm:text-sm">
                     Area: {selectedArea}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedArea("all")}
+                      className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                    >
+                      ×
+                    </Button>
                   </Badge>
+                )}
+                
+                {(selectedClass !== "all" || 
+                  selectedMedium !== "all" || 
+                  selectedCategory !== "all" || 
+                  selectedJobType !== "all" || 
+                  selectedArea !== "all") && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setSelectedArea("all")}
+                    onClick={resetFilters}
                     className="h-6 px-2 text-xs"
                   >
-                    Clear Area
+                    Clear All
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -812,7 +974,7 @@ export default function TuitionJobs() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by subject, location, ID, or phone number..."
+              placeholder="Search by subject, class, medium, location, ID, or phone number..."
               className="pl-10 h-11 font-bold"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
@@ -879,19 +1041,7 @@ export default function TuitionJobs() {
                       variant="outline"
                       size="sm"
                       className="mt-2"
-                      onClick={() => {
-                        setSelectedSubject("all");
-                        setSelectedDistrict("all");
-                        setSelectedThana("all");
-                        setSelectedArea("all");
-                        setSelectedJobType("all");
-                        setSelectedCategory("all");
-                        setSalaryRange([0, 1000000]);
-                        setSearchQuery("");
-                        setUrgentOnly(false);
-                        setRemoteOnly(false);
-                        setNewListingsOnly(false);
-                      }}
+                      onClick={resetFilters}
                     >
                       Reset All Filters
                     </Button>
@@ -920,10 +1070,23 @@ export default function TuitionJobs() {
                           {job.tutoringType || "Tutoring Request"}
                         </Badge>
                       </div>
-                      <p className="text-xs sm:text-sm font-bold text-black mt-1">
-                        {job.studentClass && `Class ${job.studentClass} • `}
-                        Phone: {job.phoneNumber}
-                      </p>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {job.medium && (
+                          <Badge variant="secondary" className="text-xs">
+                            <BookType className="mr-1 h-3 w-3" />
+                            {job.medium}
+                          </Badge>
+                        )}
+                        {job.studentClass && (
+                          <Badge variant="secondary" className="text-xs">
+                            <GraduationCap className="mr-1 h-3 w-3" />
+                            {job.studentClass}
+                          </Badge>
+                        )}
+                        <span className="text-xs sm:text-sm font-bold text-black">
+                          Phone: {job.phoneNumber}
+                        </span>
+                      </div>
                     </CardHeader>
                     <CardContent className="flex flex-col flex-grow p-4 sm:p-6">
                       <div className="space-y-2 flex-grow">
