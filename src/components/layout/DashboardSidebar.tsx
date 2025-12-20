@@ -130,7 +130,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
           main: [
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
             { id: 'posted-jobs', label: 'Tutor Request', icon: List },
-            { id: 'search', label: 'Posted Jobs', icon: Search },
+            { id: 'search', label: 'Find Tutors', icon: Search },
             // { id: 'request', label: 'Posted Job', icon: BookOpen },
             { id: 'profile', label: 'Update Profile', icon: User },
             // { id: 'demo-classes', label: 'Demo Class', icon: BookOpen },
@@ -153,10 +153,12 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'jobs', label: 'Find job', icon: Search },
             { id: 'profile', label: 'Update Profile', icon: User },
             { id: 'notifications', label: 'Notification', icon: BellRing },
+            { id: 'confirmation-letter', label: 'Confirmation Letter', icon: FileCheck },
+            { id: 'tutoring-history', label: 'Tutoring History', icon: History },
+            { id: 'payment-section', label: 'Payment Section', icon: CreditCard },
+
+
             { id: 'studentApply', label: 'Student-Apply', icon: BookCheck },
-            // { id: 'confirmation-letter', label: 'Confirmation Letter', icon: FileCheck },
-            // { id: 'tutoring-history', label: 'Tutoring History', icon: History },
-            // { id: 'payment-section', label: 'Payment Section', icon: CreditCard },
             // { id: 'genius-verification', label: 'Genius / Verification Request', icon: Shield },
             // { id: 'applications', label: 'Applications', icon: ClipboardList },
             // { id: 'demo-classes', label: 'Demo Classes', icon: BookOpen },

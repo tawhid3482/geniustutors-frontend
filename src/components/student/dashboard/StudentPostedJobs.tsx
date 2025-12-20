@@ -34,14 +34,10 @@ export function StudentPostedJobs({
 
   // Fetch posted jobs (tutor requests created by student)
   const fetchPostedRequests = async () => {
-    console.log('=== STUDENT POSTED JOBS COMPONENT DEBUG ===');
-    console.log('Function: fetchPostedRequests');
-    console.log('Component: StudentPostedJobs');
-    console.log('Timestamp:', new Date().toISOString());
+   
     
     setIsLoadingRequests(true);
     try {
-      console.log('Calling tutorRequestService.getStudentTutorRequests()...');
       const response = await tutorRequestService.getStudentTutorRequests();
       
       console.log('Response received:', {
@@ -59,9 +55,7 @@ export function StudentPostedJobs({
         setPostedRequests([]);
       }
     } catch (error) {
-      console.error('=== ERROR IN STUDENT POSTED JOBS ===');
-      console.error('Error:', error);
-      console.error('====================================');
+     
       
       toast({
         title: 'Error',

@@ -206,7 +206,7 @@ export function StudentSearch() {
           bValue = 0;
       }
 
-      if (filterSortOrder === "asc") {
+      if (filterSortOrder === "desc") {
         return aValue - bValue;
       } else {
         return bValue - aValue;
@@ -352,7 +352,7 @@ export function StudentSearch() {
             </div>
 
             {/* Rating Filter */}
-            <div>
+            {/* <div>
               <Label>Minimum Rating</Label>
               <Select
                 value={String(filterRating)}
@@ -368,7 +368,7 @@ export function StudentSearch() {
                   <SelectItem value="5">5 Stars</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
 
             {/* Experience Filter */}
             <div>
@@ -412,38 +412,6 @@ export function StudentSearch() {
               </Select>
             </div>
 
-            {/* Availability Filter */}
-            <div>
-              <Label>Availability</Label>
-              <Select
-                value={filterAvailability}
-                onValueChange={setFilterAvailability}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Any Availability" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Any Availability</SelectItem>
-                  <SelectItem value="Weekdays">Weekdays</SelectItem>
-                  <SelectItem value="Weekends">Weekends</SelectItem>
-                  <SelectItem value="Evenings">Evenings</SelectItem>
-                  <SelectItem value="Mornings">Mornings</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Maximum Price Filter */}
-            <div>
-              <Label>Maximum Price (৳/hour)</Label>
-              <Input
-                type="number"
-                placeholder="Any Price"
-                min="0"
-                className="mt-1"
-                value={filterMaxPrice}
-                onChange={(e) => setFilterMaxPrice(e.target.value)}
-              />
-            </div>
 
             {/* Sort By */}
             <div>
@@ -465,7 +433,7 @@ export function StudentSearch() {
             </div>
 
             {/* Sort Order */}
-            <div>
+            {/* <div>
               <Label>Sort Order</Label>
               <Select
                 value={filterSortOrder}
@@ -479,7 +447,7 @@ export function StudentSearch() {
                   <SelectItem value="desc">Descending</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
 
             {/* Reset Filters */}
             <div className="lg:col-span-2 xl:col-span-3 flex justify-end">
