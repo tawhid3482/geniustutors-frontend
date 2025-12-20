@@ -130,19 +130,19 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
           main: [
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
             { id: 'posted-jobs', label: 'Tutor Request', icon: List },
-            { id: 'search', label: 'Find Tutor', icon: Search },
+            { id: 'search', label: 'Posted Jobs', icon: Search },
             // { id: 'request', label: 'Posted Job', icon: BookOpen },
             { id: 'profile', label: 'Update Profile', icon: User },
             // { id: 'demo-classes', label: 'Demo Class', icon: BookOpen },
-            // { id: 'approval-letter', label: 'Approval Letter', icon: FileCheck },
+            { id: 'approval-letter', label: 'Approval Letter', icon: FileCheck },
             // { id: 'courses', label: 'My Course', icon: BookCheck },
-            { id: 'reviews', label: 'Reviews', icon: Star },
+            // { id: 'reviews', label: 'Reviews', icon: Star },
           ],
           quick: [
             { id: 'join-community', label: 'Join Our Community', icon: Users2 },
           ],
           account: [
-            { id: 'note', label: 'Notes', icon: StickyNote },
+            // { id: 'note', label: 'Notes', icon: StickyNote },
             { id: 'settings', label: 'Settings', icon: Settings },
           ],
         };
