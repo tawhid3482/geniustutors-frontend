@@ -1,17 +1,10 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { Bell, Search, Menu, X } from "lucide-react";
+
+import {  Menu, X } from "lucide-react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { NotificationDropdown } from "@/components/ui/NotificationDropdown";
+import logo from '../../../public/Genius-Tutor-Logo.png'
 import { useState, useEffect } from "react";
 import { getWebsiteInfo } from "@/services/websiteService";
 import Image from "next/image";
@@ -81,7 +74,7 @@ export const DashboardNavbar = ({ user, onLogout, onToggleSidebar, showMobileSid
             {websiteInfo.siteLogo ? (
               <div className="relative max-w-24 sm:max-w-28 md:max-w-36 lg:max-w-44 xl:max-w-52">
                 <Image 
-                  src={websiteInfo.siteLogo} 
+                  src={logo} 
                   alt={websiteInfo.siteName} 
                   width={160}
                   height={160}

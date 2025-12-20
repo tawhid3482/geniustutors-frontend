@@ -63,9 +63,12 @@ const DashboardSection = () => {
   });
 
   const { data: MyInfo, isLoading: loadingMyInfo } = useGetMYInfoQuery(userId);
+  console.log(noticeResponse)
+  console.log(MyInfo)
   const { data: AllJobs, isLoading: loadingAllJobs } =
-    useGetAllTutorRequestsForPublicQuery(undefined);
-
+  useGetAllTutorRequestsForPublicQuery(undefined);
+  
+  console.log(AllJobs)
   // Calculate profile completion percentage
   const calculateProfileCompletion = (userData: any) => {
     if (!userData) return 0;
@@ -235,7 +238,7 @@ const DashboardSection = () => {
           <div className="flex items-center gap-3 mb-4">
             <Megaphone className="h-6 w-6 text-green-600" />
             <h2 className="text-xl font-semibold text-gray-800">
-              Notice Board
+              Notice Boardss
             </h2>
           </div>
 
