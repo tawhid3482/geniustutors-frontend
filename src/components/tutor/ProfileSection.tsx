@@ -6,7 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext.next";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, CheckCircle, Shield, Award, BadgeCheck, FileText, Eye, Upload } from "lucide-react";
+import {
+  Loader2,
+  CheckCircle,
+  Shield,
+  Award,
+  BadgeCheck,
+  FileText,
+  Eye,
+  Upload,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,8 +24,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { SearchableSelect } from "@/components/ui/searchable-select";
-import { BANGLADESH_DISTRICTS_WITH_POST_OFFICES } from "@/data/bangladeshDistricts";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { SKILLS } from "@/data/skills";
 import { Badge } from "@/components/ui/badge";
@@ -26,48 +33,62 @@ import {
 } from "@/redux/features/auth/authApi";
 import { getUpgradeStatus } from "@/services/upgradeService";
 import { useRouter } from "next/navigation";
-import { 
-  useCreateDocumentMutation, 
-  useGetAllDocumentUserQuery, 
-  useUpdateDocumentMutation 
+import {
+  useCreateDocumentMutation,
+  useGetAllDocumentUserQuery,
+  useUpdateDocumentMutation,
 } from "@/redux/features/document/documentApi";
+import { useGetAllDistrictsQuery } from "@/redux/features/district/districtApi";
+import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
+import mediumOptions from "@/data/mediumOptions.json";
 
 interface ProfileFormData {
+  // Personal Information
   fullName: string;
   email: string;
   phone: string;
+  alternative_number: string;
   avatar: string;
+  gender: string;
+  religion: string;
+  nationality: string;
+  blood_group: string;
+
+  // Institute Information
+  Institute_name: string;
+  department_name: string;
+  year: string;
+
+  // Location Information
   location: string;
   district: string;
+  thana: string;
+  postOffice: string;
+
+  // Tutoring Information
+  background: string[];
+  preferred_class: string[];
+  preferred_tutoring_category: string[];
+  subjects: string[];
+  preferred_tutoring_style: string;
+  days_per_week: number;
+  availability: string[];
+  preferred_time: string[];
+  preferred_areas: string[];
+  expected_salary: string;
+
+  // Skills & Bio
+  other_skills: string[];
+  social_media_links: string;
   bio: string;
   experience: string;
   hourly_rate: string;
   qualification: string;
-  expected_salary: string;
-  other_skills: string[];
-  days_per_week: number;
-  preferred_tutoring_style: string[];
-  place_of_learning: string[];
   extra_facilities: string;
   preferred_medium: string[];
-  preferred_class: string;
-  preferred_subjects: string;
-  preferred_time: string[];
   preferred_student_gender: string;
-  alternative_number: string;
-  Institute_name: string;
-  department_name: string;
-  year: string;
-  religion: string;
-  nationality: string;
-  blood_group: string;
-  social_media_links: string;
-  preferred_tutoring_category: string;
-  present_location: string;
-  preferred_areas: string[];
-  selectedCategories: string[];
-  selectedSubjects: string[];
-  selectedClasses: string[];
+
+  // Educational Qualifications
   educational_qualifications: Array<{
     examTitle: string;
     institute: string;
@@ -105,14 +126,16 @@ export default function ProfileSection() {
     refetch: refetchUser,
   } = useGetMYInfoQuery(userId);
 
-  const { 
-    data: documentData, 
+  console.log("User Data from API:", userData);
+
+  const {
+    data: documentData,
     refetch: refetchDocuments,
-    isLoading: isLoadingDocuments 
+    isLoading: isLoadingDocuments,
   } = useGetAllDocumentUserQuery({ id: userId });
 
-
-  console.log("Document Data:", documentData);
+  const { data: districtData } = useGetAllDistrictsQuery(undefined);
+  const { data: categoryData } = useGetAllCategoryQuery(undefined);
 
   const [updateUserProfile, { isLoading: isUpdatingProfile }] =
     useUpdateUserProfileMutation();
@@ -122,41 +145,52 @@ export default function ProfileSection() {
 
   // States
   const [profile, setProfile] = useState<ProfileFormData>({
+    // Personal Information
     fullName: "",
     email: "",
     phone: "",
+    alternative_number: "",
     avatar: "",
+    gender: "",
+    religion: "",
+    nationality: "",
+    blood_group: "",
+
+    // Institute Information
+    Institute_name: "",
+    department_name: "",
+    year: "",
+
+    // Location Information
     location: "",
     district: "",
+    thana: "",
+    postOffice: "",
+
+    // Tutoring Information
+    background: [],
+    preferred_class: [],
+    preferred_tutoring_category: [],
+    subjects: [],
+    preferred_tutoring_style: "",
+    days_per_week: 0,
+    availability: [],
+    preferred_time: [],
+    preferred_areas: [],
+    expected_salary: "",
+
+    // Skills & Bio
+    other_skills: [],
+    social_media_links: "",
     bio: "",
     experience: "",
     hourly_rate: "",
     qualification: "",
-    expected_salary: "",
-    other_skills: [],
-    days_per_week: 0,
-    preferred_tutoring_style: [],
-    place_of_learning: [],
     extra_facilities: "",
     preferred_medium: [],
-    preferred_class: "",
-    preferred_subjects: "",
-    preferred_time: [],
     preferred_student_gender: "any",
-    alternative_number: "",
-    Institute_name: "",
-    department_name: "",
-    year: "",
-    religion: "",
-    nationality: "",
-    blood_group: "",
-    social_media_links: "",
-    preferred_tutoring_category: "",
-    present_location: "",
-    preferred_areas: [],
-    selectedCategories: [],
-    selectedSubjects: [],
-    selectedClasses: [],
+
+    // Educational Qualifications
     educational_qualifications: [
       {
         examTitle: "",
@@ -169,11 +203,22 @@ export default function ProfileSection() {
     ],
   });
 
-  const [upgradeStatus, setUpgradeStatus] = useState<UpgradeStatus | null>(null);
+  const [upgradeStatus, setUpgradeStatus] = useState<UpgradeStatus | null>(
+    null
+  );
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const [isUploadingDocument, setIsUploadingDocument] = useState<Record<string, boolean>>({});
+  const [isUploadingDocument, setIsUploadingDocument] = useState<
+    Record<string, boolean>
+  >({});
   const [isLoadingUpgradeStatus, setIsLoadingUpgradeStatus] = useState(false);
-  const [availableAreas, setAvailableAreas] = useState<string[]>([]);
+
+  // Tuition location states
+  const [tuitionAvailableThanas, setTuitionAvailableThanas] = useState<
+    string[]
+  >([]);
+  const [tuitionAvailableAreas, setTuitionAvailableAreas] = useState<string[]>(
+    []
+  );
 
   // File upload function
   const uploadImage = async (file: File): Promise<string> => {
@@ -188,12 +233,12 @@ export default function ProfileSection() {
           body: data,
         }
       );
-      
+
       if (!res.ok) {
         const errorText = await res.text();
         throw new Error(`Failed to upload file: ${errorText}`);
       }
-      
+
       const result = await res.json();
       return result.url;
     } catch (err: any) {
@@ -210,69 +255,90 @@ export default function ProfileSection() {
   useEffect(() => {
     if (userData?.data) {
       const data = userData.data;
+      console.log("Loading API data into form:", {
+        thana: data.thana,
+        district: data.district,
+        preferred_areas: data.preferred_areas,
+      });
 
       setProfile((prev) => ({
         ...prev,
+        // Personal Information
         fullName: data.fullName || "",
         email: data.email || "",
         phone: data.phone || "",
+        alternative_number: data.alternative_number || "",
         avatar: data.avatar || "",
+        gender: data.gender || "",
+        religion: data.religion || "",
+        nationality: data.nationality || "",
+        blood_group: data.blood_group || "",
+
+        // Institute Information
+        Institute_name: data.Institute_name || "",
+        department_name: data.department_name || "",
+        year: data.year || "",
+
+        // Location Information - FIXED
         location: data.location || "",
         district: data.district || "",
+        thana: data.thana || "", // Fix: thana directly from API
+        postOffice: data.postOffice || "",
+
+        // Tutoring Information
+        background: Array.isArray(data.background) ? data.background : [],
+        preferred_class: Array.isArray(data.preferred_class)
+          ? data.preferred_class
+          : [],
+        preferred_tutoring_category: Array.isArray(
+          data.preferred_tutoring_category
+        )
+          ? data.preferred_tutoring_category
+          : [],
+        subjects: Array.isArray(data.subjects) ? data.subjects : [],
+        preferred_tutoring_style: data.preferred_tutoring_style || "",
+        days_per_week: data.days_per_week || 0,
+        availability: Array.isArray(data.availability) ? data.availability : [],
+        preferred_time: Array.isArray(data.preferred_time)
+          ? data.preferred_time
+          : [],
+        preferred_areas: Array.isArray(data.preferred_areas)
+          ? data.preferred_areas
+          : [],
+        expected_salary: data.expected_salary || "",
+
+        // Skills & Bio
+        other_skills: Array.isArray(data.other_skills) ? data.other_skills : [],
+        social_media_links: data.social_media_links || "",
         bio: data.bio || "",
         experience: data.experience?.toString() || "",
         hourly_rate: data.hourly_rate?.toString() || "0",
-        other_skills: Array.isArray(data.other_skills) ? data.other_skills : [],
         qualification: data.qualification || "",
-        expected_salary: data.expected_salary || "",
-        days_per_week: data.days_per_week || 0,
-        preferred_tutoring_style: Array.isArray(data.preferred_tutoring_style)
-          ? data.preferred_tutoring_style
-          : [],
-        place_of_learning: Array.isArray(data.place_of_learning)
-          ? data.place_of_learning
-          : [],
         extra_facilities: data.extra_facilities || "",
         preferred_medium: Array.isArray(data.preferred_medium)
           ? data.preferred_medium
           : [],
-        preferred_class: data.preferred_class || "",
-        preferred_subjects: Array.isArray(data.subjects) 
-          ? data.subjects.join(", ") 
-          : "",
-        preferred_time: Array.isArray(data.preferred_time)
-          ? data.preferred_time
-          : [],
         preferred_student_gender: data.preferred_student_gender || "any",
-        alternative_number: data.alternative_number || "",
-        Institute_name: data.Institute_name || "",
-        department_name: data.department_name || "",
-        year: data.year || "",
-        religion: data.religion || "",
-        nationality: data.nationality || "",
-        blood_group: data.blood_group || "",
-        social_media_links: data.social_media_links || "",
-        preferred_tutoring_category: data.preferred_tutoring_category || "",
-        present_location: data.present_location || "",
-        preferred_areas: Array.isArray(data.preferred_areas)
-          ? data.preferred_areas
-          : [],
+
+        // Educational Qualifications
         educational_qualifications: data.educational_qualifications
           ? (() => {
               try {
-                if (typeof data.educational_qualifications === 'string') {
+                if (typeof data.educational_qualifications === "string") {
                   return JSON.parse(data.educational_qualifications);
                 }
                 return data.educational_qualifications;
               } catch (e) {
-                return [{
-                  examTitle: "",
-                  institute: "",
-                  board: "",
-                  group: "",
-                  year: "",
-                  gpa: "",
-                }];
+                return [
+                  {
+                    examTitle: "",
+                    institute: "",
+                    board: "",
+                    group: "",
+                    year: "",
+                    gpa: "",
+                  },
+                ];
               }
             })()
           : [
@@ -289,30 +355,65 @@ export default function ProfileSection() {
     }
   }, [userData, toast]);
 
-  // Load available areas based on selected district
+  // Load tuition thanas and areas based on selected district
   useEffect(() => {
-    if (profile.district) {
-      const district = BANGLADESH_DISTRICTS_WITH_POST_OFFICES.find(
-        (d) => d.id === profile.district
+    console.log("District changed:", profile.district);
+    console.log("Current thana:", profile.thana);
+    console.log("Current preferred_areas:", profile.preferred_areas);
+
+    if (profile.district && districtData?.data) {
+      const selectedDistrict = districtData.data.find(
+        (d: any) => d.name === profile.district
       );
-      if (district) {
-        const areas = district.areas.map((area) => area.name);
-        setAvailableAreas(areas);
-        
-        // Set present location if not already set
-        if (!profile.present_location && areas.length > 0) {
-          setProfile((prev) => ({ 
-            ...prev, 
-            present_location: areas[0] 
+
+      if (selectedDistrict) {
+        // Set available thanas
+        const thanas = selectedDistrict.thana || [];
+        console.log("Available thanas for district:", thanas);
+        setTuitionAvailableThanas(thanas);
+
+        // Set available areas
+        const areas = selectedDistrict.area || [];
+        console.log("Available areas for district:", areas);
+        setTuitionAvailableAreas(areas);
+
+        // Reset thana if it's not available in the new district
+        if (profile.thana && !thanas.includes(profile.thana)) {
+          console.log(`Thana ${profile.thana} not in new district, resetting`);
+          setProfile((prev) => ({
+            ...prev,
+            thana: thanas.length > 0 ? thanas[0] : "",
+            preferred_areas: [], // Reset areas when thana changes
+          }));
+        }
+
+        // If current thana is empty but we have available thanas, set first one
+        if (!profile.thana && thanas.length > 0) {
+          console.log("Setting first available thana");
+          setProfile((prev) => ({
+            ...prev,
+            thana: thanas[0],
           }));
         }
       } else {
-        setAvailableAreas([]);
+        console.log("District not found in district data");
+        setTuitionAvailableThanas([]);
+        setTuitionAvailableAreas([]);
       }
     } else {
-      setAvailableAreas([]);
+      console.log("No district selected or district data not loaded");
+      setTuitionAvailableThanas([]);
+      setTuitionAvailableAreas([]);
+      // Reset thana and areas when no district is selected
+      if (profile.thana) {
+        setProfile((prev) => ({
+          ...prev,
+          thana: "",
+          preferred_areas: [],
+        }));
+      }
     }
-  }, [profile.district, profile.present_location]);
+  }, [profile.district, districtData, profile.thana]);
 
   // Load upgrade status
   useEffect(() => {
@@ -344,6 +445,7 @@ export default function ProfileSection() {
   };
 
   const handleSelectChange = (name: string, value: string) => {
+    console.log(`Select change: ${name} = ${value}`);
     setProfile((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -368,7 +470,12 @@ export default function ProfileSection() {
       const file = files[0];
 
       // Validate file type
-      const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+      ];
       if (!allowedTypes.includes(file.type)) {
         toast({
           title: "Invalid file type",
@@ -429,7 +536,12 @@ export default function ProfileSection() {
       const file = files[0];
 
       // Validate file type
-      const allowedTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+      const allowedTypes = [
+        "application/pdf",
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+      ];
       if (!allowedTypes.includes(file.type)) {
         toast({
           title: "Invalid file type",
@@ -451,14 +563,16 @@ export default function ProfileSection() {
       }
 
       try {
-        setIsUploadingDocument(prev => ({ ...prev, [type]: true }));
+        setIsUploadingDocument((prev) => ({ ...prev, [type]: true }));
 
         // Upload file
         const fileUrl = await uploadImage(file);
         const fileType = file.type;
 
         // Check if document already exists
-        const existingDoc = documentData?.data?.find((doc: Document) => doc.type === type);
+        const existingDoc = documentData?.data?.find(
+          (doc: Document) => doc.type === type
+        );
 
         if (existingDoc) {
           // Update existing document
@@ -495,7 +609,7 @@ export default function ProfileSection() {
           variant: "destructive",
         });
       } finally {
-        setIsUploadingDocument(prev => ({ ...prev, [type]: false }));
+        setIsUploadingDocument((prev) => ({ ...prev, [type]: false }));
       }
     }
   };
@@ -509,8 +623,32 @@ export default function ProfileSection() {
     setProfile((prev) => ({ ...prev, other_skills: skills }));
   };
 
+  const handleSubjectsChange = (subjects: string[]) => {
+    setProfile((prev) => ({ ...prev, subjects }));
+  };
+
+  const handleBackgroundChange = (background: string[]) => {
+    setProfile((prev) => ({ ...prev, background }));
+  };
+
+  const handlePreferredClassChange = (classes: string[]) => {
+    setProfile((prev) => ({ ...prev, preferred_class: classes }));
+  };
+
+  const handleCategoryChange = (categories: string[]) => {
+    setProfile((prev) => ({
+      ...prev,
+      preferred_tutoring_category: categories,
+    }));
+  };
+
   const handlePreferredAreasChange = (areas: string[]) => {
+    console.log("Preferred areas changed:", areas);
     setProfile((prev) => ({ ...prev, preferred_areas: areas }));
+  };
+
+  const handleAvailabilityChange = (availability: string[]) => {
+    setProfile((prev) => ({ ...prev, availability }));
   };
 
   const handleEducationalQualificationChange = (
@@ -552,6 +690,102 @@ export default function ProfileSection() {
     }));
   };
 
+  // Get all districts for dropdown
+  const getAllDistricts = () => {
+    if (!districtData?.data) return [];
+    return districtData.data.map((district: any) => ({
+      value: district.name,
+      label: district.name,
+    }));
+  };
+
+  // Get all available time slots
+  const getTimeSlots = () => {
+    return [
+      "Morning (8AM-12PM)",
+      "Afternoon (12PM-4PM)",
+      "Evening (4PM-8PM)",
+      "Night (8PM-10PM)",
+    ];
+  };
+
+  // Get availability days options
+  const getAvailabilityOptions = () => {
+    return [
+      { value: "Saturday", label: "Saturday" },
+      { value: "Sunday", label: "Sunday" },
+      { value: "Monday", label: "Monday" },
+      { value: "Tuesday", label: "Tuesday" },
+      { value: "Wednesday", label: "Wednesday" },
+      { value: "Thursday", label: "Thursday" },
+      { value: "Friday", label: "Friday" },
+      { value: "All Days", label: "All Days" },
+      { value: "Flexible", label: "Flexible" },
+    ];
+  };
+
+  // Get tutoring style options (single select)
+  const getTutoringStyleOptions = () => {
+    return [
+      { value: "Home Tutoring", label: "Home Tutoring" },
+      { value: "Online Tutoring", label: "Online Tutoring" },
+      { value: "Both", label: "Both (Home & Online)" },
+    ];
+  };
+
+  // Get curriculum options from mediumOptions.json
+  const getBackgroundOptions = () => {
+    return mediumOptions.mediums.map((medium) => ({
+      value: medium.value,
+      label: medium.label,
+    }));
+  };
+
+  // Get class levels
+  const getClassLevels = () => {
+    return [
+      { value: "Play Group/KG", label: "Play Group/KG" },
+      { value: "Class 1", label: "Class 1" },
+      { value: "Class 2", label: "Class 2" },
+      { value: "Class 3", label: "Class 3" },
+      { value: "Class 4", label: "Class 4" },
+      { value: "Class 5", label: "Class 5" },
+      { value: "Class 6", label: "Class 6" },
+      { value: "Class 7", label: "Class 7" },
+      { value: "Class 8", label: "Class 8" },
+      { value: "Class 9", label: "Class 9" },
+      { value: "Class 10 (SSC)", label: "Class 10 (SSC)" },
+      { value: "Class 11 (HSC)", label: "Class 11 (HSC)" },
+      { value: "Class 12 (HSC)", label: "Class 12 (HSC)" },
+      { value: "University Level", label: "University Level" },
+    ];
+  };
+
+  // Get category options from API
+  const getCategoryOptions = () => {
+    if (!categoryData?.data) return [];
+    return categoryData.data.map((category: any) => ({
+      value: category.name,
+      label: category.name,
+    }));
+  };
+
+  // Get subject options
+  const getSubjectOptions = () => {
+    return [
+      { value: "Mathematics", label: "Mathematics" },
+      { value: "English", label: "English" },
+      { value: "Bangla", label: "Bangla" },
+      { value: "Physics", label: "Physics" },
+      { value: "Chemistry", label: "Chemistry" },
+      { value: "Biology", label: "Biology" },
+      { value: "ICT", label: "ICT" },
+      { value: "Accounting", label: "Accounting" },
+      { value: "Economics", label: "Economics" },
+      { value: "All Subjects", label: "All Subjects" },
+    ];
+  };
+
   // Save profile
   const handleSaveProfile = async () => {
     if (!userId) {
@@ -564,52 +798,71 @@ export default function ProfileSection() {
     }
 
     try {
-      // Prepare user profile data
+      console.log("Saving profile with data:", profile);
+
+      // Prepare user profile data according to backend schema
       const userProfileData: any = {
-        fullName: profile.fullName || userData?.data?.fullName || "",
-        email: profile.email || userData?.data?.email || "",
-        phone: profile.phone || userData?.data?.phone || "",
-        avatar: profile.avatar || userData?.data?.avatar || "",
-        location: profile.location || userData?.data?.location || "",
-        district: profile.district || userData?.data?.district || "",
-        bio: profile.bio || userData?.data?.bio || "",
-        experience: parseInt(profile.experience) || userData?.data?.experience || 0,
-        hourly_rate: parseInt(profile.hourly_rate) || userData?.data?.hourly_rate || 0,
-        subjects: profile.preferred_subjects ? [profile.preferred_subjects] : userData?.data?.subjects || [],
-        other_skills: profile.other_skills || userData?.data?.other_skills || [],
-        qualification: profile.qualification || userData?.data?.qualification || "",
-        expected_salary: profile.expected_salary || userData?.data?.expected_salary || "",
-        days_per_week: profile.days_per_week || userData?.data?.days_per_week || 0,
-        preferred_tutoring_style: profile.preferred_tutoring_style || userData?.data?.preferred_tutoring_style || [],
-        place_of_learning: profile.place_of_learning || userData?.data?.place_of_learning || [],
-        extra_facilities: profile.extra_facilities || userData?.data?.extra_facilities || "",
-        preferred_medium: profile.preferred_medium || userData?.data?.preferred_medium || [],
-        preferred_class: profile.preferred_class || userData?.data?.preferred_class || "",
-        preferred_time: profile.preferred_time || userData?.data?.preferred_time || [],
-        preferred_student_gender: profile.preferred_student_gender || userData?.data?.preferred_student_gender || "any",
-        alternative_number: profile.alternative_number || userData?.data?.alternative_number || "",
-        Institute_name: profile.Institute_name || userData?.data?.Institute_name || "",
-        department_name: profile.department_name || userData?.data?.department_name || "",
-        year: profile.year || userData?.data?.year || "",
-        religion: profile.religion || userData?.data?.religion || "",
-        nationality: profile.nationality || userData?.data?.nationality || "",
-        blood_group: profile.blood_group || userData?.data?.blood_group || "",
-        social_media_links: profile.social_media_links || userData?.data?.social_media_links || "",
-        preferred_tutoring_category: profile.preferred_tutoring_category || userData?.data?.preferred_tutoring_category || "",
-        present_location: profile.present_location || userData?.data?.present_location || "",
-        preferred_areas: profile.preferred_areas || userData?.data?.preferred_areas || [],
+        // Personal Information
+        fullName: profile.fullName || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        alternative_number: profile.alternative_number || "",
+        avatar: profile.avatar || "",
+        gender: profile.gender || "",
+        religion: profile.religion || "",
+        nationality: profile.nationality || "",
+        blood_group: profile.blood_group || "",
+
+        // Institute Information
+        Institute_name: profile.Institute_name || "",
+        department_name: profile.department_name || "",
+        year: profile.year || "",
+
+        // Location Information - FIXED
+        location: profile.location || "",
+        district: profile.district || "",
+        thana: profile.thana || "", // Use thana directly
+        postOffice: profile.postOffice || "",
+
+        // Tutoring Information
+        background: profile.background || [],
+        preferred_class: profile.preferred_class || [],
+        preferred_tutoring_category: profile.preferred_tutoring_category || [],
+        subjects: profile.subjects || [],
+        preferred_tutoring_style: profile.preferred_tutoring_style || "",
+        days_per_week: profile.days_per_week || 0,
+        availability: profile.availability || [],
+        preferred_time: profile.preferred_time || [],
+        preferred_areas: profile.preferred_areas || [], // FIXED
+        expected_salary: profile.expected_salary || "",
+
+        // Skills & Bio
+        other_skills: profile.other_skills || [],
+        social_media_links: profile.social_media_links || "",
+        bio: profile.bio || "",
+        experience: parseInt(profile.experience) || 0,
+        hourly_rate: parseInt(profile.hourly_rate) || 0,
+        qualification: profile.qualification || "",
+        extra_facilities: profile.extra_facilities || "",
+        preferred_medium: profile.preferred_medium || [],
+        preferred_student_gender: profile.preferred_student_gender || "any",
       };
 
       // Handle educational_qualifications
-      if (profile.educational_qualifications && profile.educational_qualifications.length > 0) {
-        userProfileData.educational_qualifications = JSON.stringify(profile.educational_qualifications);
+      if (
+        profile.educational_qualifications &&
+        profile.educational_qualifications.length > 0
+      ) {
+        userProfileData.educational_qualifications = JSON.stringify(
+          profile.educational_qualifications
+        );
       }
 
-      // Remove undefined or null values
-      Object.keys(userProfileData).forEach((key) => {
-        if (userProfileData[key] === undefined || userProfileData[key] === null) {
-          delete userProfileData[key];
-        }
+      // Log the data being sent
+      console.log("Data being sent to API:", {
+        thana: userProfileData.thana,
+        district: userProfileData.district,
+        preferred_areas: userProfileData.preferred_areas,
       });
 
       const result = await updateUserProfile({
@@ -631,26 +884,19 @@ export default function ProfileSection() {
       console.error("Error saving profile:", error);
       toast({
         title: "Error",
-        description: error?.data?.message || error?.message || "Failed to update profile",
+        description:
+          error?.data?.message || error?.message || "Failed to update profile",
         variant: "destructive",
       });
     }
   };
 
-  const getAllThanas = () => {
-    const allThanas: string[] = [];
-    BANGLADESH_DISTRICTS_WITH_POST_OFFICES.forEach((district) => {
-      district.areas.forEach((area) => {
-        if (!allThanas.includes(area.name)) {
-          allThanas.push(area.name);
-        }
-      });
-    });
-    return allThanas.sort();
-  };
-
-  const isLoading = isLoadingUser || isLoadingDocuments || isLoadingUpgradeStatus;
-  const isSaving = isUpdatingProfile || isUploadingPhoto || Object.values(isUploadingDocument).some(Boolean);
+  const isLoading =
+    isLoadingUser || isLoadingDocuments || isLoadingUpgradeStatus;
+  const isSaving =
+    isUpdatingProfile ||
+    isUploadingPhoto ||
+    Object.values(isUploadingDocument).some(Boolean);
 
   if (isLoading) {
     return (
@@ -701,7 +947,8 @@ export default function ProfileSection() {
             </div>
           )}
         </CardContent>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-8">
+          {/* Tutor ID Display */}
           {user?.tutor_id && (
             <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-4">
               <div className="flex items-center">
@@ -713,7 +960,7 @@ export default function ProfileSection() {
             </div>
           )}
 
-          {/* Profile Photo */}
+          {/* SECTION 1: Profile Photo */}
           <div className="mb-6">
             <Label>Profile Photo</Label>
             <div className="mt-2 flex items-center gap-4">
@@ -743,287 +990,278 @@ export default function ProfileSection() {
             </div>
           </div>
 
-          {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <Label>Full Name</Label>
-              <Input
-                name="fullName"
-                value={profile.fullName}
-                onChange={handleProfileChange}
-                placeholder="Full Name"
-              />
-            </div>
-            <div>
-              <Label>Email</Label>
-              <Input
-                name="email"
-                value={profile.email}
-                onChange={handleProfileChange}
-                placeholder="Email"
-                disabled
-              />
-            </div>
-            <div>
-              <Label>Phone</Label>
-              <Input
-                name="phone"
-                value={profile.phone}
-                onChange={handleProfileChange}
-                placeholder="Phone Number"
-              />
-            </div>
-            <div>
-              <Label>Alternative Phone</Label>
-              <Input
-                name="alternative_number"
-                value={profile.alternative_number}
-                onChange={handleProfileChange}
-                placeholder="Alternative Phone"
-              />
-            </div>
-          </div>
-
-          {/* University Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <Label>Institute Name</Label>
-              <Input
-                name="Institute_name"
-                value={profile.Institute_name}
-                onChange={handleProfileChange}
-                placeholder="Institute Name"
-              />
-            </div>
-            <div>
-              <Label>Department</Label>
-              <Input
-                name="department_name"
-                value={profile.department_name}
-                onChange={handleProfileChange}
-                placeholder="Department"
-              />
-            </div>
-            <div>
-              <Label>Year/Semester</Label>
-              <Input
-                name="year"
-                value={profile.year}
-                onChange={handleProfileChange}
-                placeholder="Year/Semester"
-              />
-            </div>
-            <div>
-              <Label>Blood Group</Label>
-              <Select
-                value={profile.blood_group}
-                onValueChange={(value) => handleSelectChange("blood_group", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Blood Group" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="A+">A+</SelectItem>
-                  <SelectItem value="A-">A-</SelectItem>
-                  <SelectItem value="B+">B+</SelectItem>
-                  <SelectItem value="B-">B-</SelectItem>
-                  <SelectItem value="O+">O+</SelectItem>
-                  <SelectItem value="O-">O-</SelectItem>
-                  <SelectItem value="AB+">AB+</SelectItem>
-                  <SelectItem value="AB-">AB-</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Religion</Label>
-              <Input
-                name="religion"
-                value={profile.religion}
-                onChange={handleProfileChange}
-                placeholder="Religion"
-              />
-            </div>
-            <div>
-              <Label>Nationality</Label>
-              <Input
-                name="nationality"
-                value={profile.nationality}
-                onChange={handleProfileChange}
-                placeholder="Nationality"
-              />
-            </div>
-            <div>
-              <Label>Preferred Student Gender</Label>
-              <Select
-                value={profile.preferred_student_gender}
-                onValueChange={(value) => handleSelectChange("preferred_student_gender", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select gender preference" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="any">Any</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* SECTION 2: Personal Information */}
+          <div className="border-b pb-6">
+            <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Full Name</Label>
+                <Input
+                  name="fullName"
+                  value={profile.fullName}
+                  onChange={handleProfileChange}
+                  placeholder="Full Name"
+                />
+              </div>
+              <div>
+                <Label>Email</Label>
+                <Input
+                  name="email"
+                  value={profile.email}
+                  onChange={handleProfileChange}
+                  placeholder="Email"
+                  disabled
+                />
+              </div>
+              <div>
+                <Label>Mobile Number</Label>
+                <Input
+                  name="phone"
+                  value={profile.phone}
+                  onChange={handleProfileChange}
+                  placeholder="Mobile Number"
+                />
+              </div>
+              <div>
+                <Label>Alternative Number</Label>
+                <Input
+                  name="alternative_number"
+                  value={profile.alternative_number}
+                  onChange={handleProfileChange}
+                  placeholder="Alternative Phone"
+                />
+              </div>
+              <div>
+                <Label>Gender</Label>
+                <Select
+                  value={profile.gender}
+                  onValueChange={(value) => handleSelectChange("gender", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Religion</Label>
+                <Input
+                  name="religion"
+                  value={profile.religion}
+                  onChange={handleProfileChange}
+                  placeholder="Religion"
+                />
+              </div>
+              <div>
+                <Label>Nationality</Label>
+                <Input
+                  name="nationality"
+                  value={profile.nationality}
+                  onChange={handleProfileChange}
+                  placeholder="Nationality"
+                />
+              </div>
+              <div>
+                <Label>Blood Group</Label>
+                <Select
+                  value={profile.blood_group}
+                  onValueChange={(value) =>
+                    handleSelectChange("blood_group", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Blood Group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A+">A+</SelectItem>
+                    <SelectItem value="A-">A-</SelectItem>
+                    <SelectItem value="B+">B+</SelectItem>
+                    <SelectItem value="B-">B-</SelectItem>
+                    <SelectItem value="O+">O+</SelectItem>
+                    <SelectItem value="O-">O-</SelectItem>
+                    <SelectItem value="AB+">AB+</SelectItem>
+                    <SelectItem value="AB-">AB-</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
-          {/* Location Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <Label>District</Label>
-              <SearchableSelect
-                value={profile.district}
-                onValueChange={(value) => handleSelectChange("district", value)}
-                placeholder="Select District"
-                options={BANGLADESH_DISTRICTS_WITH_POST_OFFICES.map(
-                  (district) => ({
-                    value: district.id,
-                    label: district.name,
-                  })
-                )}
-              />
+          {/* SECTION 3: Institute Information */}
+          <div className="border-b pb-6">
+            <h3 className="text-lg font-semibold mb-4">
+              Institute Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Institute Name</Label>
+                <Input
+                  name="Institute_name"
+                  value={profile.Institute_name}
+                  onChange={handleProfileChange}
+                  placeholder="Institute Name"
+                />
+              </div>
+              <div>
+                <Label>Department</Label>
+                <Input
+                  name="department_name"
+                  value={profile.department_name}
+                  onChange={handleProfileChange}
+                  placeholder="Department"
+                />
+              </div>
+              <div>
+                <Label>Year/Semester</Label>
+                <Input
+                  name="year"
+                  value={profile.year}
+                  onChange={handleProfileChange}
+                  placeholder="Year/Semester"
+                />
+              </div>
             </div>
-            <div>
-              <Label>Present Location (Thana/Area)</Label>
-              <Select
-                value={profile.present_location}
-                onValueChange={(value) => handleSelectChange("present_location", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select present location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableAreas.map((area) => (
-                    <SelectItem key={area} value={area}>
-                      {area}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          </div>
+
+          {/* SECTION 4: Location Information */}
+          <div className="border-b pb-6">
+            <h3 className="text-lg font-semibold mb-4">Location Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Your Location</Label>
+                <Input
+                  name="location"
+                  value={profile.location}
+                  onChange={handleProfileChange}
+                  placeholder="Your location (e.g., Road No, House No)"
+                />
+              </div>
             </div>
-            <div>
-              <Label>Preferable Areas (Where you can teach)</Label>
+          </div>
+
+          {/* SECTION 5: Tuition Information */}
+          <div className="border-b pb-6">
+            <h3 className="text-lg font-semibold mb-4">Tuition Information</h3>
+
+            {/* Background (Multi Select) */}
+            <div className="mb-4">
+              <Label>Curriculum/Medium (Select multiple)</Label>
               <MultiSelect
-                value={profile.preferred_areas}
-                onValueChange={handlePreferredAreasChange}
-                placeholder="Select preferable areas"
-                options={getAllThanas().map((thana) => ({
-                  value: thana,
-                  label: thana,
-                }))}
+                value={profile.background}
+                onValueChange={handleBackgroundChange}
+                placeholder="Select curriculum/medium"
+                options={getBackgroundOptions()}
                 maxSelections={10}
               />
             </div>
-          </div>
 
-          {/* Skills and Experience */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <Label>Other Skills (Select up to 5)</Label>
+            {/* Class (Multi Select) */}
+            <div className="mb-4">
+              <Label>Classes (Select multiple)</Label>
               <MultiSelect
-                value={profile.other_skills}
-                onValueChange={handleOtherSkillsChange}
-                placeholder="Select your other skills"
-                options={SKILLS.map((skill) => ({
-                  value: skill,
-                  label: skill,
-                }))}
-                maxSelections={5}
+                value={profile.preferred_class}
+                onValueChange={handlePreferredClassChange}
+                placeholder="Select classes you can teach"
+                options={getClassLevels()}
+                maxSelections={10}
               />
             </div>
-            <div>
-              <Label>Days Per Week</Label>
+
+            {/* Category (Multi Select) */}
+            <div className="mb-4">
+              <Label>Categories (Select multiple)</Label>
+              <MultiSelect
+                value={profile.preferred_tutoring_category}
+                onValueChange={handleCategoryChange}
+                placeholder="Select categories"
+                options={getCategoryOptions()}
+                maxSelections={10}
+              />
+            </div>
+
+            {/* Subject (Multi Select) */}
+            <div className="mb-4">
+              <Label>Subjects (Select multiple)</Label>
+              <MultiSelect
+                value={profile.subjects}
+                onValueChange={handleSubjectsChange}
+                placeholder="Select subjects you can teach"
+                options={getSubjectOptions()}
+                maxSelections={10}
+              />
+            </div>
+
+            {/* Tutor Method (Single Select) */}
+            <div className="mb-4">
+              <Label>Tutor Method</Label>
               <Select
-                value={profile.days_per_week.toString()}
-                onValueChange={(value) => handleSelectChange("days_per_week", value)}
+                value={profile.preferred_tutoring_style}
+                onValueChange={(value) =>
+                  handleSelectChange("preferred_tutoring_style", value)
+                }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select days per week" />
+                  <SelectValue placeholder="Select tutoring method" />
                 </SelectTrigger>
                 <SelectContent>
-                  {[1, 2, 3, 4, 5, 6, 7].map((num) => (
-                    <SelectItem key={num} value={String(num)}>
-                      {num} Day{num > 1 ? "s" : ""}
+                  {getTutoringStyleOptions().map((style) => (
+                    <SelectItem key={style.value} value={style.value}>
+                      {style.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Expected Salary (Monthly)</Label>
-              <Input
-                name="expected_salary"
-                value={profile.expected_salary}
-                onChange={handleProfileChange}
-                placeholder="Expected Monthly Salary"
-              />
-            </div>
-            <div>
-              <Label>Tutoring Experience (years)</Label>
-              <Input
-                name="experience"
-                value={profile.experience}
-                onChange={handleProfileChange}
-                placeholder="e.g. 3"
-                type="number"
-                min="0"
-              />
-            </div>
-            <div>
-              <Label>Qualification</Label>
-              <Input
-                name="qualification"
-                value={profile.qualification}
-                onChange={handleProfileChange}
-                placeholder="Highest Qualification"
-              />
-            </div>
-            <div>
-              <Label>Hourly Rate</Label>
-              <Input
-                name="hourly_rate"
-                value={profile.hourly_rate}
-                onChange={handleProfileChange}
-                placeholder="Hourly rate in BDT"
-                type="number"
-                min="0"
-              />
-            </div>
-          </div>
 
-          {/* Tutoring Preferences */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <Label className="mb-2 block">Preferred Tutoring Method</Label>
-              <div className="space-y-2">
-                {["Home Tutoring", "Online Tutoring", "Both"].map((style) => (
-                  <div key={style} className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={profile.preferred_tutoring_style.includes(style)}
-                      onCheckedChange={() => {
-                        handleMultiSelectChange("preferred_tutoring_style", style);
-                      }}
-                    />
-                    <label className="text-sm font-medium leading-none">
-                      {style}
-                    </label>
-                  </div>
-                ))}
+            {/* Days Per Week and Availability (Multi Select) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <Label>Days Per Week</Label>
+                <Select
+                  value={profile.days_per_week.toString()}
+                  onValueChange={(value) =>
+                    handleSelectChange("days_per_week", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select days per week" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5, 6, 7].map((num) => (
+                      <SelectItem key={num} value={String(num)}>
+                        {num} Day{num > 1 ? "s" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Availability Days</Label>
+                <MultiSelect
+                  value={profile.availability}
+                  onValueChange={handleAvailabilityChange}
+                  placeholder="Select availability days"
+                  options={getAvailabilityOptions()}
+                  maxSelections={10}
+                />
               </div>
             </div>
 
-            <div>
-              <Label className="mb-2 block">Preferred Time</Label>
+            {/* Available Time */}
+            <div className="mb-4">
+              <Label className="mb-2 block">Available Time</Label>
               <div className="space-y-2">
-                {["Morning", "Afternoon", "Evening", "Night"].map((time) => (
+                {getTimeSlots().map((time) => (
                   <div key={time} className="flex items-center space-x-2">
                     <Checkbox
-                      checked={profile.preferred_time.includes(time.toLowerCase())}
+                      checked={profile.preferred_time.includes(time)}
                       onCheckedChange={() => {
-                        handleMultiSelectChange("preferred_time", time.toLowerCase());
+                        handleMultiSelectChange("preferred_time", time);
                       }}
                     />
                     <label className="text-sm font-medium leading-none">
@@ -1033,22 +1271,142 @@ export default function ProfileSection() {
                 ))}
               </div>
             </div>
+
+            {/* Tuition Location - FIXED SECTION */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <Label>Tuition District</Label>
+                <Select
+                  value={profile.district}
+                  onValueChange={(value) =>
+                    handleSelectChange("district", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select tuition district" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getAllDistricts().map((district: any) => (
+                      <SelectItem key={district.value} value={district.value}>
+                        {district.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Tuition Thana</Label>
+                <Select
+                  value={profile.thana}
+                  onValueChange={(value) => handleSelectChange("thana", value)}
+                  disabled={!profile.district}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select tuition thana" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tuitionAvailableThanas.map((thana) => (
+                      <SelectItem key={thana} value={thana}>
+                        {thana}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!profile.district && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Please select a district first
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label>Preferred Areas</Label>
+                <MultiSelect
+                  value={profile.preferred_areas}
+                  onValueChange={handlePreferredAreasChange}
+                  placeholder="Select preferred areas"
+                  options={tuitionAvailableAreas.map((area) => ({
+                    value: area,
+                    label: area,
+                  }))}
+                  maxSelections={10}
+                  disabled={!profile.district}
+                />
+                {!profile.district && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Please select a district first
+                  </p>
+                )}
+              </div>
+            </div>
+
+      
+
+            {/* Expected Salary and Hourly Rate */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <Label>Expected Salary (Monthly)</Label>
+                <Input
+                  name="expected_salary"
+                  value={profile.expected_salary}
+                  onChange={handleProfileChange}
+                  placeholder="Expected Monthly Salary"
+                />
+              </div>
+              <div>
+                <Label>Hourly Rate</Label>
+                <Input
+                  name="hourly_rate"
+                  value={profile.hourly_rate}
+                  onChange={handleProfileChange}
+                  placeholder="Hourly rate in BDT"
+                  type="number"
+                  min="0"
+                />
+              </div>
+            </div>
           </div>
 
-          {/* About/Bio Section */}
-          <div className="mb-6">
-            <Label>About/Bio</Label>
-            <Textarea
-              name="bio"
-              value={profile.bio}
-              onChange={handleProfileChange}
-              placeholder="Tell us about yourself, your teaching style, etc."
-              rows={4}
-            />
+          {/* SECTION 6: Skills & Bio */}
+          <div className="border-b pb-6">
+            <h3 className="text-lg font-semibold mb-4">Skills & Bio</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <Label>Other Skills (Select up to 5)</Label>
+                <MultiSelect
+                  value={profile.other_skills}
+                  onValueChange={handleOtherSkillsChange}
+                  placeholder="Select your other skills"
+                  options={SKILLS.map((skill) => ({
+                    value: skill,
+                    label: skill,
+                  }))}
+                  maxSelections={5}
+                />
+              </div>
+              <div>
+                <Label>Social Media Links</Label>
+                <Input
+                  name="social_media_links"
+                  value={profile.social_media_links}
+                  onChange={handleProfileChange}
+                  placeholder="Facebook, LinkedIn, etc."
+                />
+              </div>
+            </div>
+            <div>
+              <Label>About/Bio</Label>
+              <Textarea
+                name="bio"
+                value={profile.bio}
+                onChange={handleProfileChange}
+                placeholder="Tell us about yourself, your teaching style, etc."
+                rows={4}
+              />
+            </div>
           </div>
 
-          {/* Educational Qualifications */}
-          <div className="mb-8">
+          {/* SECTION 7: Educational Information */}
+          <div className="border-b pb-6">
             <div className="flex items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-800">
                 Educational Information
@@ -1143,9 +1501,13 @@ export default function ProfileSection() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Dhaka">Dhaka</SelectItem>
-                            <SelectItem value="Chittagong">Chittagong</SelectItem>
+                            <SelectItem value="Chittagong">
+                              Chittagong
+                            </SelectItem>
                             <SelectItem value="Rajshahi">Rajshahi</SelectItem>
-                            <SelectItem value="Mymensingh">Mymensingh</SelectItem>
+                            <SelectItem value="Mymensingh">
+                              Mymensingh
+                            </SelectItem>
                             <SelectItem value="Sylhet">Sylhet</SelectItem>
                             <SelectItem value="Barisal">Barisal</SelectItem>
                             <SelectItem value="Comilla">Comilla</SelectItem>
@@ -1170,8 +1532,12 @@ export default function ProfileSection() {
                             <SelectItem value="Science">Science</SelectItem>
                             <SelectItem value="Arts">Arts</SelectItem>
                             <SelectItem value="Commerce">Commerce</SelectItem>
-                            <SelectItem value="Business Studies">Business Studies</SelectItem>
-                            <SelectItem value="Humanities">Humanities</SelectItem>
+                            <SelectItem value="Business Studies">
+                              Business Studies
+                            </SelectItem>
+                            <SelectItem value="Humanities">
+                              Humanities
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </td>
@@ -1215,7 +1581,9 @@ export default function ProfileSection() {
                               type="button"
                               variant="destructive"
                               size="sm"
-                              onClick={() => removeEducationalQualification(index)}
+                              onClick={() =>
+                                removeEducationalQualification(index)
+                              }
                               className="h-6 w-6 p-0"
                             >
                               ×
@@ -1242,6 +1610,7 @@ export default function ProfileSection() {
             </div>
           </div>
 
+          {/* Save Button and Last Updated */}
           <div className="flex justify-between items-center mt-6">
             <div className="text-sm text-gray-600">
               <p>
@@ -1272,7 +1641,7 @@ export default function ProfileSection() {
         </CardContent>
       </Card>
 
-      {/* Documents Section */}
+      {/* SECTION 8: Documents */}
       <Card className="border-border shadow-sm">
         <CardHeader>
           <CardTitle>Documents</CardTitle>
@@ -1302,19 +1671,29 @@ export default function ProfileSection() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(getDocumentByType("SSC_HSC_MARKSHEET")?.file_url, '_blank')}
+                        onClick={() =>
+                          window.open(
+                            getDocumentByType("SSC_HSC_MARKSHEET")?.file_url,
+                            "_blank"
+                          )
+                        }
                         className="flex items-center gap-1"
                       >
                         <Eye className="h-3 w-3" />
                         View Document
                       </Button>
                       <p className="text-xs text-gray-500">
-                        {new Date(getDocumentByType("SSC_HSC_MARKSHEET")?.uploaded_at || '').toLocaleDateString()}
+                        {new Date(
+                          getDocumentByType("SSC_HSC_MARKSHEET")?.uploaded_at ||
+                            ""
+                        ).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">No document uploaded yet</p>
+                  <p className="text-sm text-gray-500">
+                    No document uploaded yet
+                  </p>
                 )}
                 {isUploadingDocument["SSC_HSC_MARKSHEET"] && (
                   <div className="flex items-center gap-2 text-sm text-blue-600">
@@ -1328,14 +1707,18 @@ export default function ProfileSection() {
             {/* NID/Birth Certificate */}
             <div className="border rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
-                <Label className="text-lg font-medium">NID/Birth Certificate</Label>
+                <Label className="text-lg font-medium">
+                  NID/Birth Certificate
+                </Label>
                 <FileText className="h-5 w-5 text-gray-500" />
               </div>
               <div className="space-y-3">
                 <Input
                   type="file"
                   accept="application/pdf,image/*"
-                  onChange={(e) => handleDocumentUpload("NID_BIRTH_CERTIFICATE", e)}
+                  onChange={(e) =>
+                    handleDocumentUpload("NID_BIRTH_CERTIFICATE", e)
+                  }
                   disabled={isUploadingDocument["NID_BIRTH_CERTIFICATE"]}
                 />
                 {getDocumentByType("NID_BIRTH_CERTIFICATE") ? (
@@ -1348,19 +1731,30 @@ export default function ProfileSection() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(getDocumentByType("NID_BIRTH_CERTIFICATE")?.file_url, '_blank')}
+                        onClick={() =>
+                          window.open(
+                            getDocumentByType("NID_BIRTH_CERTIFICATE")
+                              ?.file_url,
+                            "_blank"
+                          )
+                        }
                         className="flex items-center gap-1"
                       >
                         <Eye className="h-3 w-3" />
                         View Document
                       </Button>
                       <p className="text-xs text-gray-500">
-                        {new Date(getDocumentByType("NID_BIRTH_CERTIFICATE")?.uploaded_at || '').toLocaleDateString()}
+                        {new Date(
+                          getDocumentByType("NID_BIRTH_CERTIFICATE")
+                            ?.uploaded_at || ""
+                        ).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">No document uploaded yet</p>
+                  <p className="text-sm text-gray-500">
+                    No document uploaded yet
+                  </p>
                 )}
                 {isUploadingDocument["NID_BIRTH_CERTIFICATE"] && (
                   <div className="flex items-center gap-2 text-sm text-blue-600">
@@ -1394,19 +1788,28 @@ export default function ProfileSection() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(getDocumentByType("INSTITUTE_ID")?.file_url, '_blank')}
+                        onClick={() =>
+                          window.open(
+                            getDocumentByType("INSTITUTE_ID")?.file_url,
+                            "_blank"
+                          )
+                        }
                         className="flex items-center gap-1"
                       >
                         <Eye className="h-3 w-3" />
                         View Document
                       </Button>
                       <p className="text-xs text-gray-500">
-                        {new Date(getDocumentByType("INSTITUTE_ID")?.uploaded_at || '').toLocaleDateString()}
+                        {new Date(
+                          getDocumentByType("INSTITUTE_ID")?.uploaded_at || ""
+                        ).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">No document uploaded yet</p>
+                  <p className="text-sm text-gray-500">
+                    No document uploaded yet
+                  </p>
                 )}
                 {isUploadingDocument["INSTITUTE_ID"] && (
                   <div className="flex items-center gap-2 text-sm text-blue-600">
@@ -1417,18 +1820,23 @@ export default function ProfileSection() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
             <div className="flex items-start gap-3">
               <Upload className="h-5 w-5 text-blue-600 mt-0.5" />
               <div>
-                <h4 className="text-sm font-medium text-blue-800">Document Upload Guidelines</h4>
+                <h4 className="text-sm font-medium text-blue-800">
+                  Document Upload Guidelines
+                </h4>
                 <ul className="mt-2 text-sm text-blue-700 space-y-1">
                   <li>• Upload documents in PDF, JPG, or PNG format</li>
                   <li>• Maximum file size: 10MB per document</li>
                   <li>• Ensure documents are clear and readable</li>
                   <li>• All documents are stored securely</li>
-                  <li>• Existing documents will be replaced when you upload new ones</li>
+                  <li>
+                    • Existing documents will be replaced when you upload new
+                    ones
+                  </li>
                 </ul>
               </div>
             </div>
