@@ -984,7 +984,7 @@ export default function TutorRequestPage() {
                         disabled={isLoadingCategories || isLoadingTaxonomy}
                       >
                         <SelectTrigger className="h-10 sm:h-11">
-                          <SelectValue placeholder="Category *" />
+                          <SelectValue placeholder="Medium *" />
                         </SelectTrigger>
                         <SelectContent>
                           {categories

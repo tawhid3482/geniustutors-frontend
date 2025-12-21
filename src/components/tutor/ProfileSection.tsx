@@ -1342,7 +1342,7 @@ export default function ProfileSection() {
       
 
             {/* Expected Salary and Hourly Rate */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
                 <Label>Expected Salary (Monthly)</Label>
                 <Input
@@ -1359,6 +1359,17 @@ export default function ProfileSection() {
                   value={profile.hourly_rate}
                   onChange={handleProfileChange}
                   placeholder="Hourly rate in BDT"
+                  type="number"
+                  min="0"
+                />
+              </div>
+              <div>
+                <Label>Experience</Label>
+                <Input
+                  name="experience"
+                  value={profile.experience}
+                  onChange={handleProfileChange}
+                  placeholder="Enter your experience"
                   type="number"
                   min="0"
                 />

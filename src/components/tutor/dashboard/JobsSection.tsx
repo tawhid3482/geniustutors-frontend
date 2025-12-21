@@ -236,43 +236,7 @@ const JobsSection = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Subject
-                </label>
-                <select
-                  value={selectedSubject}
-                  onChange={(e) => setSelectedSubject(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md bg-white"
-                >
-                  <option value="all">All Subjects</option>
-                  {uniqueSubjects.map((subject) => (
-                    <option key={subject} value={subject}>
-                      {subject}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Location
-                </label>
-                <select
-                  value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md bg-white"
-                >
-                  <option value="all">All Locations</option>
-                  {uniqueLocations.map((location) => (
-                    <option key={location} value={location}>
-                      {location}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+           
 
             <div className="flex flex-wrap gap-2 pt-2">
               <Button
@@ -293,8 +257,7 @@ const JobsSection = () => {
                   onClick={() => {
                     setSelectedSubject("all");
                     setSelectedLocation("all");
-                    // Show nearby jobs in filtered results
-                    // We can't directly set the filteredJobs, so we show a badge
+                    
                   }}
                   className="border-blue-200 text-blue-700 hover:bg-blue-50"
                 >

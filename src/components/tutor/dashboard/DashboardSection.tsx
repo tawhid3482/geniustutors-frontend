@@ -22,13 +22,15 @@ import { useAuth } from "@/contexts/AuthContext.next";
 import { tutorDashboardService } from "@/services/tutorDashboardService";
 import { noticeBoardService } from "@/services/noticeBoardService";
 import { useGetAllNoticeByRoleQuery } from "@/redux/features/notice/noticeApi";
-import { useGetMYInfoQuery } from "@/redux/features/auth/authApi";
+import {
+  useGetMYInfoQuery,
+  useGetTutorStatsQuery,
+} from "@/redux/features/auth/authApi";
 import { useGetAllTutorRequestsForPublicQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
 import ProfileSection from "../ProfileSection";
 
 const DashboardSection = () => {
   const { user } = useAuth();
-  
 
   const [dashboardStats, setDashboardStats] = useState({
     totalEarnings: 0,
@@ -50,6 +52,7 @@ const DashboardSection = () => {
     isVerified: false, // From MyInfo data
     isGeniusTutor: false, // From MyInfo data
   });
+
   const [loading, setLoading] = useState(true);
 
   const userId = user?.id as string;
@@ -63,12 +66,13 @@ const DashboardSection = () => {
   });
 
   const { data: MyInfo, isLoading: loadingMyInfo } = useGetMYInfoQuery(userId);
-  console.log(noticeResponse)
-  console.log(MyInfo)
   const { data: AllJobs, isLoading: loadingAllJobs } =
-  useGetAllTutorRequestsForPublicQuery(undefined);
-  
-  console.log(AllJobs)
+    useGetAllTutorRequestsForPublicQuery(undefined);
+
+  const { data: tutorStatus } = useGetTutorStatsQuery(userId);
+
+  const tutorStatusData = tutorStatus?.data
+
   // Calculate profile completion percentage
   const calculateProfileCompletion = (userData: any) => {
     if (!userData) return 0;
@@ -238,7 +242,7 @@ const DashboardSection = () => {
           <div className="flex items-center gap-3 mb-4">
             <Megaphone className="h-6 w-6 text-green-600" />
             <h2 className="text-xl font-semibold text-gray-800">
-              Notice Boardss
+              Notice Boards
             </h2>
           </div>
 
@@ -394,7 +398,7 @@ const DashboardSection = () => {
           <CardContent className="p-4 text-center">
             <Briefcase className="h-8 w-8 text-green-600 mx-auto mb-2" />
             <div className="text-2xl font-bold text-gray-800 mb-1">
-              {dashboardStats.appliedJobs}
+              {tutorStatusData.total}
             </div>
             <div className="text-sm text-gray-600">Applied Jobs</div>
           </CardContent>
@@ -404,9 +408,9 @@ const DashboardSection = () => {
           <CardContent className="p-4 text-center">
             <FileText className="h-8 w-8 text-green-500 mx-auto mb-2" />
             <div className="text-2xl font-bold text-gray-800 mb-1">
-              {dashboardStats.shortlistedJobs}
+              {tutorStatusData.pending}
             </div>
-            <div className="text-sm text-gray-600">Shortlisted Jobs</div>
+            <div className="text-sm text-gray-600">Pending </div>
           </CardContent>
         </Card>
 
@@ -414,9 +418,9 @@ const DashboardSection = () => {
           <CardContent className="p-4 text-center">
             <UserCheck className="h-8 w-8 text-green-700 mx-auto mb-2" />
             <div className="text-2xl font-bold text-gray-800 mb-1">
-              {dashboardStats.appointedJobs}
+              {tutorStatusData.accepted}
             </div>
-            <div className="text-sm text-gray-600">Appointed Jobs</div>
+            <div className="text-sm text-gray-600">Accepted </div>
           </CardContent>
         </Card>
 
@@ -424,9 +428,9 @@ const DashboardSection = () => {
           <CardContent className="p-4 text-center">
             <HeartHandshake className="h-8 w-8 text-green-600 mx-auto mb-2" />
             <div className="text-2xl font-bold text-gray-800 mb-1">
-              {dashboardStats.confirmedJobs}
+              {tutorStatusData.under_review}
             </div>
-            <div className="text-sm text-gray-600">Confirmed Jobs</div>
+            <div className="text-sm text-gray-600">Under Reviews </div>
           </CardContent>
         </Card>
 
@@ -434,9 +438,9 @@ const DashboardSection = () => {
           <CardContent className="p-4 text-center">
             <XCircle className="h-8 w-8 text-red-600 mx-auto mb-2" />
             <div className="text-2xl font-bold text-gray-800 mb-1">
-              {dashboardStats.cancelledJobs}
+              {tutorStatusData.rejected}
             </div>
-            <div className="text-sm text-gray-600">Cancelled Jobs</div>
+            <div className="text-sm text-gray-600">Rejected </div>
           </CardContent>
         </Card>
       </div>
@@ -510,10 +514,10 @@ const DashboardSection = () => {
                   Complete & organized profile may help to get better response.
                 </p>
                 <div className="flex items-center  cursor-pointer">
-                  <span className="text-sm " >
+                  <span className="text-sm ">
                     Go to Profile Section and Update Your Profile
                   </span>
-                 {/* {activeTab === "profile" && <ProfileSection />} */}
+                  {/* {activeTab === "profile" && <ProfileSection />} */}
                   {/* <ArrowRight className="h-4 w-4 ml-1" /> */}
                 </div>
               </div>

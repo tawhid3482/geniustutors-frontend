@@ -79,6 +79,14 @@ const authApi = baseApi.injectEndpoints({
       providesTags: [tagTypes.auth],
     }),
 
+    getTutorStats: builder.query({
+      query: (id: string) => ({
+        url: `/auth/user/tutor-stats/${id}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.auth],
+    }),
+
     getSingleAuthData: builder.query({
       query: (id: string) => ({
         url: `/auth/${id}`,
@@ -154,5 +162,6 @@ export const {
   useUpdateAdminProfileMutation,
   useUpdateUserProfileMutation,
   useGetStudentStatsQuery,
+  useGetTutorStatsQuery,
   useGetMYInfoQuery,
 } = authApi;

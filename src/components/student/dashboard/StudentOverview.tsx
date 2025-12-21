@@ -77,7 +77,7 @@ export function StudentOverview({
     return [
       {
         id: "total",
-        label: "Total Requests",
+        label: "All Total Requests",
         value: total || 0,
         icon: BookOpen,
         description: "All tuition requests",
