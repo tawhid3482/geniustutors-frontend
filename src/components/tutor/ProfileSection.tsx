@@ -41,6 +41,7 @@ import {
 import { useGetAllDistrictsQuery } from "@/redux/features/district/districtApi";
 import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
 import mediumOptions from "@/data/mediumOptions.json";
+import { useCreateNotificationMutation } from "@/redux/features/notification/notificationApi";
 
 interface ProfileFormData {
   // Personal Information
@@ -136,6 +137,8 @@ export default function ProfileSection() {
 
   const { data: districtData } = useGetAllDistrictsQuery(undefined);
   const { data: categoryData } = useGetAllCategoryQuery(undefined);
+
+  const [createNotification]=useCreateNotificationMutation()
 
   const [updateUserProfile, { isLoading: isUpdatingProfile }] =
     useUpdateUserProfileMutation();
@@ -357,9 +360,7 @@ export default function ProfileSection() {
 
   // Load tuition thanas and areas based on selected district
   useEffect(() => {
-    console.log("District changed:", profile.district);
-    console.log("Current thana:", profile.thana);
-    console.log("Current preferred_areas:", profile.preferred_areas);
+   
 
     if (profile.district && districtData?.data) {
       const selectedDistrict = districtData.data.find(
@@ -369,17 +370,14 @@ export default function ProfileSection() {
       if (selectedDistrict) {
         // Set available thanas
         const thanas = selectedDistrict.thana || [];
-        console.log("Available thanas for district:", thanas);
         setTuitionAvailableThanas(thanas);
 
         // Set available areas
         const areas = selectedDistrict.area || [];
-        console.log("Available areas for district:", areas);
         setTuitionAvailableAreas(areas);
 
         // Reset thana if it's not available in the new district
         if (profile.thana && !thanas.includes(profile.thana)) {
-          console.log(`Thana ${profile.thana} not in new district, resetting`);
           setProfile((prev) => ({
             ...prev,
             thana: thanas.length > 0 ? thanas[0] : "",
@@ -389,19 +387,16 @@ export default function ProfileSection() {
 
         // If current thana is empty but we have available thanas, set first one
         if (!profile.thana && thanas.length > 0) {
-          console.log("Setting first available thana");
           setProfile((prev) => ({
             ...prev,
             thana: thanas[0],
           }));
         }
       } else {
-        console.log("District not found in district data");
         setTuitionAvailableThanas([]);
         setTuitionAvailableAreas([]);
       }
     } else {
-      console.log("No district selected or district data not loaded");
       setTuitionAvailableThanas([]);
       setTuitionAvailableAreas([]);
       // Reset thana and areas when no district is selected
@@ -427,7 +422,6 @@ export default function ProfileSection() {
           setUpgradeStatus(upgradeResponse.data);
         }
       } catch (error) {
-        console.error("Error fetching upgrade status:", error);
       } finally {
         setIsLoadingUpgradeStatus(false);
       }
@@ -504,6 +498,13 @@ export default function ProfileSection() {
           id: userId,
           data: { avatar: imageUrl },
         }).unwrap();
+         await createNotification({
+            title: "Profile Updated",
+            message: "Your profile has been successfully updated.",
+            type: "success",
+            readStatus: false,
+            userId: user.id,
+          }).unwrap();
 
         if (result.success) {
           setProfile((prev) => ({ ...prev, avatar: imageUrl }));
@@ -876,6 +877,14 @@ export default function ProfileSection() {
           description: "Profile updated successfully",
           variant: "default",
         });
+
+         await createNotification({
+            title: "Profile Updated",
+            message: "Your profile has been successfully updated.",
+            type: "success",
+            readStatus: false,
+            userId: user.id,
+          }).unwrap();
 
         // Refetch user data
         refetchUser();
