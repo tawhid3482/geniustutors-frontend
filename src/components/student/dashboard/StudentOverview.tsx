@@ -15,11 +15,16 @@ import {
   CheckCircle,
   Info,
   AlertTriangle,
+  BookOpen,
+  Clock,
+  Target,
+  TrendingUp,
 } from "lucide-react";
 import { useMemo } from "react";
 import { useGetAllNoticeByRoleQuery } from "@/redux/features/notice/noticeApi";
 import { useAuth } from "@/contexts/AuthContext.next";
 import { useRouter } from "next/navigation";
+import { useGetStudentStatsQuery } from "@/redux/features/auth/authApi";
 
 interface StudentOverviewProps {
   profile: any;
@@ -36,11 +41,6 @@ interface StudentOverviewProps {
 
 export function StudentOverview({
   profile,
-  requestsPostedCount,
-  tutorRequestedCount,
-  tutorAssignedCount,
-  paymentsProcessedCount,
-  postedRequests,
   recentPlatformJobs,
   topRatedTutors,
   setActiveTab,
@@ -49,34 +49,107 @@ export function StudentOverview({
   const user = useAuth();
   const userId = user.user.id;
 
-  // Use RTK Query hook - make sure to pass the correct id parameter
+  // Use RTK Query hook
   const {
     data: noticeResponse,
     isLoading: loadingNotices,
     error,
   } = useGetAllNoticeByRoleQuery({
-    id: userId, 
+    id: userId,
   });
 
+  const { data: statsResponse, isLoading: loadingStats } =
+    useGetStudentStatsQuery(userId);
 
+  console.log("Stats Data:", statsResponse);
 
-  // Extract notices from the response
   const notices = noticeResponse?.data || [];
+  const statsData = statsResponse?.data || {};
 
-  // const overviewStats = useMemo(
-  //   () => [
-  //     { label: "Requests", value: requestsPostedCount, icon: ListFilter },
-  //     { label: "Demo Invites", value: tutorRequestedCount, icon: Users },
-  //     { label: "Assigned", value: tutorAssignedCount, icon: CheckCircle2 },
-  //     { label: "Paid", value: paymentsProcessedCount, icon: CreditCard },
-  //   ],
-  //   [
-  //     requestsPostedCount,
-  //     tutorRequestedCount,
-  //     tutorAssignedCount,
-  //     paymentsProcessedCount,
-  //   ]
-  // );
+  // Create stats cards data from API response
+  const statsCards = useMemo(() => {
+    if (!statsData || Object.keys(statsData).length === 0) {
+      return [];
+    }
+
+    const { active, confirmed, rejected, total } = statsData;
+
+    return [
+      {
+        id: "total",
+        label: "Total Requests",
+        value: total || 0,
+        icon: BookOpen,
+        description: "All tuition requests",
+        color: "from-blue-500 to-blue-600",
+        bgColor: "bg-blue-50",
+        textColor: "text-blue-700",
+        iconColor: "text-blue-600",
+        trend: "total",
+      },
+       {
+        id: "active",
+        label: "Active",
+        value: active || 0,
+        icon: Clock,
+        description: "Currently active",
+        color: "from-amber-500 to-amber-600",
+        bgColor: "bg-amber-50",
+        textColor: "text-amber-700",
+        iconColor: "text-amber-600",
+        trend: "active",
+      },
+      {
+        id: "confirmed",
+        label: "Confirmed",
+        value: confirmed || 0,
+        icon: CheckCircle2,
+        description: "Approved requests",
+        color: "from-green-500 to-green-600",
+        bgColor: "bg-green-50",
+        textColor: "text-green-700",
+        iconColor: "text-green-600",
+        trend: "confirmed",
+      },
+     
+      {
+        id: "rejected",
+        label: "Rejected",
+        value: rejected || 0,
+        icon: AlertCircle,
+        description: "Not approved",
+        color: "from-red-500 to-red-600",
+        bgColor: "bg-red-50",
+        textColor: "text-red-700",
+        iconColor: "text-red-600",
+        trend: "rejected",
+      },
+    ];
+  }, [statsData]);
+
+  // Calculate stats summary for the header
+  const statsSummary = useMemo(() => {
+    if (!statsData || Object.keys(statsData).length === 0) {
+      return null;
+    }
+
+    const { total,  active, confirmed, rejected } = statsData;
+
+    if (total === 0) return null;
+
+    const confirmedPercentage =
+      total > 0 ? Math.round((confirmed / total) * 100) : 0;
+    const activePercentage = total > 0 ? Math.round((active / total) * 100) : 0;
+
+    return {
+      confirmedPercentage,
+      activePercentage,
+      total,
+      active,
+      confirmed,
+      rejected,
+    };
+  }, [statsData]);
 
   // Get notice type icon and styling
   const getNoticeTypeConfig = (type: string) => {
@@ -111,14 +184,50 @@ export function StudentOverview({
         };
     }
   };
-  const router = useRouter()
 
-  const handlePush =()=>{
-   router.push('/tutor-request') 
+  const router = useRouter();
+
+  const handlePush = () => {
+    router.push("/tutor-request");
+  };
+
+  // Loading state for stats
+  if (loadingStats) {
+    return (
+      <div className="space-y-4 sm:space-y-6 w-full">
+        <div className="rounded-2xl bg-gradient-to-r from-green-600 via-green-500 to-green-600 text-white p-4 sm:p-6 shadow-lg">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">
+                Welcome back, {profile.name.split(" ")[0]} 👋
+              </h2>
+              <p className="text-white/90 mt-1 text-sm sm:text-base">
+                Loading your learning journey...
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="border-green-100/60">
+              <CardHeader className="pb-2">
+                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div className="h-3 w-20 bg-gray-100 rounded animate-pulse"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-4 sm:space-y-6 w-full">
+      {/* Welcome Banner */}
       <div className="rounded-2xl bg-gradient-to-r from-green-600 via-green-500 to-green-600 text-white p-4 sm:p-6 shadow-lg">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
@@ -126,7 +235,25 @@ export function StudentOverview({
               Welcome back, {profile.name.split(" ")[0]} 👋
             </h2>
             <p className="text-white/90 mt-1 text-sm sm:text-base">
-              Here is a quick snapshot of your learning journey.
+              {statsSummary ? (
+                <>
+                  You have{" "}
+                  <span className="font-bold">
+                    {statsSummary.total} tuition request
+                    {statsSummary.total !== 1 ? "s" : ""}
+                  </span>
+                  .{" "}
+                  <span className="font-bold text-green-200">
+                    {statsSummary.confirmedPercentage}% confirmed
+                  </span>
+                  ,{" "}
+                  <span className="font-bold text-amber-200">
+                    {statsSummary.activePercentage}% active
+                  </span>
+                </>
+              ) : (
+                "Start your learning journey by posting a tuition request."
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -140,6 +267,11 @@ export function StudentOverview({
           </div>
         </div>
       </div>
+
+      {/* Stats Cards */}
+    
+
+  
 
       {/* Notice Board */}
       <Card className="bg-white rounded-xl shadow-sm">
@@ -164,7 +296,7 @@ export function StudentOverview({
             </div>
           ) : notices.length > 0 ? (
             <div className="space-y-3">
-              {notices.map((notice:any) => {
+              {notices.map((notice: any) => {
                 const typeConfig = getNoticeTypeConfig(notice.type);
                 const TypeIcon = typeConfig.icon;
 
@@ -228,26 +360,85 @@ export function StudentOverview({
         </CardContent>
       </Card>
 
-      {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {overviewStats.map((s) => (
-          <Card
-            key={s.label}
-            className="border-green-100/60 hover:shadow-md transition-all"
-          >
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-xs sm:text-sm text-muted-foreground">
-                {s.label}
-              </CardTitle>
-              <s.icon className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl sm:text-2xl font-bold">{s.value}</div>
-              <p className="text-xs text-muted-foreground mt-1">This month</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div> */}
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {statsCards.map((stat) => {
+          const Icon = stat.icon;
 
+          return (
+            <Card
+              key={stat.id}
+              className={`${stat.bgColor} border-transparent hover:shadow-lg transition-all duration-300 hover:scale-[1.02] group overflow-hidden`}
+            >
+              <div className="relative">
+                {/* Gradient overlay */}
+                <div
+                  className={`absolute top-0 right-0 w-20 h-20 opacity-10 bg-gradient-to-br ${stat.color} rounded-full -translate-y-8 translate-x-8`}
+                ></div>
+
+                <CardHeader className="pb-2 flex flex-row items-center justify-between relative z-10">
+                  <CardTitle
+                    className={`text-xs sm:text-sm font-medium ${stat.textColor}`}
+                  >
+                    {stat.label}
+                  </CardTitle>
+                  <div
+                    className={`p-2 rounded-lg ${stat.bgColor} bg-opacity-50 group-hover:scale-110 transition-transform`}
+                  >
+                    <Icon className={`h-4 w-4 ${stat.iconColor}`} />
+                  </div>
+                </CardHeader>
+                <CardContent className="relative z-10">
+                  <div
+                    className={`text-2xl sm:text-3xl font-bold ${stat.textColor}`}
+                  >
+                    {stat.value}
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {stat.description}
+                  </p>
+
+                  {/* Progress bar for confirmed and active */}
+                  {(stat.id === "confirmed" || stat.id === "active") &&
+                    statsSummary &&
+                    statsSummary.total > 0 && (
+                      <div className="mt-3">
+                      
+                        <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${
+                              stat.id === "confirmed"
+                                ? "bg-green-500"
+                                : "bg-amber-500"
+                            } rounded-full transition-all duration-500`}
+                            style={{
+                              width: `${
+                                stat.id === "confirmed"
+                                  ? statsSummary.confirmedPercentage
+                                  : statsSummary.activePercentage
+                              }%`,
+                            }}
+                          ></div>
+                        </div>
+
+                          <div className="flex justify-between text-xs mb-1">
+                          <span className={`${stat.textColor} font-medium`}>
+                            {stat.id === "confirmed"
+                              ? statsSummary.confirmedPercentage
+                              : statsSummary.activePercentage}
+                            %
+                          </span>
+                          <span className="text-gray-500">of total</span>
+                        </div>
+                      </div>
+                    )}
+                </CardContent>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Recent Tuition Jobs and Top Rated Tutors */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
