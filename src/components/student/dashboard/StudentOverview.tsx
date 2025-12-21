@@ -19,6 +19,7 @@ import {
 import { useMemo } from "react";
 import { useGetAllNoticeByRoleQuery } from "@/redux/features/notice/noticeApi";
 import { useAuth } from "@/contexts/AuthContext.next";
+import { useRouter } from "next/navigation";
 
 interface StudentOverviewProps {
   profile: any;
@@ -110,6 +111,11 @@ export function StudentOverview({
         };
     }
   };
+  const router = useRouter()
+
+  const handlePush =()=>{
+   router.push('/tutor-request') 
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6 w-full">
@@ -127,7 +133,7 @@ export function StudentOverview({
             <Button
               variant="secondary"
               className="bg-white text-green-700 hover:bg-green-50 text-sm sm:text-base"
-              onClick={() => setActiveTab("request")}
+              onClick={() => handlePush()}
             >
               Post a Request
             </Button>
