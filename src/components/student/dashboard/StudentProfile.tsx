@@ -22,24 +22,36 @@ import {
 import { useAuth } from "@/contexts/AuthContext.next";
 import { useRouter } from "next/navigation";
 
-interface StudentProfileProps {
-  profile: any;
-  refetchProfile?: () => void; // Optional: to refetch profile data after update
+interface ProfileFormData {
+  fullName: string;
+  email: string;
+  phone: string;
+  district: string;
+  location: string;
+  avatar?: string;
 }
 
-export function StudentProfile({
-  profile,
-  refetchProfile,
-}: StudentProfileProps) {
-  const [profileForm, setProfileForm] = useState({
-    fullName: profile.name || "",
-    email: profile.email || "",
-    phone: profile.phone || "",
-    district: profile.district || "",
-    location: profile.location || "",
+interface PasswordFormData {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export function StudentProfile() {
+  const { user, signOut } = useAuth();
+  console.log(user)
+  const router = useRouter();
+
+  const [profileForm, setProfileForm] = useState<ProfileFormData>({
+    fullName: "",
+    email: "",
+    phone: "",
+    district: "",
+    location: "",
+    avatar: "",
   });
 
-  const [passwordForm, setPasswordForm] = useState({
+  const [passwordForm, setPasswordForm] = useState<PasswordFormData>({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
@@ -48,8 +60,6 @@ export function StudentProfile({
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState<string>("");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const { user, signOut } = useAuth();
-  const router = useRouter();
 
   // RTK Query mutations
   const [updateProfile, { isLoading: isUpdatingProfile }] =
@@ -57,20 +67,23 @@ export function StudentProfile({
   const [changePassword, { isLoading: isChangingPassword }] =
     useChangePasswordMutation();
 
+  // Initialize profile form with user data
   useEffect(() => {
-    setProfileForm({
-      fullName: profile.name || "",
-      email: profile.email || "",
-      phone: profile.phone || "",
-      district: profile.district || "",
-      location: profile.location || "",
-    });
+    if (user) {
+      setProfileForm({
+        fullName: user.fullName || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        district: user.district || "",
+        location: user.location || "",
+        avatar: user.avatar || "",
+      });
 
-    // Reset preview if profile has avatar
-    if (profile.avatar) {
-      setProfilePhotoPreview(profile.avatar);
+      if (user.avatar) {
+        setProfilePhotoPreview(user.avatar);
+      }
     }
-  }, [profile]);
+  }, [user]);
 
   const uploadImage = async (file: File): Promise<string> => {
     const data = new FormData();
@@ -101,6 +114,26 @@ export function StudentProfile({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Error",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "Image size should be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Set preview
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -113,7 +146,7 @@ export function StudentProfile({
   };
 
   // Profile form handlers
-  const handleProfileFormChange = (field: string, value: string) => {
+  const handleProfileFormChange = (field: keyof ProfileFormData, value: string) => {
     setProfileForm((prev) => ({
       ...prev,
       [field]: value,
@@ -121,7 +154,7 @@ export function StudentProfile({
   };
 
   const handleProfileFormSubmit = async () => {
-    // Check if userId is available
+    // Check if user is available
     if (!user?.id) {
       toast({
         title: "Error",
@@ -131,8 +164,47 @@ export function StudentProfile({
       return;
     }
 
+    // Validate required fields
+    if (!profileForm.fullName.trim()) {
+      toast({
+        title: "Error",
+        description: "Full name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!profileForm.email.trim()) {
+      toast({
+        title: "Error",
+        description: "Email is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(profileForm.email)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!profileForm.phone.trim()) {
+      toast({
+        title: "Error",
+        description: "Phone number is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      let avatarUrl = profile.avatar; // Keep existing avatar by default
+      let avatarUrl = user.avatar || ""; // Keep existing avatar by default
 
       // If a new photo is selected, upload it first
       if (profilePhoto) {
@@ -147,7 +219,7 @@ export function StudentProfile({
           toast({
             title: "Error",
             description:
-              error?.data?.message || "Failed to upload profile photo",
+              error?.message || "Failed to upload profile photo",
             variant: "destructive",
           });
           return; // Stop if image upload fails
@@ -156,31 +228,49 @@ export function StudentProfile({
         }
       }
 
-      // Update profile with user ID
-      await updateProfile({
-        id: user?.id,
-        data: {
-          ...profileForm,
-          avatar: avatarUrl, // Include the avatar URL (existing or new)
-        },
+      // Prepare update data
+      const updateData = {
+        fullName: profileForm.fullName.trim(),
+        email: profileForm.email.trim(),
+        phone: profileForm.phone.trim(),
+        district: profileForm.district,
+        avatar: avatarUrl,
+      };
+
+      // Remove empty fields
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key as keyof typeof updateData] === "") {
+          delete updateData[key as keyof typeof updateData];
+        }
+      });
+
+      // Update profile
+      const result = await updateProfile({
+        id: user.id,
+        data: updateData,
       }).unwrap();
 
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Profile updated successfully",
+        });
 
-      signOut();
-      router.push("/");
-      toast({
-        description: "Please Login again to see the changes",
-      });
-      // Clear the photo state after successful update
-      setProfilePhoto(null);
+        // Clear the photo state after successful update
+        setProfilePhoto(null);
 
-      // Refetch profile if refetch function provided
-      if (refetchProfile) {
-        refetchProfile();
+        // Logout and redirect
+        signOut();
+        router.push("/");
+        toast({
+          description: "Please login again to see the changes",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to update profile",
+          variant: "destructive",
+        });
       }
     } catch (error: any) {
       console.error("Error updating profile:", error);
@@ -192,84 +282,36 @@ export function StudentProfile({
     }
   };
 
-  // const handlePasswordFormSubmit = async () => {
-  //   // Check if userId is available
-  //   if (!user?.id) {
-  //     toast({
-  //       title: "Error",
-  //       description: "User ID not found. Please log in again.",
-  //       variant: "destructive",
-  //     });
-  //     return;
-  //   }
 
-  //   // Validate passwords
-  //   if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-  //     toast({
-  //       title: "Error",
-  //       description: "New passwords do not match",
-  //       variant: "destructive",
-  //     });
-  //     return;
-  //   }
 
-  //   if (passwordForm.newPassword.length < 6) {
-  //     toast({
-  //       title: "Error",
-  //       description: "Password must be at least 6 characters",
-  //       variant: "destructive",
-  //     });
-  //     return;
-  //   }
-
-  //   try {
-  //     // Change password with user ID
-  //     await changePassword({
-  //       id: user?.id,
-  //       data: {
-  //         oldPassword: passwordForm.currentPassword,
-  //         newPassword: passwordForm.newPassword,
-  //       },
-  //     }).unwrap();
-
-  //     toast({
-  //       title: "Success",
-  //       description: "Password changed successfully",
-  //     });
-
-  //     signOut();
-  //     router.push("/");
-  //     toast({
-  //       description: "Please Login again",
-  //     });
-
-  //     // Clear form
-  //     setPasswordForm({
-  //       currentPassword: "",
-  //       newPassword: "",
-  //       confirmPassword: "",
-  //     });
-  //   } catch (error: any) {
-  //     console.error("Error changing password:", error);
-  //     toast({
-  //       title: "Error",
-  //       description: error?.data?.message || "Failed to change password",
-  //       variant: "destructive",
-  //     });
-  //   }
-  // };
+  // If no user, show message
+  if (!user) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <p className="text-gray-600">Please login to view your profile.</p>
+          <Button
+            className="mt-4 bg-green-600 hover:bg-green-700"
+            onClick={() => router.push("/login")}
+          >
+            Login
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="w-full space-y-6">
       {/* Profile Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Profile Settingssss</CardTitle>
+          <CardTitle>Profile Settings</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">Full Name *</Label>
               <Input
                 id="name"
                 className="mt-1"
@@ -277,10 +319,11 @@ export function StudentProfile({
                 onChange={(e) =>
                   handleProfileFormChange("fullName", e.target.value)
                 }
+                placeholder="Enter your full name"
               />
             </div>
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email *</Label>
               <Input
                 id="email"
                 className="mt-1"
@@ -289,10 +332,11 @@ export function StudentProfile({
                   handleProfileFormChange("email", e.target.value)
                 }
                 type="email"
+                placeholder="Enter your email"
               />
             </div>
             <div>
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone">Phone *</Label>
               <Input
                 id="phone"
                 className="mt-1"
@@ -301,12 +345,13 @@ export function StudentProfile({
                   handleProfileFormChange("phone", e.target.value)
                 }
                 type="tel"
+                placeholder="Enter your phone number"
               />
             </div>
             <div>
               <Label htmlFor="district">District</Label>
               <Select
-                value={profileForm.district || ""}
+                value={profileForm.district}
                 onValueChange={(v) => handleProfileFormChange("district", v)}
               >
                 <SelectTrigger id="district" className="mt-1">
@@ -321,18 +366,7 @@ export function StudentProfile({
                 </SelectContent>
               </Select>
             </div>
-            <div className="md:col-span-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                className="mt-1"
-                value={profileForm.location}
-                onChange={(e) =>
-                  handleProfileFormChange("location", e.target.value)
-                }
-                placeholder="Enter your current location (e.g., Dhanmondi, Dhaka)"
-              />
-            </div>
+         
             <div className="md:col-span-2">
               <Label>Profile Photo</Label>
               <div className="mt-1 flex items-center gap-4">
@@ -342,12 +376,6 @@ export function StudentProfile({
                       <img
                         src={profilePhotoPreview}
                         alt="Profile Preview"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : profile.avatar ? (
-                      <img
-                        src={profile.avatar}
-                        alt="Profile"
                         className="h-full w-full object-cover"
                       />
                     ) : (
@@ -374,28 +402,32 @@ export function StudentProfile({
                       ? "New photo selected. Click 'Save Changes' to upload."
                       : "Upload a profile photo to personalize your account"}
                   </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      document.getElementById("photo-upload")?.click()
-                    }
-                  >
-                    Choose Photo
-                  </Button>
-                  {profilePhoto && (
+                  <div className="flex gap-2">
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="ml-2"
-                      onClick={() => {
-                        setProfilePhoto(null);
-                        setProfilePhotoPreview(profile.avatar || "");
-                      }}
+                      onClick={() =>
+                        document.getElementById("photo-upload")?.click()
+                      }
                     >
-                      Remove
+                      Choose Photo
                     </Button>
-                  )}
+                    {profilePhoto && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setProfilePhoto(null);
+                          setProfilePhotoPreview(user.avatar || "");
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Supported formats: JPG, PNG, GIF. Max size: 5MB
+                  </p>
                 </div>
               </div>
             </div>
@@ -419,80 +451,7 @@ export function StudentProfile({
         </CardContent>
       </Card>
 
-      {/* Password Change Section */}
-      {/* <Card>
-        <CardHeader>
-          <CardTitle>Change Password</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="currentPassword">Current Password</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                className="mt-1"
-                value={passwordForm.currentPassword}
-                onChange={(e) =>
-                  setPasswordForm((prev) => ({
-                    ...prev,
-                    currentPassword: e.target.value,
-                  }))
-                }
-                placeholder="Enter current password"
-              />
-            </div>
-            <div>
-              <Label htmlFor="newPassword">New Password</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                className="mt-1"
-                value={passwordForm.newPassword}
-                onChange={(e) =>
-                  setPasswordForm((prev) => ({
-                    ...prev,
-                    newPassword: e.target.value,
-                  }))
-                }
-                placeholder="Enter new password"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                className="mt-1"
-                value={passwordForm.confirmPassword}
-                onChange={(e) =>
-                  setPasswordForm((prev) => ({
-                    ...prev,
-                    confirmPassword: e.target.value,
-                  }))
-                }
-                placeholder="Confirm new password"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end mt-4">
-            <Button
-              className="bg-green-600 hover:bg-green-700"
-              onClick={handlePasswordFormSubmit}
-              disabled={isChangingPassword}
-            >
-              {isChangingPassword ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                "Update Password"
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card> */}
+     
     </div>
   );
 }

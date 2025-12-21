@@ -629,6 +629,9 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
         </div>
 
         {/* Background - Creatable MultiSelect */}
+
+
+
         <div className="space-y-2">
           <Label
             htmlFor="background"
@@ -642,7 +645,7 @@ export const TutorSignupForm: React.FC<TutorSignupFormProps> = ({
             placeholder="curriculum."
             options={categoryOptions}
             maxSelections={5}
-            className="border-green-200 focus:border-green-500"
+            className=" h-11 bg-white/80 border-green-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
           />
           <p className="text-xs text-gray-500">
             Type to search existing subjects or add new ones

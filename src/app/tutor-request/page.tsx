@@ -26,9 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { SUBJECT_OPTIONS, CLASS_LEVELS } from "@/data/mockData";
 import mediumOptions from "@/data/mediumOptions.json";
-import {
-  TutorRequestFormData,
-} from "@/services/tutorRequestService";
+import { TutorRequestFormData } from "@/services/tutorRequestService";
 import { useAuth } from "@/contexts/AuthContext.next";
 
 import {
@@ -135,7 +133,7 @@ export default function TutorRequestPage() {
       if (selectedDistrictData) {
         // Set available thanas from backend
         setAvailableThanas(selectedDistrictData.thana || []);
-        
+
         // Clear selected thana and areas when district changes
         setSelectedThana("");
         setSelectedAreas([]);
@@ -168,7 +166,7 @@ export default function TutorRequestPage() {
       if (selectedDistrictData) {
         // Only show areas for the selected district
         setAvailableAreas(selectedDistrictData.area || []);
-        
+
         // Clear selected areas when thana changes
         setSelectedAreas([]);
         setCustomArea("");
@@ -305,11 +303,11 @@ export default function TutorRequestPage() {
     setSelectedThana(thana);
     setSelectedAreas([]);
     setCustomArea("");
-    
+
     // Update form data with selected thana
     setFormData((prev) => ({
       ...prev,
-      thana: thana
+      thana: thana,
     }));
   };
 
@@ -837,15 +835,17 @@ export default function TutorRequestPage() {
                         <SelectTrigger className="h-10 sm:h-11">
                           <SelectValue placeholder="District *" />
                         </SelectTrigger>
-                        <SelectContent>
-                          {districtOptions.map((district: any) => (
-                            <SelectItem
-                              key={district.value}
-                              value={district.value}
-                            >
-                              {district.label}
-                            </SelectItem>
-                          ))}
+                        <SelectContent className="max-h-80">
+                          <div className="pr-1 overflow-y-auto max-h-60 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+                            {districtOptions.map((district: any) => (
+                              <SelectItem
+                                key={district.value}
+                                value={district.value}
+                              >
+                                {district.label}
+                              </SelectItem>
+                            ))}
+                          </div>
                         </SelectContent>
                       </Select>
                       {isLoadingDistricts && (
@@ -865,12 +865,14 @@ export default function TutorRequestPage() {
                         <SelectTrigger className="h-10 sm:h-11">
                           <SelectValue placeholder="Thana *" />
                         </SelectTrigger>
-                        <SelectContent>
-                          {availableThanas.map((thana: string) => (
-                            <SelectItem key={thana} value={thana}>
-                              {thana}
-                            </SelectItem>
-                          ))}
+                        <SelectContent className="max-h-80">
+                          <div className="pr-1 overflow-y-auto max-h-60 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+                            {availableThanas.map((thana: string) => (
+                              <SelectItem key={thana} value={thana}>
+                                {thana}
+                              </SelectItem>
+                            ))}
+                          </div>
                         </SelectContent>
                       </Select>
                       {!selectedDistrict && (
@@ -890,12 +892,14 @@ export default function TutorRequestPage() {
                               <SelectTrigger className="h-10 sm:h-11">
                                 <SelectValue placeholder="Select area *" />
                               </SelectTrigger>
-                              <SelectContent>
-                                {availableAreas.map((area: string) => (
-                                  <SelectItem key={area} value={area}>
-                                    {area}
-                                  </SelectItem>
-                                ))}
+                              <SelectContent className="max-h-80">
+                                <div className="pr-1 overflow-y-auto max-h-60 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+                                  {availableAreas.map((area: string) => (
+                                    <SelectItem key={area} value={area}>
+                                      {area}
+                                    </SelectItem>
+                                  ))}
+                                </div>
                               </SelectContent>
                             </Select>
                           )}
@@ -933,23 +937,7 @@ export default function TutorRequestPage() {
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Select
-                        value={formData.medium || ""}
-                        onValueChange={(value) => handleChange("medium", value)}
-                      >
-                        <SelectTrigger className="h-10 sm:h-11">
-                          <SelectValue placeholder="Medium *" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mediumOptions.mediums.map((medium) => (
-                            <SelectItem key={medium.value} value={medium.value}>
-                              {medium.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                
                   </div>
 
                   {/* Selected areas display - Shown when areas are selected */}
@@ -1339,7 +1327,9 @@ export default function TutorRequestPage() {
                     }
                     className="bg-green-600 hover:bg-green-700 text-white px-8 sm:px-12 py-3 sm:py-4 text-base sm:text-lg w-full max-w-md"
                   >
-                    {isSubmitting || creating ? "Submitting..." : "Submit Tutor Request"}
+                    {isSubmitting || creating
+                      ? "Submitting..."
+                      : "Submit Tutor Request"}
                     {!(isSubmitting || creating) && (
                       <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 ml-2" />
                     )}

@@ -865,24 +865,27 @@ export default function TuitionJobs() {
                   >
                     <SelectValue placeholder="All Districts" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="font-bold">
-                      All Districts
-                    </SelectItem>
-                    {districts.map((district: string) => (
-                      <SelectItem
-                        key={district}
-                        value={district}
-                        className="font-bold"
-                      >
-                        {district}
+
+                  <SelectContent className="max-h-80">
+                    <div className="pr-1 overflow-y-auto max-h-60 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+                      <SelectItem value="all" className="font-bold">
+                        All Districts
                       </SelectItem>
-                    ))}
+                      {districts.map((district: string) => (
+                        <SelectItem
+                          key={district}
+                          value={district}
+                          className="font-bold"
+                        >
+                          {district}
+                        </SelectItem>
+                      ))}
+                    </div>
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Thana Filter - Only shows when district is selected */}
+              {/* Thana Filter */}
               <div className="space-y-2">
                 <Label
                   htmlFor="thana"
@@ -890,6 +893,7 @@ export default function TuitionJobs() {
                 >
                   Thana
                 </Label>
+
                 <Select
                   value={selectedThana}
                   onValueChange={setSelectedThana}
@@ -908,19 +912,22 @@ export default function TuitionJobs() {
                       }
                     />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="font-bold">
-                      All Thanas
-                    </SelectItem>
-                    {availableThanas.map((thana: string) => (
-                      <SelectItem
-                        key={thana}
-                        value={thana}
-                        className="font-bold"
-                      >
-                        {thana}
+
+                  <SelectContent className="max-h-80">
+                    <div className="pr-1 overflow-y-auto max-h-60 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+                      <SelectItem value="all" className="font-bold">
+                        All Thanas
                       </SelectItem>
-                    ))}
+                      {availableThanas.map((thana: string) => (
+                        <SelectItem
+                          key={thana}
+                          value={thana}
+                          className="font-bold"
+                        >
+                          {thana}
+                        </SelectItem>
+                      ))}
+                    </div>
                   </SelectContent>
                 </Select>
               </div>

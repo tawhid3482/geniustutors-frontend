@@ -566,7 +566,7 @@ export function StudentDashboardMain() {
         const response = await profileService.getProfile(user.id);
         if (response.success && response.data) {
           setProfileData({
-            name: response.data.full_name || response.data.name || "",
+            name: response.data.fullName || response.data.name || "",
             email: response.data.email || "",
             phone: response.data.phone || "",
             district: response.data.district || "",
@@ -971,7 +971,6 @@ export function StudentDashboardMain() {
             )}
             {activeTab === "profile" && (
               <StudentProfile
-                profile={profileData}
                 // paymentMethods={[]}
                 // isLoadingPaymentMethods={false}
                 // handleProfileUpdate={handleProfileUpdate}

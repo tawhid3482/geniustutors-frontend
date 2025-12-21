@@ -7,9 +7,9 @@ export const baseApi = createApi({
   reducerPath: "api",
   baseQuery: axiosBaseQuery({
     // baseUrl: "https://geniustutorss-backend.vercel.app/api",
-    // baseUrl: "http://localhost:5000/api",
+    baseUrl: "http://localhost:5000/api",
     // baseUrl: "http://160.25.7.229:5000/api",
-    baseUrl: "https://www.geniustutorss.com/api/api",
+    // baseUrl: "https://www.geniustutorss.com/api/api",
   }),
   endpoints: () => ({}),
   tagTypes: tagTypesList,

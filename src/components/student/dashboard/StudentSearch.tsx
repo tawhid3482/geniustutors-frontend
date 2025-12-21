@@ -13,26 +13,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Toggle } from "@/components/ui/toggle";
-import { Search, Star, Award, CheckCircle } from "lucide-react";
-import { ALL_DISTRICTS } from "@/data/bangladeshDistricts";
+import { Search, Star, Award, CheckCircle, MapPin, ChevronDown, ChevronUp, X } from "lucide-react";
 import { useGetAllTutorPublicQuery } from "@/redux/features/tutorHub/tutorHubApi";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useGetAllDistrictsQuery } from "@/redux/features/district/districtApi";
 
 export function StudentSearch() {
   // Local state for all filters and search
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterSubject, setFilterSubject] = useState("any");
-  const [filterArea, setFilterArea] = useState("all");
   const [filterGender, setFilterGender] = useState("any");
   const [filterRating, setFilterRating] = useState(0);
   const [viewMode, setViewMode] = useState("grid");
   const [filterExperience, setFilterExperience] = useState<string>("0");
   const [filterEducation, setFilterEducation] = useState<string>("all");
-  const [filterAvailability, setFilterAvailability] = useState<string>("all");
   const [filterMaxPrice, setFilterMaxPrice] = useState<string>("");
   const [filterSortBy, setFilterSortBy] = useState<string>("all");
   const [filterSortOrder, setFilterSortOrder] = useState<string>("desc");
+
+  // Area-based filter states
+  const [selectedArea, setSelectedArea] = useState<string>("all");
+  const [areaSearchQuery, setAreaSearchQuery] = useState("");
+  const [isAreaFilterExpanded, setIsAreaFilterExpanded] = useState(false);
 
   // RTK Query to fetch tutors
   const {
@@ -44,8 +46,65 @@ export function StudentSearch() {
     refetchOnMountOrArgChange: true,
   });
 
+  const { data: districtData } = useGetAllDistrictsQuery(undefined);
+
   // Extract tutors from the response
   const tutors = tutorsResponse?.data || [];
+
+  // Extract all unique areas from district data
+  const allUniqueAreas = useMemo(() => {
+    const areas = new Set<string>();
+    
+    if (districtData?.data) {
+      districtData.data.forEach((district: any) => {
+        if (district.area && Array.isArray(district.area)) {
+          district.area.forEach((area: string) => {
+            // Clean up area names
+            const cleanArea = area.trim();
+            if (cleanArea) {
+              areas.add(cleanArea);
+            }
+          });
+        }
+      });
+    }
+    
+    // Also extract areas from tutors
+    tutors.forEach((tutor: any) => {
+      if (tutor.area) {
+        if (Array.isArray(tutor.area)) {
+          tutor.area.forEach((area: string) => {
+            const cleanArea = area.trim();
+            if (cleanArea) {
+              areas.add(cleanArea);
+            }
+          });
+        } else if (typeof tutor.area === 'string') {
+          // Split comma separated areas
+          const areaList = tutor.area.split(',').map((a: string) => a.trim());
+          areaList.forEach((area: string) => {
+            if (area) {
+              areas.add(area);
+            }
+          });
+        }
+      }
+    });
+    
+    return Array.from(areas).sort();
+  }, [districtData, tutors]);
+
+  // Filter areas based on search query
+  const filteredAreas = useMemo(() => {
+    if (!areaSearchQuery.trim()) {
+      return allUniqueAreas;
+    }
+    
+    const query = areaSearchQuery.toLowerCase().trim();
+    return allUniqueAreas.filter(area => 
+      area.toLowerCase().includes(query)
+    );
+  }, [allUniqueAreas, areaSearchQuery]);
 
   // Auto-refetch data when component mounts
   useEffect(() => {
@@ -59,6 +118,24 @@ export function StudentSearch() {
     if (verified === "false" || verified === false) return false;
     if (verified === "no" || verified === "No") return false;
     return true;
+  };
+
+  // Helper function to check if tutor has area
+  const tutorHasArea = (tutor: any, selectedArea: string): boolean => {
+    if (selectedArea === "all") return true;
+    if (!tutor.area) return false;
+    
+    let tutorAreas: string[] = [];
+    
+    if (Array.isArray(tutor.area)) {
+      tutorAreas = tutor.area.map((area: string) => area.trim());
+    } else if (typeof tutor.area === 'string') {
+      // Split by comma and trim each area
+      tutorAreas = tutor.area.split(',').map((area: string) => area.trim());
+    }
+    
+    // Check if any tutor area matches the selected area
+    return tutorAreas.some((area: string) => area === selectedArea);
   };
 
   // Filter tutors based on all criteria
@@ -85,34 +162,6 @@ export function StudentSearch() {
         !instituteMatch &&
         !departmentMatch &&
         !subjectMatch
-      ) {
-        return false;
-      }
-    }
-
-    // Filter by subject (case-insensitive)
-    if (filterSubject !== "any") {
-      if (tutor.subjects && tutor.subjects.length > 0) {
-        const lowerCaseSubjects = tutor.subjects.map(
-          (subject: string) => subject?.toLowerCase() || ""
-        );
-        const filterSubjectLower = filterSubject.toLowerCase();
-        const hasSubject = lowerCaseSubjects.some((subject: string) =>
-          subject.includes(filterSubjectLower)
-        );
-        if (!hasSubject) {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    }
-
-    // Filter by area (district)
-    if (filterArea !== "all") {
-      if (
-        !tutor.district ||
-        tutor.district.toLowerCase() !== filterArea.toLowerCase()
       ) {
         return false;
       }
@@ -155,16 +204,6 @@ export function StudentSearch() {
       }
     }
 
-    // Filter by availability
-    if (filterAvailability !== "all") {
-      if (
-        !tutor.availability ||
-        tutor.availability.toLowerCase() !== filterAvailability.toLowerCase()
-      ) {
-        return false;
-      }
-    }
-
     // Filter by maximum price
     if (filterMaxPrice.trim()) {
       const maxPrice = parseFloat(filterMaxPrice);
@@ -172,6 +211,11 @@ export function StudentSearch() {
       if (tutorPrice > maxPrice) {
         return false;
       }
+    }
+
+    // Filter by area
+    if (!tutorHasArea(tutor, selectedArea)) {
+      return false;
     }
 
     return true;
@@ -207,12 +251,41 @@ export function StudentSearch() {
       }
 
       if (filterSortOrder === "desc") {
-        return aValue - bValue;
-      } else {
         return bValue - aValue;
+      } else {
+        return aValue - bValue;
       }
     });
   }
+
+  // Reset all filters
+  const resetAllFilters = () => {
+    setSearchQuery("");
+    setFilterGender("any");
+    setFilterRating(0);
+    setFilterExperience("0");
+    setFilterEducation("all");
+    setFilterMaxPrice("");
+    setFilterSortBy("all");
+    setFilterSortOrder("desc");
+    setViewMode("grid");
+    
+    // Reset area filter
+    setSelectedArea("all");
+    setAreaSearchQuery("");
+    setIsAreaFilterExpanded(false);
+  };
+
+  // Clear area search
+  const clearAreaSearch = () => {
+    setAreaSearchQuery("");
+  };
+
+  // Handle area selection from search
+  const handleAreaSelect = (area: string) => {
+    setSelectedArea(area);
+    setAreaSearchQuery("");
+  };
 
   // Show loading state
   if (isLoading) {
@@ -282,7 +355,7 @@ export function StudentSearch() {
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {/* Search Bar */}
             <div className="lg:col-span-2 xl:col-span-3">
-              <Label>Search</Label>
+              <Label>Search Tutors</Label>
               <Input
                 className="mt-1"
                 value={searchQuery}
@@ -291,46 +364,118 @@ export function StudentSearch() {
               />
             </div>
 
-            {/* Subject Filter */}
-            <div>
-              <Label>Subject</Label>
-              <Select value={filterSubject} onValueChange={setFilterSubject}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="All Subjects" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">All Subjects</SelectItem>
-                  <SelectItem value="Mathematics">Mathematics</SelectItem>
-                  <SelectItem value="Physics">Physics</SelectItem>
-                  <SelectItem value="Chemistry">Chemistry</SelectItem>
-                  <SelectItem value="Biology">Biology</SelectItem>
-                  <SelectItem value="English">English</SelectItem>
-                  <SelectItem value="Computer Science">
-                    Computer Science
-                  </SelectItem>
-                  <SelectItem value="Programming">Programming</SelectItem>
-                  <SelectItem value="Bangla">Bangla</SelectItem>
-                  <SelectItem value="Economics">Economics</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Area Filter Section */}
+            <div className="lg:col-span-2 xl:col-span-3 space-y-3">
+              <div 
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => setIsAreaFilterExpanded(!isAreaFilterExpanded)}
+              >
+                <Label className="text-sm font-bold text-green-600 flex items-center">
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Search By Area
+                </Label>
+                {isAreaFilterExpanded ? (
+                  <ChevronUp className="h-4 w-4 text-green-600" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-green-600" />
+                )}
+              </div>
 
-            {/* District Filter */}
-            <div>
-              <Label>District</Label>
-              <Select value={filterArea} onValueChange={setFilterArea}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="All Districts" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Districts</SelectItem>
-                  {ALL_DISTRICTS.map((district) => (
-                    <SelectItem key={district} value={district}>
-                      {district}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isAreaFilterExpanded && (
+                <div className="space-y-3 bg-green-50 p-4 rounded-lg">
+                  {/* Area Search Input */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-black">
+                      Search Area
+                    </Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        className="pl-10 pr-10"
+                        value={areaSearchQuery}
+                        onChange={(e) => setAreaSearchQuery(e.target.value)}
+                        placeholder="Type to search areas..."
+                      />
+                      {areaSearchQuery && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+                          onClick={clearAreaSearch}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Type area name to search (e.g., "Chattogram City", "Agrabad")
+                    </p>
+                  </div>
+
+                  {/* Area Selection - Show filtered results or all */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-black">
+                      Select Area
+                    </Label>
+                    <div className="max-h-60 overflow-y-auto border rounded-lg bg-white p-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+                      {filteredAreas.length === 0 ? (
+                        <div className="text-center py-4 text-sm text-gray-500">
+                          No areas found matching "{areaSearchQuery}"
+                        </div>
+                      ) : (
+                        <>
+                          {/* All Areas option */}
+                          <div
+                            className={`flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-100 ${
+                              selectedArea === "all" ? "bg-green-50 border border-green-200" : ""
+                            }`}
+                            onClick={() => setSelectedArea("all")}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3 h-3 rounded-full border ${
+                                selectedArea === "all" ? "bg-green-500 border-green-500" : "border-gray-300"
+                              }`} />
+                              <span className="text-sm font-medium">All Areas</span>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {allUniqueAreas.length} areas
+                            </span>
+                          </div>
+
+                          {/* Area list */}
+                          {filteredAreas.map((area: string) => (
+                            <div
+                              key={area}
+                              className={`flex items-center justify-between p-2 rounded cursor-pointer hover:bg-gray-100 ${
+                                selectedArea === area ? "bg-green-50 border border-green-200" : ""
+                              }`}
+                              onClick={() => handleAreaSelect(area)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={`w-3 h-3 rounded-full border ${
+                                  selectedArea === area ? "bg-green-500 border-green-500" : "border-gray-300"
+                                }`} />
+                                <span className="text-sm">{area}</span>
+                              </div>
+                              {selectedArea === area && (
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                              )}
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                    
+                    {selectedArea !== "all" && (
+                      <div className="mt-2">
+                        <p className="text-xs text-gray-600">
+                          Selected: <span className="font-semibold text-green-700">{selectedArea}</span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Gender Filter */}
@@ -350,25 +495,6 @@ export function StudentSearch() {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Rating Filter */}
-            {/* <div>
-              <Label>Minimum Rating</Label>
-              <Select
-                value={String(filterRating)}
-                onValueChange={(v) => setFilterRating(Number(v))}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Any Rating" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Any Rating</SelectItem>
-                  <SelectItem value="3">3+ Stars</SelectItem>
-                  <SelectItem value="4">4+ Stars</SelectItem>
-                  <SelectItem value="5">5 Stars</SelectItem>
-                </SelectContent>
-              </Select>
-            </div> */}
 
             {/* Experience Filter */}
             <div>
@@ -391,88 +517,35 @@ export function StudentSearch() {
               </Select>
             </div>
 
-            {/* Education Filter */}
-            <div>
-              <Label>Education</Label>
-              <Select
-                value={filterEducation}
-                onValueChange={setFilterEducation}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Any Education" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Any Education</SelectItem>
-                  <SelectItem value="HSC">HSC</SelectItem>
-                  <SelectItem value="Diploma">Diploma</SelectItem>
-                  <SelectItem value="Bachelor">Bachelor's Degree</SelectItem>
-                  <SelectItem value="Master">Master's Degree</SelectItem>
-                  <SelectItem value="PhD">PhD</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-
-            {/* Sort By */}
-            <div>
-              <Label>Sort By</Label>
-              <Select value={filterSortBy} onValueChange={setFilterSortBy}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Default" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Default (No Sorting)</SelectItem>
-                  <SelectItem value="rating">Rating</SelectItem>
-                  <SelectItem value="hourly_rate">Price</SelectItem>
-                  <SelectItem value="experience">Experience</SelectItem>
-                  <SelectItem value="total_reviews">
-                    Number of Reviews
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Sort Order */}
-            {/* <div>
-              <Label>Sort Order</Label>
-              <Select
-                value={filterSortOrder}
-                onValueChange={setFilterSortOrder}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Sort Order" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="asc">Ascending</SelectItem>
-                  <SelectItem value="desc">Descending</SelectItem>
-                </SelectContent>
-              </Select>
-            </div> */}
-
             {/* Reset Filters */}
             <div className="lg:col-span-2 xl:col-span-3 flex justify-end">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  setSearchQuery("");
-                  setFilterSubject("any");
-                  setFilterArea("all");
-                  setFilterGender("any");
-                  setFilterRating(0);
-                  setFilterExperience("0");
-                  setFilterEducation("all");
-                  setFilterAvailability("all");
-                  setFilterMaxPrice("");
-                  setFilterSortBy("all");
-                  setFilterSortOrder("desc");
-                  setViewMode("grid");
-                }}
+                onClick={resetAllFilters}
               >
-                Reset Filters
+                Reset All Filters
               </Button>
             </div>
           </div>
+
+          {/* Filter Badges */}
+          {selectedArea !== "all" && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                Area: {selectedArea}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedArea("all")}
+                  className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                >
+                  ×
+                </Button>
+              </Badge>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -486,6 +559,7 @@ export function StudentSearch() {
             <p className="text-sm text-gray-600 mt-1">
               {sortedTutors.length} tutor{sortedTutors.length !== 1 ? "s" : ""}{" "}
               found
+              {selectedArea !== "all" && ` in ${selectedArea}`}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -587,10 +661,12 @@ export function StudentSearch() {
                         </p>
                       )}
 
-                      {/* Location */}
-                      <p className="text-sm text-gray-500">
-                        {tutor.district || "Location not specified"}
-                      </p>
+                      {/* Location with area info */}
+                      <div className="flex items-center gap-1 text-sm text-gray-500">
+                        <MapPin className="h-3 w-3" />
+                        {tutor.area && <span>{tutor.area}</span>}
+                        {!tutor.area && <span>Location not specified</span>}
+                      </div>
 
                       {/* Rating */}
                       <div className="flex items-center gap-1 mt-1">
@@ -702,26 +778,15 @@ export function StudentSearch() {
                 No tutors found
               </h3>
               <p className="text-gray-500 mb-4">
-                Try adjusting your search criteria or filters to find more tutors.
+                {selectedArea !== "all" 
+                  ? `No tutors found in "${selectedArea}"`
+                  : "Try adjusting your search criteria or filters to find more tutors."}
               </p>
               <Button
                 variant="outline"
-                onClick={() => {
-                  setSearchQuery("");
-                  setFilterSubject("any");
-                  setFilterArea("all");
-                  setFilterGender("any");
-                  setFilterRating(0);
-                  setFilterExperience("0");
-                  setFilterEducation("all");
-                  setFilterAvailability("all");
-                  setFilterMaxPrice("");
-                  setFilterSortBy("all");
-                  setFilterSortOrder("desc");
-                  setViewMode("grid");
-                }}
+                onClick={resetAllFilters}
               >
-                Clear Filters
+                Clear All Filters
               </Button>
             </CardContent>
           </Card>

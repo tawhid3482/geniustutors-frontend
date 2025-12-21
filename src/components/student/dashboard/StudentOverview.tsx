@@ -57,7 +57,6 @@ export function StudentOverview({
     id: userId, 
   });
 
-  console.log(noticeResponse)
 
 
   // Extract notices from the response
