@@ -70,6 +70,10 @@ export default function TutorRequestPage() {
     refetchOnMountOrArgChange: true,
   });
 
+  console.log(districtData)
+
+
+
   const {
     data: categoryData,
     isLoading: isLoadingCategories,
