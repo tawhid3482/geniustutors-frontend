@@ -21,6 +21,9 @@ const applicationApi = baseApi.injectEndpoints({
       }),
       providesTags: [tagTypes.application],
     }),
+
+
+
     getAllapplicationTutors: builder.query({
       query: () => ({
         url: "/application/application-tutors",
@@ -47,6 +50,17 @@ const applicationApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [tagTypes.application],
     }),
+
+    getAllTutorsApplication: builder.query({
+      query: (id: string) => ({
+        url: `/application/${id}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.application],
+    }),
+
+
+
   }),
 });
 
@@ -56,4 +70,5 @@ export const {
   useGetAllapplicationQuery,
   useUpdateapplicationMutation,
   useGetAllapplicationTutorsQuery,
+  useGetAllTutorsApplicationQuery
 } = applicationApi;

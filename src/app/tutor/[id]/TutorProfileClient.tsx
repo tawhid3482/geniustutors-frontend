@@ -107,6 +107,10 @@ export default function TutorProfileClient({
     error: tutorError,
   } = useGetSingleTutorHubQuery(tutorId);
 
+
+  console.log(tutorResponse)
+
+
   const {
     data: reviewResponse,
     isLoading: reviewsLoading,

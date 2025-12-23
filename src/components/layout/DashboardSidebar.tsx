@@ -159,7 +159,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
 
 
             { id: 'studentApply', label: 'Student-Apply', icon: BookCheck },
-            // { id: 'genius-verification', label: 'Genius / Verification Request', icon: Shield },
+            { id: 'genius-verification', label: 'Genius / Verification Request', icon: Shield },
             // { id: 'applications', label: 'Applications', icon: ClipboardList },
             // { id: 'demo-classes', label: 'Demo Classes', icon: BookOpen },
             // { id: 'assignments', label: 'Assignments', icon: CheckCircle2 },

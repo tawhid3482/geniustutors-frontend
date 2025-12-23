@@ -3,8 +3,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import { 
   Shield, 
@@ -16,107 +14,219 @@ import {
   Star,
   BadgeCheck,
   FileText,
-  Upload,
-  X,
-  Eye,
-  Download,
   Phone,
   Receipt,
   Copy,
-  Loader2
+  Loader2,
+  Calendar,
+  UserCheck,
+  TrendingUp,
+  Target,
+  Award,
+  Crown,
+  Zap
 } from 'lucide-react';
-import { 
-  getUpgradePackages, 
-  getUpgradeStatus, 
-  applyForUpgrade,
-  type UpgradePackage,
-  type UpgradeStatus,
-  type KYCDocuments
-} from '@/services/upgradeService';
 import { useAuth } from '@/contexts/AuthContext.next';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { platformPaymentMethodService, type PlatformPaymentMethod } from '@/services/platformPaymentMethodService';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const EnhancedUpgradeSection = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [upgradeStatus, setUpgradeStatus] = useState<UpgradeStatus | null>(null);
-  const [packages, setPackages] = useState<UpgradePackage[]>([]);
-  const [selectedPackage, setSelectedPackage] = useState<UpgradePackage | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState('bKash');
-  const [transactionId, setTransactionId] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [kycDocuments, setKycDocuments] = useState<KYCDocuments>({});
-  const [showApplicationModal, setShowApplicationModal] = useState(false);
-  const [showKycModal, setShowKycModal] = useState(false);
-  const [accessDenied, setAccessDenied] = useState(false);
-  
-  // Payment dialog states (same as course enrollment)
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [paymentMethods, setPaymentMethods] = useState<PlatformPaymentMethod[]>([]);
-  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [paymentData, setPaymentData] = useState({
     payment_method: '',
     transaction_id: '',
     phone_number: ''
   });
 
-  // Helper function to parse features
-  const parseFeatures = (features: any): string[] => {
-    if (!features) {
-      return [];
-    }
-    if (Array.isArray(features)) {
-      return features.filter(feature => typeof feature === 'string');
-    }
-    if (typeof features === 'string') {
-      try {
-        const parsed = JSON.parse(features || '[]');
-        return Array.isArray(parsed) ? parsed.filter(feature => typeof feature === 'string') : [];
-      } catch {
-        return [];
+  // Demo Data - Upgrade Status
+  const [upgradeStatus, setUpgradeStatus] = useState({
+    hasPremium: false,
+    hasVerified: true,
+    activeUpgrades: [
+      {
+        id: '1',
+        package_name: 'Verified Tutor',
+        upgrade_type: 'verified',
+        end_date: '2024-12-31T23:59:59Z',
+        start_date: '2024-01-01T00:00:00Z',
+        status: 'active'
       }
+    ],
+    pendingApplications: [
+      {
+        id: '2',
+        package_name: 'Genius Pro',
+        created_at: '2024-03-10T14:30:00Z',
+        status: 'pending',
+        amount_paid: 1200.00
+      }
+    ],
+    stats: {
+      total_upgrades: 3,
+      total_spent: 2500.00,
+      success_rate: 85
     }
-    return [];
+  });
+
+  // Demo Data - Packages
+  const [packages, setPackages] = useState([
+    {
+      id: '1',
+      name: 'Genius Basic',
+      description: 'Basic premium features for 30 days',
+      type: 'premium',
+      price: 500,
+      duration_days: 30,
+      features: JSON.stringify([
+        'Priority listing in search results',
+        'Enhanced profile with badges',
+        'Advanced analytics dashboard',
+        'Priority customer support',
+        'Unlimited course creation',
+        'Profile verification badge',
+        'Early access to new features'
+      ]),
+      popular: false,
+      discount: 0
+    },
+    {
+      id: '2',
+      name: 'Genius Pro',
+      description: 'Advanced premium features for 90 days',
+      type: 'premium',
+      price: 1200,
+      duration_days: 90,
+      features: JSON.stringify([
+        'All Basic features',
+        'Featured tutor spotlight',
+        'Advanced marketing tools',
+        'Custom profile URL',
+        'Monthly performance reports',
+        'Dedicated account manager',
+        'Social media promotion'
+      ]),
+      popular: true,
+      discount: 15
+    },
+    {
+      id: '3',
+      name: 'Verified Tutor',
+      description: 'Get verified status for trust building',
+      type: 'verified',
+      price: 300,
+      duration_days: 365,
+      features: JSON.stringify([
+        'Verified badge on profile',
+        'Increased student trust',
+        'Background check validation',
+        'Certificate of verification',
+        'KYC documentation',
+        'Trust score boost',
+        'Parent confidence badge'
+      ]),
+      popular: false,
+      discount: 0
+    },
+    {
+      id: '4',
+      name: 'Combo Package',
+      description: 'Both Genius and Verified for 60 days',
+      type: 'premium',
+      price: 800,
+      duration_days: 60,
+      features: JSON.stringify([
+        'All Genius Basic features',
+        'Verified badge',
+        'Priority in both categories',
+        'Combined discount',
+        'Dual certification',
+        'Extended support hours',
+        'Premium webinar access'
+      ]),
+      popular: true,
+      discount: 20
+    }
+  ]);
+
+  // Demo Data - Payment Methods
+  const [paymentMethods, setPaymentMethods] = useState([
+    {
+      id: '1',
+      name: 'bKash',
+      type: 'MOBILE_BANKING',
+      payment_number: '01711-123456',
+      account_name: 'Tutor Platform Ltd.',
+      status: 'active',
+      instructions: 'Send money to this number and mention transaction ID in note',
+      icon: '💰'
+    },
+    {
+      id: '2',
+      name: 'Nagad',
+      type: 'MOBILE_BANKING',
+      payment_number: '01722-654321',
+      account_name: 'Tutor Platform',
+      status: 'active',
+      instructions: 'Send money to this number via Nagad app',
+      icon: '📱'
+    },
+    {
+      id: '3',
+      name: 'Rocket',
+      type: 'MOBILE_BANKING',
+      payment_number: '01733-987654',
+      account_name: 'Tutor Platform',
+      status: 'active',
+      instructions: 'Send money via Rocket Mobile Banking',
+      icon: '🚀'
+    },
+    {
+      id: '4',
+      name: 'Bank Transfer',
+      type: 'BANK_TRANSFER',
+      payment_number: '1234567890123',
+      account_name: 'Tutor Platform Ltd.',
+      status: 'active',
+      instructions: 'Transfer to this bank account (DBBL Gulshan Branch)',
+      icon: '🏦'
+    }
+  ]);
+
+  // Demo User Data
+  const demoUser = {
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    phone: '01712345678',
+    role: 'TUTOR',
+    rating: 4.8,
+    totalStudents: 45,
+    completedSessions: 120,
+    profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John'
   };
 
   useEffect(() => {
-    fetchData();
-    fetchPaymentMethods();
-    
-    // Pre-populate phone number if user has one
-    if (user?.phone) {
-      setPaymentData(prev => ({ ...prev, phone_number: user.phone || '' }));
-    }
-  }, [user?.phone]);
-
-  // Fetch payment methods when component mounts
-  const fetchPaymentMethods = async () => {
-    try {
-      setLoadingPaymentMethods(true);
-      const methods = await platformPaymentMethodService.getPaymentMethods();
-      setPaymentMethods(methods.filter(method => method.status === 'active'));
-    } catch (error) {
-      console.error('Error fetching payment methods:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load payment methods',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoadingPaymentMethods(false);
-    }
-  };
+    // Simulate loading
+    setLoading(true);
+    const timer = setTimeout(() => {
+      setLoading(false);
+      // Pre-populate phone number
+      setPaymentData(prev => ({ ...prev, phone_number: demoUser.phone }));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const selectedPaymentMethod = paymentMethods.find(method => method.id === paymentData.payment_method);
 
-  // Copy payment number to clipboard
   const copyPaymentNumber = async () => {
     if (selectedPaymentMethod?.payment_number) {
       try {
@@ -136,39 +246,7 @@ const EnhancedUpgradeSection = () => {
     }
   };
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [statusResponse, packagesResponse] = await Promise.all([
-        getUpgradeStatus(),
-        getUpgradePackages()
-      ]);
-
-      if (statusResponse.success) {
-        setUpgradeStatus(statusResponse.data);
-      }
-
-      if (packagesResponse.success) {
-        setPackages(packagesResponse.data);
-      }
-    } catch (error: any) {
-      console.error('Error fetching data:', error);
-      if (error.message?.includes('403') || error.message?.includes('Unauthorized')) {
-        setAccessDenied(true);
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to load upgrade information. Please try again.',
-          variant: 'destructive'
-        });
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handlePaymentSubmit = async () => {
-    // Validate payment data
     if (!paymentData.payment_method || !paymentData.transaction_id || !paymentData.phone_number) {
       toast({
         title: 'Validation Error',
@@ -189,53 +267,39 @@ const EnhancedUpgradeSection = () => {
 
     try {
       setSubmitting(true);
-      // Get the payment method name from the selected payment method
-      const selectedPaymentMethodName = paymentMethods.find(method => method.id === paymentData.payment_method)?.name;
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      if (!selectedPaymentMethodName) {
-        toast({
-          title: 'Error',
-          description: 'Please select a valid payment method',
-          variant: 'destructive'
-        });
-        return;
-      }
-
-      const response = await applyForUpgrade(
-        selectedPackage.id,
-        selectedPaymentMethodName, // Send payment method name instead of ID
-        paymentData.transaction_id,
-        paymentData.phone_number, // Use phone number from form
-        selectedPackage.type === 'verified' ? kycDocuments : undefined
-      );
-
-      if (response.success) {
-        toast({
-          title: 'Success',
-          description: 'Your upgrade application has been submitted successfully! Payment is pending verification.',
-        });
-        setShowPaymentDialog(false);
-        setSelectedPackage(null);
-        setPaymentData({
-          payment_method: '',
-          transaction_id: '',
-          phone_number: ''
-        });
-        setKycDocuments({});
-        fetchData(); // Refresh data
-        
-        // Show success message and stay on current page
-        setTimeout(() => {
-          toast({
-            title: 'Application Submitted',
-            description: 'Your application has been submitted successfully. You can track its status in the "Pending Applications" section below.',
-          });
-        }, 2000);
-      }
-    } catch (error: any) {
+      toast({
+        title: 'Success! 🎉',
+        description: `Your ${selectedPackage.name} application has been submitted successfully! Payment is pending verification.`,
+      });
+      
+      setShowPaymentDialog(false);
+      setPaymentData({
+        payment_method: '',
+        transaction_id: '',
+        phone_number: demoUser.phone
+      });
+      
+      // Update status for demo
+      setUpgradeStatus(prev => ({
+        ...prev,
+        pendingApplications: [
+          ...prev.pendingApplications,
+          {
+            id: Date.now().toString(),
+            package_name: selectedPackage.name,
+            created_at: new Date().toISOString(),
+            status: 'pending',
+            amount_paid: selectedPackage.price
+          }
+        ]
+      }));
+    } catch (error) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to submit application. Please try again.',
+        description: 'Failed to submit application. Please try again.',
         variant: 'destructive'
       });
     } finally {
@@ -243,727 +307,756 @@ const EnhancedUpgradeSection = () => {
     }
   };
 
-  const handleFileUpload = (field: keyof KYCDocuments, file: File) => {
-    // In a real implementation, you would upload the file to a server
-    // For now, we'll just store the file name
-    setKycDocuments(prev => ({
-      ...prev,
-      [field]: file.name
-    }));
+  const parseFeatures = (features: any): string[] => {
+    if (!features) return [];
+    if (Array.isArray(features)) return features;
+    if (typeof features === 'string') {
+      try {
+        return JSON.parse(features);
+      } catch {
+        return [];
+      }
+    }
+    return [];
   };
 
-  const removeFile = (field: keyof KYCDocuments) => {
-    setKycDocuments(prev => {
-      const newDocs = { ...prev };
-      delete newDocs[field];
-      return newDocs;
-    });
-  };
-
-  // Helper function to render the payment dialog (same as course enrollment)
   const renderPaymentDialog = () => (
-    <>
-      {/* Payment Dialog */}
-      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-center flex items-center justify-center gap-2">
-              <CreditCard className="h-5 w-5 text-green-600" />
-              Payment Information
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-6">
-            {/* Package Summary */}
-            <Card className="bg-green-50 border-green-200">
-              <CardContent className="pt-4">
-                <div className="text-center">
-                  <h3 className="font-semibold text-green-800 mb-2">{selectedPackage?.name}</h3>
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-2xl font-bold text-green-700">
-                      ৳{selectedPackage?.price.toLocaleString()}
+    <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold text-center flex items-center justify-center gap-2">
+            <CreditCard className="h-5 w-5 text-green-600" />
+            Payment Information
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-6">
+          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 shadow-sm">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  {selectedPackage?.type === 'premium' ? (
+                    <Crown className="h-6 w-6 text-yellow-500" />
+                  ) : (
+                    <BadgeCheck className="h-6 w-6 text-blue-500" />
+                  )}
+                  <h3 className="font-bold text-green-800 text-lg">{selectedPackage?.name}</h3>
+                </div>
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  {selectedPackage?.discount > 0 && (
+                    <span className="text-sm text-gray-500 line-through">
+                      ৳{(selectedPackage?.price / (1 - selectedPackage.discount/100)).toFixed(0)}
                     </span>
-                  </div>
-                  <p className="text-sm text-green-600 mt-1">
-                    Duration: {selectedPackage?.duration_days} days
-                  </p>
+                  )}
+                  <span className="text-3xl font-bold text-green-700">
+                    ৳{selectedPackage?.price.toLocaleString()}
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Payment Form */}
-            <div className="space-y-4">
-              {/* Payment Method */}
-              <div className="space-y-2">
-                <Label htmlFor="payment_method" className="text-sm font-medium flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  Payment Method
-                </Label>
-                <Select 
-                  value={paymentData.payment_method} 
-                  onValueChange={(value) => setPaymentData(prev => ({ ...prev, payment_method: value }))}
-                  disabled={loadingPaymentMethods}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={loadingPaymentMethods ? "Loading payment methods..." : "Select payment method"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {paymentMethods.map((method) => (
-                      <SelectItem key={method.id} value={method.id}>
-                        {method.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {selectedPackage?.discount > 0 && (
+                  <Badge className="bg-red-100 text-red-800 mb-3">
+                    {selectedPackage.discount}% OFF
+                  </Badge>
+                )}
+                <div className="flex items-center justify-center gap-4 text-sm text-green-600 mt-3">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    <span>{selectedPackage?.duration_days} days</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <UserCheck className="h-4 w-4" />
+                    <span>{selectedPackage?.type === 'premium' ? 'Premium' : 'Verified'}</span>
+                  </div>
+                </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Payment Number Display */}
-              {selectedPaymentMethod && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    Payment Number
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={selectedPaymentMethod.payment_number}
-                      readOnly
-                      className="border-green-200 bg-green-50 font-mono"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={copyPaymentNumber}
-                      className="shrink-0"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Send payment to this number and enter the transaction ID below
-                  </p>
-                </div>
-              )}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Payment Method
+              </Label>
+              <Select 
+                value={paymentData.payment_method} 
+                onValueChange={(value) => setPaymentData(prev => ({ ...prev, payment_method: value }))}
+              >
+                <SelectTrigger className="border-green-200">
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  {paymentMethods.map((method) => (
+                    <SelectItem key={method.id} value={method.id} className="flex items-center gap-2">
+                      <span className="text-lg">{method.icon}</span>
+                      <span>{method.name}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              {/* Phone Number */}
+            {selectedPaymentMethod && (
               <div className="space-y-2">
-                <Label htmlFor="phone_number" className="text-sm font-medium flex items-center gap-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  Phone Number
+                  Payment Number
                 </Label>
-                <Input
-                  id="phone_number"
-                  type="tel"
-                  placeholder="Enter your phone number"
-                  value={paymentData.phone_number}
-                  onChange={(e) => setPaymentData(prev => ({ ...prev, phone_number: e.target.value }))}
-                  className="border-green-200 focus:border-green-500 focus:ring-green-500"
-                />
-              </div>
-
-              {/* Transaction ID */}
-              <div className="space-y-2">
-                <Label htmlFor="transaction_id" className="text-sm font-medium flex items-center gap-2">
-                  <Receipt className="h-4 w-4" />
-                  Transaction ID
-                </Label>
-                <Input
-                  id="transaction_id"
-                  type="text"
-                  placeholder="Enter transaction ID"
-                  value={paymentData.transaction_id}
-                  onChange={(e) => setPaymentData(prev => ({ ...prev, transaction_id: e.target.value }))}
-                  className="border-green-200 focus:border-green-500 focus:ring-green-500"
-                />
-              </div>
-
-              {/* KYC Documents for Verified Package */}
-              {selectedPackage?.type === 'verified' && (
-                <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={selectedPaymentMethod.payment_number}
+                    readOnly
+                    className="border-green-200 bg-green-50 font-mono"
+                  />
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setShowKycModal(true)}
-                    className="w-full"
+                    size="sm"
+                    onClick={copyPaymentNumber}
+                    className="shrink-0 border-green-300"
                   >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Upload KYC Documents
+                    <Copy className="h-4 w-4" />
                   </Button>
                 </div>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowPaymentDialog(false)}
-                className="flex-1"
-                disabled={submitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handlePaymentSubmit}
-                disabled={submitting}
-                className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  'Complete Payment'
-                )}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* KYC Modal */}
-      <Dialog open={showKycModal} onOpenChange={setShowKycModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>KYC Document Upload</DialogTitle>
-            <DialogDescription>
-              Please upload the required documents for verification
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Please ensure all documents are clear and legible. Supported formats: JPG, PNG, PDF (max 5MB each)
-              </AlertDescription>
-            </Alert>
-
-            {Object.entries({
-              national_id: 'National ID Card',
-              passport: 'Passport',
-              driving_license: 'Driving License',
-              utility_bill: 'Utility Bill (Electricity/Water/Gas)',
-              bank_statement: 'Bank Statement',
-              employment_letter: 'Employment Letter',
-              education_certificate: 'Education Certificate'
-            }).map(([key, label]) => (
-              <div key={key} className="space-y-2">
-                <Label htmlFor={key}>{label}</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id={key}
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.pdf"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        handleFileUpload(key as keyof KYCDocuments, file);
-                      }
-                    }}
-                    className="flex-1"
-                  />
-                  {kycDocuments[key as keyof KYCDocuments] && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeFile(key as keyof KYCDocuments)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-                {kycDocuments[key as keyof KYCDocuments] && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <FileText className="h-4 w-4" />
-                    {kycDocuments[key as keyof KYCDocuments]}
-                  </div>
-                )}
+                <p className="text-xs text-muted-foreground px-1">
+                  {selectedPaymentMethod.instructions}
+                </p>
               </div>
-            ))}
+            )}
 
             <div className="space-y-2">
-              <Label>Other Documents (Optional)</Label>
-              <Textarea
-                placeholder="List any additional documents you'd like to submit..."
-                value={kycDocuments.other_documents?.join('\n') || ''}
-                onChange={(e) => setKycDocuments(prev => ({
-                  ...prev,
-                  other_documents: e.target.value.split('\n').filter(doc => doc.trim())
-                }))}
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Your Phone Number
+              </Label>
+              <Input
+                type="tel"
+                placeholder="Enter your phone number"
+                value={paymentData.phone_number}
+                onChange={(e) => setPaymentData(prev => ({ ...prev, phone_number: e.target.value }))}
+                className="border-green-200"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Receipt className="h-4 w-4" />
+                Transaction ID
+              </Label>
+              <Input
+                type="text"
+                placeholder="Enter transaction ID"
+                value={paymentData.transaction_id}
+                onChange={(e) => setPaymentData(prev => ({ ...prev, transaction_id: e.target.value }))}
+                className="border-green-200"
               />
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowKycModal(false)}>
+          <Alert className="bg-blue-50 border-blue-200">
+            <AlertCircle className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-700 text-sm">
+              Please keep your transaction ID safe. It will be used to verify your payment within 24 hours.
+            </AlertDescription>
+          </Alert>
+
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowPaymentDialog(false)}
+              className="flex-1 border-green-300"
+              disabled={submitting}
+            >
               Cancel
             </Button>
-            <Button onClick={() => setShowKycModal(false)}>
-              Save Documents
+            <Button
+              onClick={handlePaymentSubmit}
+              disabled={submitting}
+              className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-md"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Complete Payment
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </>
+              )}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 
   if (loading) {
     return (
-      <>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-              <span className="ml-2">Loading upgrade information...</span>
-            </div>
-          </CardContent>
-        </Card>
-        {renderPaymentDialog()}
-      </>
+      <Card className="animate-pulse">
+        <CardContent className="p-8">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="h-12 w-12 rounded-full bg-gradient-to-r from-green-200 to-emerald-200"></div>
+            <div className="h-4 w-48 bg-gray-200 rounded"></div>
+            <div className="h-3 w-32 bg-gray-200 rounded"></div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  if (accessDenied) {
-    return (
-      <>
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-6">
-            <div className="text-center">
-              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-red-800 mb-2">Access Denied</h3>
-              <p className="text-red-600 mb-4">
-                You don't have permission to access the upgrade section. Please contact support if you believe this is an error.
-              </p>
-              <div className="flex gap-3 justify-center">
-                <Button 
-                  onClick={() => window.location.href = '/contact'} 
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  Contact Support
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => window.location.reload()}
-                  className="border-red-300 text-red-700 hover:bg-red-50"
-                >
-                  Try Again
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        {renderPaymentDialog()}
-      </>
-    );
-  }
-
-  // If user has both genius and verified status
-  if (upgradeStatus?.hasPremium && upgradeStatus?.hasVerified) {
-    return (
-      <div className="space-y-6">
-        <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 shadow-md overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 -mt-8 -mr-8 bg-purple-200 rounded-full opacity-20"></div>
-          <CardHeader>
-            <div className="flex items-center gap-3">
+  // User Profile Header
+  const UserProfileHeader = () => (
+    <Card className="mb-6 border-green-100 shadow-sm">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Avatar className="h-16 w-16 border-2 border-green-200">
+              <AvatarImage src={demoUser.profileImage} />
+              <AvatarFallback className="bg-green-100 text-green-800">
+                {demoUser.name.split(' ').map(n => n[0]).join('')}
+              </AvatarFallback>
+            </Avatar>
+            <div>
               <div className="flex items-center gap-2">
-                <Shield className="h-8 w-8 text-purple-600" />
-                <Star className="h-6 w-6 text-yellow-500" />
-                <BadgeCheck className="h-6 w-6 text-green-500" />
+                <h2 className="text-xl font-bold">{demoUser.name}</h2>
+                {upgradeStatus.hasVerified && (
+                  <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                    <BadgeCheck className="h-3 w-3 mr-1" />
+                    Verified
+                  </Badge>
+                )}
+                {upgradeStatus.hasPremium && (
+                  <Badge className="bg-purple-100 text-purple-800 border-purple-300">
+                    <Crown className="h-3 w-3 mr-1" />
+                    Genius
+                  </Badge>
+                )}
               </div>
-              <CardTitle className="text-2xl font-bold text-purple-800">Genius & Verified Tutor</CardTitle>
-            </div>
-            <CardDescription className="text-purple-700 mt-2">
-              You are a verified Genius Tutor with full access to all features
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <Badge className="bg-purple-100 text-purple-800 border-purple-300">
-                  <Shield className="h-3 w-3 mr-1" />
-                  Genius
-                </Badge>
-                <Badge className="bg-green-100 text-green-800 border-green-300">
-                  <BadgeCheck className="h-3 w-3 mr-1" />
-                  Verified
-                </Badge>
+              <p className="text-gray-600">Professional Tutor</p>
+              <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 text-yellow-500" />
+                  <span>{demoUser.rating}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <UserCheck className="h-4 w-4 text-green-500" />
+                  <span>{demoUser.totalStudents} students</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Target className="h-4 w-4 text-blue-500" />
+                  <span>{demoUser.completedSessions} sessions</span>
+                </div>
               </div>
-              <p className="text-purple-700">
-                Enjoy all premium features including priority listing, enhanced profile, advanced analytics, 
-                and priority support. Your verified status builds trust with students and parents.
-              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-green-700">৳{upgradeStatus.stats.total_spent}</div>
+            <div className="text-sm text-gray-500">Total Spent on Upgrades</div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
-        {/* Active Upgrades */}
-        {upgradeStatus?.activeUpgrades && upgradeStatus.activeUpgrades.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Active Upgrades
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {upgradeStatus.activeUpgrades.map((upgrade) => (
-                  <div key={upgrade.id} className="flex items-center justify-between p-3 border rounded-lg">
+  // Stats Section
+  const StatsSection = () => (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" />
+          Upgrade Statistics
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-green-700">{upgradeStatus.stats.total_upgrades}</div>
+                <div className="text-sm text-gray-600">Total Upgrades</div>
+              </div>
+              <Award className="h-8 w-8 text-green-600 opacity-70" />
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-blue-700">৳{upgradeStatus.stats.total_spent.toLocaleString()}</div>
+                <div className="text-sm text-gray-600">Total Spent</div>
+              </div>
+              <CreditCard className="h-8 w-8 text-blue-600 opacity-70" />
+            </div>
+          </div>
+          
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-2xl font-bold text-purple-700">{upgradeStatus.stats.success_rate}%</div>
+                <div className="text-sm text-gray-600">Success Rate</div>
+              </div>
+              <div className="relative">
+                <CheckCircle className="h-8 w-8 text-purple-600 opacity-70" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // Active Upgrades Section
+  const ActiveUpgradesSection = () => (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Zap className="h-5 w-5 text-yellow-500" />
+          Active Upgrades
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {upgradeStatus.activeUpgrades.map((upgrade) => {
+            const daysRemaining = Math.ceil((new Date(upgrade.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            const progress = Math.max(0, Math.min(100, (daysRemaining / upgrade.duration_days) * 100));
+            
+            return (
+              <div key={upgrade.id} className="border rounded-lg p-4 hover:border-green-300 transition-colors">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    {upgrade.upgrade_type === 'premium' ? (
+                      <Crown className="h-6 w-6 text-yellow-500" />
+                    ) : (
+                      <BadgeCheck className="h-6 w-6 text-blue-500" />
+                    )}
                     <div>
-                      <div className="font-medium">{upgrade.package_name}</div>
+                      <div className="font-semibold">{upgrade.package_name}</div>
                       <div className="text-sm text-gray-600">
-                        Expires: {new Date(upgrade.end_date).toLocaleDateString()}
+                        Started: {new Date(upgrade.start_date).toLocaleDateString()}
                       </div>
                     </div>
-                    <Badge variant={upgrade.upgrade_type === 'premium' ? 'default' : 'secondary'}>
-                      {upgrade.upgrade_type}
-                    </Badge>
+                  </div>
+                  <Badge className={
+                    upgrade.upgrade_type === 'premium' 
+                      ? "bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border-yellow-300"
+                      : "bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 border-blue-300"
+                  }>
+                    {upgrade.upgrade_type === 'premium' ? 'Genius' : 'Verified'}
+                  </Badge>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Days Remaining: {daysRemaining}</span>
+                    <span className="text-green-600 font-medium">{progress.toFixed(0)}% active</span>
+                  </div>
+                  <Progress value={progress} className="h-2" />
+                  <div className="text-sm text-gray-500">
+                    Expires: {new Date(upgrade.end_date).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // Pending Applications Section
+  const PendingApplicationsSection = () => (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Clock className="h-5 w-5 text-yellow-500" />
+          Pending Applications
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {upgradeStatus.pendingApplications.map((application) => (
+            <div key={application.id} className="flex items-center justify-between p-3 border rounded-lg hover:border-yellow-200 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div>
+                  <div className="font-medium">{application.package_name}</div>
+                  <div className="text-sm text-gray-600">
+                    Applied: {new Date(application.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <Badge variant="outline" className="text-yellow-600 border-yellow-300 bg-yellow-50">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Pending Review
+                </Badge>
+                <div className="text-sm font-semibold text-gray-700 mt-1">
+                  ৳{application.amount_paid.toLocaleString()}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // Packages Grid
+  const PackagesGrid = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Shield className="h-5 w-5" />
+          Available Upgrade Packages
+        </CardTitle>
+        <CardDescription>
+          Choose the package that best fits your needs. All packages include 24/7 support.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="all" className="mb-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="all">All Packages</TabsTrigger>
+            <TabsTrigger value="premium">Genius</TabsTrigger>
+            <TabsTrigger value="verified">Verified</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="all" className="mt-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {packages.map((pkg) => (
+                <PackageCard key={pkg.id} pkg={pkg} />
+              ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="premium" className="mt-4">
+            <div className="grid gap-6 md:grid-cols-2">
+              {packages.filter(p => p.type === 'premium').map((pkg) => (
+                <PackageCard key={pkg.id} pkg={pkg} />
+              ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="verified" className="mt-4">
+            <div className="grid gap-6 md:grid-cols-2">
+              {packages.filter(p => p.type === 'verified').map((pkg) => (
+                <PackageCard key={pkg.id} pkg={pkg} />
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+
+  const PackageCard = ({ pkg }: { pkg: any }) => {
+    const features = parseFeatures(pkg.features);
+    
+    return (
+      <Card className={`border-2 hover:border-green-300 transition-all duration-300 hover:shadow-lg flex flex-col h-full ${
+        pkg.popular ? 'border-green-300 shadow-md relative' : ''
+      }`}>
+        {pkg.popular && (
+          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+            <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1">
+              <Star className="h-3 w-3 mr-1" />
+              MOST POPULAR
+            </Badge>
+          </div>
+        )}
+        
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                {pkg.type === 'premium' ? (
+                  <Crown className="h-5 w-5 text-yellow-500" />
+                ) : (
+                  <BadgeCheck className="h-5 w-5 text-blue-500" />
+                )}
+                {pkg.name}
+              </CardTitle>
+              <CardDescription className="mt-1">{pkg.description}</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="flex-1">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-baseline gap-2">
+                {pkg.discount > 0 && (
+                  <span className="text-sm text-gray-500 line-through">
+                    ৳{(pkg.price / (1 - pkg.discount/100)).toFixed(0)}
+                  </span>
+                )}
+                <span className="text-3xl font-bold text-green-700">
+                  ৳{pkg.price.toLocaleString()}
+                </span>
+                {pkg.discount > 0 && (
+                  <Badge className="bg-red-100 text-red-800">
+                    Save {pkg.discount}%
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-4 w-4" />
+                  <span>{pkg.duration_days} days</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {pkg.type === 'premium' ? (
+                    <Crown className="h-4 w-4 text-yellow-500" />
+                  ) : (
+                    <BadgeCheck className="h-4 w-4 text-blue-500" />
+                  )}
+                  <span>{pkg.type === 'premium' ? 'Premium' : 'Verified'}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="text-sm font-semibold text-gray-700">Features:</div>
+              <div className="space-y-2">
+                {features.slice(0, 4).map((feature: string, index: number) => (
+                  <div key={index} className="flex items-start gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>{feature}</span>
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    );
-  }
-
-  // If user has only premium status
-  if (upgradeStatus?.hasPremium) {
-    return (
-      <div className="space-y-6">
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-md overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 -mt-8 -mr-8 bg-green-200 rounded-full opacity-20"></div>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Shield className="h-8 w-8 text-green-600" />
-              <CardTitle className="text-2xl font-bold text-green-800">Genius Tutor</CardTitle>
-            </div>
-            <CardDescription className="text-green-700 mt-2">
-              You are a Genius Tutor with enhanced features
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Badge className="bg-green-100 text-green-800 border-green-300">
-                <Shield className="h-3 w-3 mr-1" />
-                Genius
-              </Badge>
-              <p className="text-green-700">
-                Enjoy premium features including priority listing, enhanced profile, and advanced analytics.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Upgrade to Verified */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BadgeCheck className="h-5 w-5 text-green-600" />
-              Get Verified Status
-            </CardTitle>
-            <CardDescription>
-              Become a verified tutor to build more trust with students and parents
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                {packages.filter(pkg => pkg.type === 'verified').map((pkg) => (
-                  <Card key={pkg.id} className="border-2 hover:border-green-300 transition-colors">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <BadgeCheck className="h-5 w-5 text-green-600" />
-                        {pkg.name}
-                      </CardTitle>
-                      <CardDescription>{pkg.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="text-2xl font-bold text-green-600">
-                          ৳{pkg.price.toLocaleString()}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          Duration: {pkg.duration_days} days
-                        </div>
-                        <div className="space-y-1">
-                          {(() => {
-                            const features = parseFeatures(pkg.features);
-                            return Array.isArray(features) ? features.map((feature, index) => (
-                              <div key={index} className="flex items-center gap-2 text-sm">
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                                {feature}
-                              </div>
-                            )) : [];
-                          })()}
-                        </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button 
-                        className="w-full bg-green-600 hover:bg-green-700"
-                        onClick={() => {
-                          setSelectedPackage(pkg);
-                          setShowPaymentDialog(true);
-                        }}
-                      >
-                        Apply for Verification
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
+                {features.length > 4 && (
+                  <div className="text-sm text-gray-500">
+                    + {features.length - 4} more features
+                  </div>
+                )}
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+        
+        <CardFooter className="pt-4">
+          <Button 
+            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+            onClick={() => {
+              setSelectedPackage(pkg);
+              setShowPaymentDialog(true);
+            }}
+          >
+            {pkg.type === 'premium' ? 'Upgrade Now' : 'Get Verified'}
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        </CardFooter>
+      </Card>
     );
-  }
+  };
 
-  // If user has only verified status
-  if (upgradeStatus?.hasVerified) {
-    return (
-      <>
-        <div className="space-y-6">
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-md overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 -mt-8 -mr-8 bg-green-200 rounded-full opacity-20"></div>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <BadgeCheck className="h-8 w-8 text-green-600" />
-              <CardTitle className="text-2xl font-bold text-green-800">Verified Tutor</CardTitle>
-            </div>
-            <CardDescription className="text-green-700 mt-2">
-              You are a verified tutor with trust indicators
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Badge className="bg-green-100 text-green-800 border-green-300">
-                <BadgeCheck className="h-3 w-3 mr-1" />
-                Verified
-              </Badge>
-              <p className="text-green-700">
-                Your verified status helps build trust with students and parents.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Upgrade to Genius */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-green-600" />
-              Upgrade to Premium
-            </CardTitle>
-            <CardDescription>
-              Get genius features for enhanced visibility and tools
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                {packages.filter(pkg => pkg.type === 'premium').map((pkg) => (
-                  <Card key={pkg.id} className="border-2 hover:border-green-300 transition-colors flex flex-col">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Shield className="h-5 w-5 text-green-600" />
-                        {pkg.name}
-                      </CardTitle>
-                      <CardDescription>{pkg.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-1">
-                      <div className="space-y-3">
-                        <div className="text-2xl font-bold text-green-600">
-                          ৳{pkg.price.toLocaleString()}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          Duration: {pkg.duration_days} days
-                        </div>
-                        <div className="space-y-1">
-                          {(() => {
-                            const features = parseFeatures(pkg.features);
-                            return Array.isArray(features) ? features.map((feature, index) => (
-                              <div key={index} className="flex items-center gap-2 text-sm">
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                                {feature}
-                              </div>
-                            )) : [];
-                          })()}
-                        </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="mt-auto">
-                      <Button 
-                        className="w-full bg-green-600 hover:bg-green-700"
-                        onClick={() => {
-                          setSelectedPackage(pkg);
-                          setShowPaymentDialog(true);
-                        }}
-                      >
-                        Upgrade to Genius
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        </div>
-        {renderPaymentDialog()}
-      </>
-    );
-  }
-
-  // If user has no upgrades
+  // Main Render Logic
   return (
     <>
       <div className="space-y-6">
-        <Card>
+        <UserProfileHeader />
+        
+        {upgradeStatus.hasPremium && upgradeStatus.hasVerified ? (
+          <>
+            <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 shadow-md">
+              <CardContent className="p-8">
+                <div className="text-center">
+                  <div className="flex justify-center mb-4">
+                    <div className="relative">
+                      <Crown className="h-12 w-12 text-yellow-500" />
+                      <BadgeCheck className="h-8 w-8 text-blue-500 absolute -bottom-2 -right-2" />
+                    </div>
+                  </div>
+                  <h2 className="text-2xl font-bold text-purple-800 mb-2">
+                    Genius & Verified Tutor 🎉
+                  </h2>
+                  <p className="text-purple-600 mb-4">
+                    You have full access to all premium features and verified status!
+                  </p>
+                  <div className="flex justify-center gap-3 mb-6">
+                    <Badge className="bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border-yellow-300">
+                      <Crown className="h-3 w-3 mr-1" />
+                      Genius Status Active
+                    </Badge>
+                    <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 border-blue-300">
+                      <BadgeCheck className="h-3 w-3 mr-1" />
+                      Verified Status Active
+                    </Badge>
+                  </div>
+                  <Alert className="max-w-md mx-auto bg-green-50 border-green-200">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-700">
+                      You're getting maximum visibility and trust from students!
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <StatsSection />
+            <ActiveUpgradesSection />
+            <PendingApplicationsSection />
+          </>
+        ) : upgradeStatus.hasPremium ? (
+          <>
+            <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200 shadow-md">
+              <CardContent className="p-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-3 mb-3">
+                      <Crown className="h-10 w-10 text-yellow-600" />
+                      <h2 className="text-2xl font-bold text-yellow-800">Genius Tutor</h2>
+                    </div>
+                    <p className="text-yellow-700 mb-4">
+                      Enjoy premium features including priority listing, enhanced profile, and advanced analytics.
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <Badge className="bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border-yellow-300">
+                        <Crown className="h-3 w-3 mr-1" />
+                        Genius Status Active
+                      </Badge>
+                      <Button 
+                        variant="outline" 
+                        className="border-blue-300 text-blue-700"
+                        onClick={() => {
+                          const verifiedPackage = packages.find(p => p.type === 'verified');
+                          setSelectedPackage(verifiedPackage);
+                          setShowPaymentDialog(true);
+                        }}
+                      >
+                        <BadgeCheck className="h-4 w-4 mr-2" />
+                        Get Verified
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="hidden md:block">
+                    <div className="h-32 w-32 bg-gradient-to-br from-yellow-200 to-amber-200 rounded-full"></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <StatsSection />
+            <ActiveUpgradesSection />
+            <PendingApplicationsSection />
+            <div className="mt-8">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <BadgeCheck className="h-5 w-5 text-blue-500" />
+                Get Verified Status
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Become a verified tutor to build more trust with students and parents
+              </p>
+              <div className="grid gap-6 md:grid-cols-2">
+                {packages.filter(p => p.type === 'verified').map((pkg) => (
+                  <PackageCard key={pkg.id} pkg={pkg} />
+                ))}
+              </div>
+            </div>
+          </>
+        ) : upgradeStatus.hasVerified ? (
+          <>
+            <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 shadow-md">
+              <CardContent className="p-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-3 mb-3">
+                      <BadgeCheck className="h-10 w-10 text-blue-600" />
+                      <h2 className="text-2xl font-bold text-blue-800">Verified Tutor</h2>
+                    </div>
+                    <p className="text-blue-700 mb-4">
+                      Your verified status helps build trust with students and parents.
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <Badge className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 border-blue-300">
+                        <BadgeCheck className="h-3 w-3 mr-1" />
+                        Verified Status Active
+                      </Badge>
+                      <Button 
+                        variant="outline" 
+                        className="border-yellow-300 text-yellow-700"
+                        onClick={() => {
+                          const premiumPackage = packages.find(p => p.type === 'premium' && p.popular);
+                          setSelectedPackage(premiumPackage);
+                          setShowPaymentDialog(true);
+                        }}
+                      >
+                        <Crown className="h-4 w-4 mr-2" />
+                        Upgrade to Genius
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="hidden md:block">
+                    <div className="h-32 w-32 bg-gradient-to-br from-blue-200 to-cyan-200 rounded-full"></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <StatsSection />
+            <ActiveUpgradesSection />
+            <PendingApplicationsSection />
+            <div className="mt-8">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Crown className="h-5 w-5 text-yellow-500" />
+                Upgrade to Genius
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Get genius features for enhanced visibility and tools
+              </p>
+              <div className="grid gap-6 md:grid-cols-2">
+                {packages.filter(p => p.type === 'premium').map((pkg) => (
+                  <PackageCard key={pkg.id} pkg={pkg} />
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <StatsSection />
+            <ActiveUpgradesSection />
+            <PendingApplicationsSection />
+            <PackagesGrid />
+          </>
+        )}
+        
+        {/* FAQ Section */}
+        <Card className="mt-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Upgrade Your Account
+              <AlertCircle className="h-5 w-5" />
+              Frequently Asked Questions
             </CardTitle>
-            <CardDescription>
-              Choose between Genius and Verified packages to enhance your tutoring profile
-            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-6 md:grid-cols-2">
-              {/* Genius Package */}
-              {packages.filter(pkg => pkg.type === 'premium').map((pkg) => (
-                <Card key={pkg.id} className="border-2 hover:border-green-300 transition-colors flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Shield className="h-5 w-5 text-green-600" />
-                      {pkg.name}
-                    </CardTitle>
-                    <CardDescription>{pkg.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <div className="space-y-3">
-                      <div className="text-2xl font-bold text-green-600">
-                        ৳{pkg.price.toLocaleString()}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        Duration: {pkg.duration_days} days
-                      </div>
-                      <div className="space-y-1">
-                        {(() => {
-                          const features = parseFeatures(pkg.features);
-                          return Array.isArray(features) ? features.map((feature, index) => (
-                            <div key={index} className="flex items-center gap-2 text-sm">
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                              {feature}
-                            </div>
-                          )) : [];
-                        })()}
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="mt-auto">
-                    <Button 
-                      className="w-full bg-green-600 hover:bg-green-700"
-                      onClick={() => {
-                        setSelectedPackage(pkg);
-                        setShowPaymentDialog(true);
-                      }}
-                    >
-                      Get Genius
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-
-              {/* Verified Package */}
-              {packages.filter(pkg => pkg.type === 'verified').map((pkg) => (
-                <Card key={pkg.id} className="border-2 hover:border-green-300 transition-colors flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BadgeCheck className="h-5 w-5 text-green-600" />
-                      {pkg.name}
-                    </CardTitle>
-                    <CardDescription>{pkg.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <div className="space-y-3">
-                      <div className="text-2xl font-bold text-green-600">
-                        ৳{pkg.price.toLocaleString()}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        Duration: {pkg.duration_days} days
-                      </div>
-                      <div className="space-y-1">
-                        {(() => {
-                          const features = parseFeatures(pkg.features);
-                          return Array.isArray(features) ? features.map((feature, index) => (
-                            <div key={index} className="flex items-center gap-2 text-sm">
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                              {feature}
-                            </div>
-                          )) : [];
-                        })()}
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="mt-auto">
-                    <Button 
-                      className="w-full bg-green-600 hover:bg-green-700"
-                      onClick={() => {
-                        setSelectedPackage(pkg);
-                        setShowPaymentDialog(true);
-                      }}
-                    >
-                      Get Verified
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+            <div className="space-y-4">
+              <div className="border-b pb-4">
+                <h4 className="font-semibold mb-2">What's the difference between Genius and Verified?</h4>
+                <p className="text-gray-600 text-sm">
+                  <span className="font-medium text-green-700">Genius</span> gives you premium features like priority listing and analytics. 
+                  <span className="font-medium text-blue-700 ml-2">Verified</span> builds trust with students through background verification.
+                </p>
+              </div>
+              <div className="border-b pb-4">
+                <h4 className="font-semibold mb-2">How long does verification take?</h4>
+                <p className="text-gray-600 text-sm">
+                  Usually 24-48 hours after payment confirmation. We'll notify you via email and in-app notification.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2">Can I cancel my upgrade?</h4>
+                <p className="text-gray-600 text-sm">
+                  Upgrades are non-refundable, but you can cancel auto-renewal anytime before the expiration date.
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
-
-        {/* Pending Applications */}
-        {upgradeStatus?.pendingApplications && upgradeStatus.pendingApplications.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Pending Applications
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {upgradeStatus.pendingApplications.map((application) => (
-                  <div key={application.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <div className="font-medium">{application.package_name}</div>
-                      <div className="text-sm text-gray-600">
-                        Applied: {new Date(application.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="text-yellow-600 border-yellow-300">
-                      <Clock className="h-3 w-3 mr-1" />
-                      Pending Review
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
+      
       {renderPaymentDialog()}
     </>
   );
