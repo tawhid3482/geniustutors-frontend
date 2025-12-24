@@ -22,6 +22,8 @@ export enum tagTypes {
   transaction = "transaction",
   applyForTutor = "applyForTutor",
   payment = "payment",
+  PaymentAccount = "PaymentAccount",
+  RefundPolicy = "RefundPolicy",
 }
 
 export const tagTypesList = [
@@ -47,5 +49,6 @@ export const tagTypesList = [
   tagTypes.review,
   tagTypes.transaction,
   tagTypes.applyForTutor,
-  tagTypes.payment,
+  tagTypes.PaymentAccount,
+  tagTypes.RefundPolicy,
 ];

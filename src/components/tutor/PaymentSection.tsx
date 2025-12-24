@@ -26,16 +26,20 @@ import {
   Shield,
   Percent,
   Info,
-  CheckSquare
+  CheckSquare,
+  AlertTriangle,
+  TrendingUp,
+  Receipt
 } from "lucide-react";
 import { useGetAllPaymentByRoleQuery } from '@/redux/features/payment/paymentApi';
+import { useGetAllRefundPolicyQuery } from '@/redux/features/RefundPolicy/RefundPolicyApi';
 
 // Type definitions
 interface Transaction {
   id: string;
   transactionId: string;
   Amount: number;
-  type: 'payment' | 'refunded' | 'payout';
+  type: 'payment' | 'refunded' | 'payout' | 'due';
   Status: 'success' | 'pending' | 'failed' | 'cancelled';
   method: string;
   paymentMethod: string;
@@ -50,7 +54,7 @@ interface Transaction {
 
 interface FormattedTransaction {
   id: string;
-  type: 'payment' | 'refunded' | 'payout';
+  type: 'payment' | 'refunded' | 'payout' | 'due';
   amount: number;
   description: string;
   payment_method: string;
@@ -63,19 +67,23 @@ interface FormattedTransaction {
 }
 
 interface PaymentStats {
-  totalCost: number;
-  thisMonth: number;
-  pending: number;
-  totalPaid: number;
-  totalRefunded: number;
-  totalPayout: number;
+  totalPayableAmount: number;
+  totalPlatformFee: number;
+  paidAmount: number;
+  dueAmount: number;
+  refundedAmount: number;
+  pendingAmount: number;
+  thisMonthPayments: number;
 }
 
 interface RefundPolicy {
+  id: string;
   title: string;
   description: string;
   conditions: string[];
   processing_time: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface PaymentApiResponse {
@@ -85,35 +93,50 @@ interface PaymentApiResponse {
   data: Transaction[];
 }
 
-type TransactionType = 'payment' | 'refunded' | 'payout';
+interface RefundPolicyApiResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: RefundPolicy[];
+}
+
+type TransactionType = 'payment' | 'refunded' | 'payout' | 'due';
 type TransactionStatus = 'success' | 'pending' | 'failed' | 'cancelled';
 
 export function PaymentSection() {
   const { user } = useAuth();
   const { toast } = useToast();
   const userId = user.id;
+  
+  // API Calls
   const { data: paymentData, refetch } = useGetAllPaymentByRoleQuery(userId) as {
     data: PaymentApiResponse;
     refetch: () => void;
+  };
+
+  const { data: refundPolicyData, isLoading: isLoadingRefundPolicies } = useGetAllRefundPolicyQuery(undefined) as {
+    data: RefundPolicyApiResponse;
+    isLoading: boolean;
   };
 
   // State for filters
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  
   const [transactions, setTransactions] = useState<FormattedTransaction[]>([]);
+  const [refundPolicies, setRefundPolicies] = useState<RefundPolicy[]>([]);
 
   // Calculate statistics from transaction data
   const calculateStats = (): PaymentStats => {
     if (!transactions.length) {
       return {
-        totalCost: 0,
-        thisMonth: 0,
-        pending: 0,
-        totalPaid: 0,
-        totalRefunded: 0,
-        totalPayout: 0
+        totalPayableAmount: 0,
+        totalPlatformFee: 0,
+        paidAmount: 0,
+        dueAmount: 0,
+        refundedAmount: 0,
+        pendingAmount: 0,
+        thisMonthPayments: 0
       };
     }
 
@@ -126,45 +149,49 @@ export function PaymentSection() {
       const isCurrentMonth = transDate.getMonth() === currentMonth && 
                             transDate.getFullYear() === currentYear;
 
+      // Calculate platform fee (55% of successful payments)
+      if (transaction.type === 'payment' && transaction.status === 'success') {
+        const platformFee = transaction.amount * 0.55;
+        acc.totalPlatformFee += platformFee;
+        acc.totalPayableAmount += transaction.amount;
+      }
+
+      // Calculate this month's payments (successful payments only)
+      if (transaction.type === 'payment' && transaction.status === 'success' && isCurrentMonth) {
+        acc.thisMonthPayments += transaction.amount;
+      }
+
       switch (transaction.type) {
         case 'payment':
           if (transaction.status === 'success') {
-            acc.totalPaid += transaction.amount;
+            acc.paidAmount += transaction.amount;
           } else if (transaction.status === 'pending') {
-            acc.pending += transaction.amount;
+            acc.pendingAmount += transaction.amount;
           }
+          break;
           
-          if (isCurrentMonth) {
-            acc.thisMonth += transaction.amount;
+        case 'due':
+          if (transaction.status === 'success') {
+            acc.dueAmount += transaction.amount;
           }
           break;
           
         case 'refunded':
           if (transaction.status === 'success') {
-            acc.totalRefunded += transaction.amount;
+            acc.refundedAmount += transaction.amount;
           }
           break;
-          
-        case 'payout':
-          if (transaction.status === 'success') {
-            acc.totalPayout += transaction.amount;
-          }
-          break;
-      }
-
-      // Total cost includes all successful payments
-      if (transaction.type === 'payment' && transaction.status === 'success') {
-        acc.totalCost += transaction.amount;
       }
 
       return acc;
     }, {
-      totalCost: 0,
-      thisMonth: 0,
-      pending: 0,
-      totalPaid: 0,
-      totalRefunded: 0,
-      totalPayout: 0
+      totalPayableAmount: 0,
+      totalPlatformFee: 0,
+      paidAmount: 0,
+      dueAmount: 0,
+      refundedAmount: 0,
+      pendingAmount: 0,
+      thisMonthPayments: 0
     });
 
     return stats;
@@ -172,25 +199,18 @@ export function PaymentSection() {
 
   const stats: PaymentStats = calculateStats();
 
-  // Refund policy data
-  const refundPolicy: RefundPolicy = {
-    title: "Refund & Platform Charge Policy",
-    description: "Our policies for platform charges and refunds",
-    conditions: [
-      "Refunds are only applicable for cancellations within one month",
-      "25% platform fee applies for refunds within one month",
-      "Original 55% platform fee applies during initial transaction",
-      "Refunds are processed within 7-14 business days",
-      "Bank transfer fees may apply for refund processing"
-    ],
-    processing_time: "Refunds are typically processed within 7-14 business days from the date of cancellation approval."
-  };
+  // Separate transactions by type for different tabs
+  const paymentTransactions = transactions.filter(t => t.type === 'payment');
+  const refundedTransactions = transactions.filter(t => t.type === 'refunded');
+  const dueTransactions = transactions.filter(t => t.type === 'due');
 
-  // Filtered transactions
+  // Filtered transactions for main table
   const filteredTransactions: FormattedTransaction[] = transactions.filter(transaction => {
     const matchesSearch = searchQuery === '' || 
       transaction.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      transaction.reference_id?.toLowerCase().includes(searchQuery.toLowerCase());
+      transaction.reference_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      transaction.student?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      transaction.tutor?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || transaction.status === statusFilter;
     const matchesType = typeFilter === 'all' || transaction.type === typeFilter;
@@ -214,7 +234,9 @@ export function PaymentSection() {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -226,6 +248,8 @@ export function PaymentSection() {
         return <Wallet className="h-4 w-4 text-purple-600" />;
       case 'payment':
         return <CreditCard className="h-4 w-4 text-red-600" />;
+      case 'due':
+        return <AlertTriangle className="h-4 w-4 text-orange-600" />;
       default:
         return <DollarSign className="h-4 w-4 text-gray-600" />;
     }
@@ -236,6 +260,7 @@ export function PaymentSection() {
       case 'payment': return 'Payment';
       case 'refunded': return 'Refund';
       case 'payout': return 'Payout';
+      case 'due': return 'Due';
       default: return type;
     }
   };
@@ -267,8 +292,21 @@ export function PaymentSection() {
     }
   };
 
+  // Get platform charge policy (static for now, could be fetched from API if available)
+  const platformChargePolicy = {
+    title: "Platform Charge Policy",
+    description: "Once a tuition job is confirmed successfully, tutors must pay a one-time platform fee for each job. The charge is 55% for both Home Tutoring and Online Tutoring.",
+    keyPoints: [
+      "One-time fee per confirmed tuition job",
+      "55% fee applies to both Home and Online Tutoring",
+      "Fee is calculated based on the total job value",
+      "Fee is charged only once per job confirmation",
+      "No additional platform fees for extended job durations"
+    ]
+  };
+
   useEffect(() => {
-    // Load initial data
+    // Load transaction data
     if (paymentData?.data) {
       const formattedTransactions: FormattedTransaction[] = paymentData.data.map((item: Transaction) => ({
         id: item.id,
@@ -287,6 +325,148 @@ export function PaymentSection() {
     }
   }, [paymentData]);
 
+  useEffect(() => {
+    // Load refund policy data from API
+    if (refundPolicyData?.data) {
+      setRefundPolicies(refundPolicyData.data);
+    }
+  }, [refundPolicyData]);
+
+  // Render refund policy section
+  const renderRefundPolicy = () => {
+    if (isLoadingRefundPolicies) {
+      return (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="text-gray-600 mt-2">Loading refund policies...</p>
+        </div>
+      );
+    }
+
+    if (refundPolicies.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Refund Policies Available</h3>
+          <p className="text-gray-600">Refund policies are currently being updated.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {refundPolicies.map((policy, index) => (
+          <Card key={policy.id} className={index > 0 ? "mt-6" : ""}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                {policy.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Policy Description */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <div className="flex items-center gap-2 mb-3">
+                  <Info className="h-5 w-5 text-gray-600" />
+                  <h4 className="font-bold text-gray-900">Policy Description</h4>
+                </div>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  {policy.description}
+                </p>
+              </div>
+
+              {/* Conditions */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <h4 className="font-medium mb-3 text-blue-900">Conditions:</h4>
+                <ul className="space-y-2">
+                  {policy.conditions.map((condition, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-blue-800">{condition}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Processing Time */}
+              <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-4 w-4 text-green-600" />
+                  <h4 className="font-medium text-green-900">Processing Time</h4>
+                </div>
+                <p className="text-green-800 text-sm">{policy.processing_time}</p>
+                <p className="text-green-800 text-xs mt-2">
+                  Last updated: {new Date(policy.updatedAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
+  // Render platform charge policy section
+  const renderPlatformChargePolicy = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Percent className="h-5 w-5" />
+            {platformChargePolicy.title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Platform Charge Section */}
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+            <div className="flex items-center gap-2 mb-3">
+              <Percent className="h-5 w-5 text-blue-600" />
+              <h4 className="font-bold text-blue-900">Platform Charge</h4>
+            </div>
+            <p className="text-blue-800 text-sm leading-relaxed">
+              {platformChargePolicy.description}
+            </p>
+          </div>
+
+          {/* Additional Information */}
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+            <h4 className="font-medium mb-3 text-gray-800">Key Points:</h4>
+            <ul className="space-y-3">
+              {platformChargePolicy.keyPoints.map((point, index) => (
+                <li key={index} className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-gray-700">{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Example Calculation */}
+          <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign className="h-4 w-4 text-green-600" />
+              <span className="font-medium text-green-900">Platform Charge Example</span>
+            </div>
+            <p className="text-green-800 text-sm">
+              For a tuition job valued at 10,000 BDT:
+              <br />
+              <strong>Platform Fee (55%):</strong> 5,500 BDT
+              <br />
+              <strong>Tutor Receives:</strong> 4,500 BDT
+            </p>
+            <p className="text-green-800 text-sm mt-2 text-xs">
+              Note: This is a one-time fee charged when the job is confirmed. No additional platform fees for the duration of the job.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
@@ -295,83 +475,89 @@ export function PaymentSection() {
           Payment Section
         </h2>
         <p className="text-muted-foreground text-lg">
-        Once a tuition job is confirmed successfully, tutors must pay a one-time platform fee for each job. <br /> The charge is 55% for both Home Tutoring and Online Tutoring.
+          Once a tuition job is confirmed successfully, tutors must pay a one-time platform fee for each job. <br /> The charge is 55% for both Home Tutoring and Online Tutoring.
         </p>
       </div>
 
       {/* Payment Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Total Platform Fee Percentage */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Platform Cost</p>
-                <p className="text-2xl font-bold text-blue-600">{formatCurrency(stats.totalCost)}</p>
+                <p className="text-sm font-medium text-muted-foreground">Platform Fee Rate</p>
+                <p className="text-2xl font-bold text-blue-600">55%</p>
               </div>
               <Percent className="h-8 w-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
-        
+
+        {/* Total Payable Amount */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">This Month</p>
-                <p className="text-2xl font-bold">{formatCurrency(stats.thisMonth)}</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Payable Amount</p>
+                <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.totalPayableAmount)}</p>
               </div>
-              <Calendar className="h-8 w-8 text-muted-foreground" />
+              <Receipt className="h-8 w-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
-        
+
+        {/* Paid Amount */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending Amount</p>
-                <p className="text-2xl font-bold text-yellow-600">{formatCurrency(stats.pending)}</p>
+                <p className="text-sm font-medium text-muted-foreground">Paid Amount</p>
+                <p className="text-2xl font-bold text-blue-600">{formatCurrency(stats.paidAmount)}</p>
               </div>
-              <Clock className="h-8 w-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Paid</p>
-                <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.totalPaid)}</p>
-              </div>
-              <CheckSquare className="h-8 w-8 text-green-600" />
+              <CheckSquare className="h-8 w-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Additional Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Due Amount */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Refunded</p>
-                <p className="text-2xl font-bold text-blue-600">{formatCurrency(stats.totalRefunded)}</p>
+                <p className="text-sm font-medium text-muted-foreground">Due Amount</p>
+                <p className="text-2xl font-bold text-orange-600">{formatCurrency(stats.dueAmount)}</p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Refunded Amount */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Refunded Amount</p>
+                <p className="text-2xl font-bold text-blue-600">{formatCurrency(stats.refundedAmount)}</p>
               </div>
               <Download className="h-8 w-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
-        
+
+        {/* Pending Amount */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Payout</p>
-                <p className="text-2xl font-bold text-purple-600">{formatCurrency(stats.totalPayout)}</p>
+                <p className="text-sm font-medium text-muted-foreground">Pending Amount</p>
+                <p className="text-2xl font-bold text-yellow-600">{formatCurrency(stats.pendingAmount)}</p>
               </div>
-              <Wallet className="h-8 w-8 text-purple-600" />
+              <Clock className="h-8 w-8 text-yellow-600" />
             </div>
           </CardContent>
         </Card>
@@ -387,10 +573,14 @@ export function PaymentSection() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="transactions" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full md:grid-cols-4">
           <TabsTrigger value="transactions" className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
-            Transactions
+            All Transactions
+          </TabsTrigger>
+          <TabsTrigger value="due-history" className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Due History
           </TabsTrigger>
           <TabsTrigger value="refund-policy" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
@@ -402,6 +592,7 @@ export function PaymentSection() {
           </TabsTrigger>
         </TabsList>
 
+        {/* All Transactions Tab */}
         <TabsContent value="transactions" className="space-y-4">
           {/* Filters */}
           <Card>
@@ -417,7 +608,7 @@ export function PaymentSection() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
-                      placeholder="Search transactions..."
+                      placeholder="Search transactions, student, tutor..."
                       value={searchQuery}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                       className="pl-10"
@@ -445,7 +636,7 @@ export function PaymentSection() {
                     <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="payment">Payments</SelectItem>
                     <SelectItem value="refunded">Refunds</SelectItem>
-                    <SelectItem value="payout">Payouts</SelectItem>
+                    <SelectItem value="due">Due</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -456,11 +647,16 @@ export function PaymentSection() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Transaction History</CardTitle>
-                <Button variant="outline" size="sm" onClick={fetchPaymentData}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh
-                </Button>
+                <CardTitle>All Transactions History</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="bg-blue-50">
+                    Total: {transactions.length}
+                  </Badge>
+                  <Button variant="outline" size="sm" onClick={fetchPaymentData}>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -490,7 +686,7 @@ export function PaymentSection() {
                           <TableCell className="font-medium">
                             <span className={
                               transaction.type === 'refunded' ? 'text-blue-600' :
-                              transaction.type === 'payout' ? 'text-purple-600' : 'text-red-600'
+                              transaction.type === 'due' ? 'text-orange-600' : 'text-red-600'
                             }>
                               {formatCurrency(transaction.amount)}
                             </span>
@@ -543,132 +739,112 @@ export function PaymentSection() {
           </Card>
         </TabsContent>
 
+        {/* Due History Tab */}
+        <TabsContent value="due-history" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-orange-600" />
+                Due Payment History
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {dueTransactions.length > 0 ? (
+                <div className="space-y-4">
+                  {/* Due Summary Card */}
+                  <Card className="bg-orange-50 border-orange-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-orange-800">Total Due Amount</p>
+                          <p className="text-2xl font-bold text-orange-700">{formatCurrency(stats.dueAmount)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-orange-700">Total Due Records: {dueTransactions.length}</p>
+                          <p className="text-xs text-orange-600 mt-1">Last updated: {new Date().toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Due Transactions Table */}
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Transaction ID</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Student</TableHead>
+                          <TableHead>Tutor</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Due Date</TableHead>
+                          <TableHead>Payment Method</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {dueTransactions.map((transaction) => (
+                          <TableRow key={transaction.id} className="hover:bg-orange-50">
+                            <TableCell className="font-mono font-medium">
+                              {transaction.reference_id}
+                            </TableCell>
+                            <TableCell className="font-bold text-orange-600">
+                              {formatCurrency(transaction.amount)}
+                            </TableCell>
+                            <TableCell>
+                              {transaction.student || 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                              {transaction.tutor || 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                              {getStatusBadge(transaction.status)}
+                            </TableCell>
+                            <TableCell>
+                              {formatDate(transaction.created_at)}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {getPaymentMethodIcon(transaction.payment_method)}
+                                <span>{transaction.payment_method}</span>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <CheckCircle className="h-12 w-12 mx-auto text-green-600 mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Due Payments</h3>
+                  <p className="text-muted-foreground">
+                    You have no outstanding due payments. All your payments are up to date.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Refund Policy Tab */}
         <TabsContent value="refund-policy" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                {refundPolicy.title}
+                Refund Policies
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Refund Policy Section */}
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                <div className="flex items-center gap-2 mb-3">
-                  <Info className="h-5 w-5 text-gray-600" />
-                  <h4 className="font-bold text-gray-900">Refund Policy</h4>
-                </div>
-                <p className="text-gray-700 text-sm leading-relaxed mb-4">
-                  In case the tuition job is cancelled within one month due to any reason, 25% of the payable salary for the conducted classes will be charged as a platform fee, and the remaining amount will be refunded accordingly.
-                </p>
-                
-                <h4 className="font-medium mb-2 text-gray-800">Refund Conditions:</h4>
-                <ul className="space-y-2">
-                  {refundPolicy.conditions.map((condition, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-gray-700">{condition}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              
-              {/* Example Calculation */}
-              <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-                <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="h-4 w-4 text-green-600" />
-                  <span className="font-medium text-green-900">Refund Calculation Example</span>
-                </div>
-                <p className="text-green-800 text-sm">
-                  For a transaction of 1500 BDT refunded within one month:
-                  <br />
-                  <strong>Platform Fee (25%):</strong> 375 BDT
-                  <br />
-                  <strong>Refund Amount:</strong> 1125 BDT
-                </p>
-                <p className="text-green-800 text-sm mt-2 text-xs">
-                  Note: The 55% platform fee applies during initial transaction, while 25% applies for refunds within one month of cancellation.
-                </p>
-              </div>
-
-              {/* Processing Time */}
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Clock className="h-4 w-4 text-blue-600" />
-                  <span className="font-medium text-blue-900">Processing Time</span>
-                </div>
-                <p className="text-blue-800">{refundPolicy.processing_time}</p>
-              </div>
+            <CardContent>
+              {renderRefundPolicy()}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Platform Charge Tab */}
         <TabsContent value="platform-charge" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Percent className="h-5 w-5" />
-                Platform Charge
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Platform Charge Section */}
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                <div className="flex items-center gap-2 mb-3">
-                  <Percent className="h-5 w-5 text-blue-600" />
-                  <h4 className="font-bold text-blue-900">Platform Charge</h4>
-                </div>
-                <p className="text-blue-800 text-sm leading-relaxed">
-                  Once a tuition job is confirmed successfully, tutors must pay a one-time platform fee for each job. The charge is 55% for both Home Tutoring and Online Tutoring.
-                </p>
-              </div>
-
-              {/* Additional Information */}
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                <h4 className="font-medium mb-3 text-gray-800">Key Points:</h4>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-700">One-time fee per confirmed tuition job</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-700">55% fee applies to both Home and Online Tutoring</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-700">Fee is calculated based on the total job value</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-700">Fee is charged only once per job confirmation</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm text-gray-700">No additional platform fees for extended job durations</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Example Calculation */}
-              <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-                <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="h-4 w-4 text-green-600" />
-                  <span className="font-medium text-green-900">Platform Charge Example</span>
-                </div>
-                <p className="text-green-800 text-sm">
-                  For a tuition job valued at 10,000 BDT:
-                  <br />
-                  <strong>Platform Fee (55%):</strong> 5,500 BDT
-                  <br />
-                  <strong>Tutor Receives:</strong> 4,500 BDT
-                </p>
-                <p className="text-green-800 text-sm mt-2 text-xs">
-                  Note: This is a one-time fee charged when the job is confirmed. No additional platform fees for the duration of the job.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          {renderPlatformChargePolicy()}
         </TabsContent>
       </Tabs>
     </div>
