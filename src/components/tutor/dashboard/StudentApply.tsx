@@ -342,23 +342,7 @@ const TutorApplications = () => {
                   </span>
                 </div>
 
-                {/* Phone */}
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">
-                    <span className="font-medium">Phone:</span>{" "}
-                    {application.phone}
-                  </span>
-                </div>
-
-                {/* Location */}
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">
-                    <span className="font-medium">Location:</span>{" "}
-                    {application.location}
-                  </span>
-                </div>
+               
 
                 {/* Class & Gender */}
                 <div className="flex items-center gap-4">
