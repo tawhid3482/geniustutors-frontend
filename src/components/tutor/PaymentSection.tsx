@@ -58,6 +58,10 @@ import {
   Phone,
   User,
   FileCheck,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import {
   useCreatePaymentMutation,
@@ -231,6 +235,10 @@ export function PaymentSection() {
     note: "",
   });
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   // Calculate statistics from transaction data
   const calculateStats = (): PaymentStats => {
     if (!transactions.length) {
@@ -351,8 +359,63 @@ export function PaymentSection() {
     }
   );
 
+  // Pagination calculations
+  const totalItems = filteredTransactions.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentTransactions = filteredTransactions.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push("...");
+        pageNumbers.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pageNumbers.push(1);
+        pageNumbers.push("...");
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pageNumbers.push(i);
+        }
+      } else {
+        pageNumbers.push(1);
+        pageNumbers.push("...");
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push("...");
+        pageNumbers.push(totalPages);
+      }
+    }
+    
+    return pageNumbers;
+  };
+
   const fetchPaymentData = () => {
     refetch();
+    setCurrentPage(1); // Reset to first page when refreshing
     toast({
       title: "Refreshing data",
       description: "Fetching latest payment information...",
@@ -793,6 +856,93 @@ export function PaymentSection() {
     </div>
   );
 
+  // Render pagination component
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const pageNumbers = getPageNumbers();
+
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <span>Showing</span>
+          <Select
+            value={itemsPerPage.toString()}
+            onValueChange={handleItemsPerPageChange}
+          >
+            <SelectTrigger className="h-8 w-20">
+              <SelectValue placeholder="10" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="5">5</SelectItem>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
+          <span>entries per page</span>
+        </div>
+        
+        <div className="text-sm text-gray-600">
+          Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} entries
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
+          {pageNumbers.map((pageNumber, index) => (
+            <div key={index}>
+              {pageNumber === "..." ? (
+                <span className="px-3 py-2">...</span>
+              ) : (
+                <Button
+                  variant={currentPage === pageNumber ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePageChange(pageNumber as number)}
+                  className={currentPage === pageNumber ? "bg-green-600 hover:bg-green-700" : ""}
+                >
+                  {pageNumber}
+                </Button>
+              )}
+            </div>
+          ))}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Header with Pay Now Button */}
@@ -1052,86 +1202,91 @@ export function PaymentSection() {
               </div>
             </CardHeader>
             <CardContent>
-              {filteredTransactions.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Payment Method</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Transaction ID</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredTransactions.map((transaction) => (
-                        <TableRow key={transaction.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {getTypeIcon(transaction.type)}
-                              <span className="font-medium">
-                                {getTypeText(transaction.type)}
+              {currentTransactions.length > 0 ? (
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead>Payment Method</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Transaction ID</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {currentTransactions.map((transaction) => (
+                          <TableRow key={transaction.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {getTypeIcon(transaction.type)}
+                                <span className="font-medium">
+                                  {getTypeText(transaction.type)}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              <span
+                                className={
+                                  transaction.type === "refunded"
+                                    ? "text-blue-600"
+                                    : transaction.type === "due"
+                                    ? "text-orange-600"
+                                    : "text-red-600"
+                                }
+                              >
+                                {formatCurrency(transaction.amount)}
                               </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            <span
-                              className={
-                                transaction.type === "refunded"
-                                  ? "text-blue-600"
-                                  : transaction.type === "due"
-                                  ? "text-orange-600"
-                                  : "text-red-600"
-                              }
-                            >
-                              {formatCurrency(transaction.amount)}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <p>{transaction.description}</p>
-                              {transaction.tutor && (
-                                <p className="text-xs text-muted-foreground">
-                                  Tutor: {transaction.tutor}
-                                </p>
-                              )}
-                              {transaction.student && (
-                                <p className="text-xs text-muted-foreground">
-                                  Student: {transaction.student}
-                                </p>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {getPaymentMethodIcon(transaction.payment_method)}
+                            </TableCell>
+                            <TableCell>
                               <div>
-                                <p>{transaction.payment_method}</p>
-                                {transaction.payment_number && (
+                                <p>{transaction.description}</p>
+                                {transaction.tutor && (
                                   <p className="text-xs text-muted-foreground">
-                                    {transaction.payment_number}
+                                    Tutor: {transaction.tutor}
+                                  </p>
+                                )}
+                                {transaction.student && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Student: {transaction.student}
                                   </p>
                                 )}
                               </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {getStatusBadge(transaction.status)}
-                          </TableCell>
-                          <TableCell>
-                            {formatDate(transaction.created_at)}
-                          </TableCell>
-                          <TableCell className="font-mono text-sm">
-                            {transaction.reference_id}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {getPaymentMethodIcon(transaction.payment_method)}
+                                <div>
+                                  <p>{transaction.payment_method}</p>
+                                  {transaction.payment_number && (
+                                    <p className="text-xs text-muted-foreground">
+                                      {transaction.payment_number}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {getStatusBadge(transaction.status)}
+                            </TableCell>
+                            <TableCell>
+                              {formatDate(transaction.created_at)}
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">
+                              {transaction.reference_id}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  
+                  {/* Pagination */}
+                  {renderPagination()}
+                </>
               ) : (
                 <div className="text-center py-8">
                   <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
