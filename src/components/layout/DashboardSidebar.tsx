@@ -192,8 +192,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
           main: [
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
             { id: 'tution-request', label: 'Tution Requests', icon: Briefcase },
-            // { id: 'tutor-connect', label: 'Tutor Connect', icon: BookCheck },
-            { id: 'reviews', label: 'Reviews', icon: Star },
+            { id: 'tutor-connect', label: 'Tutor Connect', icon: BookCheck },
             { id: 'users', label: 'User Management', icon: Users },
             // { id: 'role-management', label: 'Role Management', icon: Key },
             { id: 'upgrade-applications', label: 'Upgrade Applications', icon: Shield },
@@ -201,7 +200,8 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'tutor-applications', label: 'Tutor Applications', icon: UserCheck },
             // { id: 'demo-classes', label: 'Demo Classes', icon: BookOpen },
             // { id: 'courses', label: 'Course Management', icon: BookCheck },
-            // { id: 'history', label: 'History', icon: History },
+            { id: 'reviews', label: 'Reviews', icon: Star },
+            { id: 'history', label: 'History', icon: History },
             { id: 'notice-board', label: 'Notice Board', icon: Megaphone },
           ],
           quick: [
