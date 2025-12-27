@@ -38,6 +38,8 @@ import { adminMenuItems, managerMenuItems } from "@/config/adminMenu";
 import PermissionAssignment from "./PermissionAssignment";
 import Category from "./components/Category";
 import TuitionRequestsSection from "./sections/TuitionRequestsSection";
+import TutorConnectSection from "./sections/TutorConnectSection";
+import ManageDistrict from "./components/ManageDistrict";
 // import RefundPoliciesPage from "@/app/admin/refund-policies/page";
 
 // Icon mapping for string to component conversion
@@ -402,6 +404,11 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
       <TuitionRequestsSection />
     );
   };
+  const renderTuitionConnection = () => {
+    return (
+      <TutorConnectSection />
+    );
+  };
 
   // Render user management section
   const renderUserManagement = () => {
@@ -431,6 +438,12 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
     );
   };
 
+  // Render district management section
+  const renderDistrictManagement = () => {
+    return (
+      <ManageDistrict />
+    );
+  };
   // Render review management section
   const renderReviewManagement = () => {
     return (
@@ -559,11 +572,13 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
             {activeTab === "jobs" && renderJobs()}
             {activeTab === "profile" && renderProfile()}
             {activeTab === "tution-request" && renderTuitionRequests()}
+            {activeTab === "tutor-connect" && renderTuitionConnection()}
             {activeTab === "users" && renderUserManagement()}
             {activeTab === "tutors" && renderTutorManagement()}
             {activeTab === "tutor-applications" && <ContactRequests />}
             {activeTab === "upgrade-applications" && renderUpgradeApplicationsManagement()}
             {activeTab === "upgrade-packages" && renderUpgradePackagesManagement()}
+            {activeTab === "district" && renderDistrictManagement()}
             {activeTab === "reviews" && renderReviewManagement()}
             {activeTab === "payment" && renderPaymentManagement()}
             {/* {activeTab === "refund-policies" && <RefundPoliciesPage />} */}

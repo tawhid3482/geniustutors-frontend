@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Users,
   Search,
-  Filter,
   Eye,
   Mail,
   Phone,
@@ -17,14 +16,40 @@ import {
   Check,
   Star,
   Crown,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import {
   useGetAllTutorsQuery,
   useUpdateTutorStatusMutation,
 } from "@/redux/features/tutorHub/tutorHubApi";
 
-// Define types for better TypeScript support
+// --- Enhanced Type Definitions ---
 type TutorStatus = "pending" | "approved" | "rejected";
+
+interface Tutor {
+  id: string;
+  tutor_id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  gender?: string;
+  nationality?: string;
+  religion?: string;
+  Institute_name?: string;
+  department_name?: string;
+  year?: string;
+  district?: string;
+  background?: string[];
+  alternative_number?: string;
+  qualification?: string;
+  experience?: string;
+  tutorStatus: TutorStatus;
+  verified: boolean;
+  genius: boolean;
+  premium: boolean;
+  createdAt: string;
+}
 
 interface StatusConfig {
   colorClasses: string;
@@ -39,7 +64,17 @@ interface StatusConfigMap {
 }
 
 // --- Status Cards Component ---
-const StatusCard = ({ label, count, isPrimary, countColor }: any) => (
+const StatusCard = ({ 
+  label, 
+  count, 
+  isPrimary, 
+  countColor 
+}: { 
+  label: string; 
+  count: number; 
+  isPrimary: boolean; 
+  countColor: string;
+}) => (
   <div
     className={`p-6 border rounded-xl shadow-sm transition-all duration-300 hover:shadow-md
       ${
@@ -53,19 +88,15 @@ const StatusCard = ({ label, count, isPrimary, countColor }: any) => (
   </div>
 );
 
-const StatusCards = ({ tutors }: any) => {
-  const statusCounts = {
-    total: tutors?.length || 0,
-    pending:
-      tutors?.filter((tutor: any) => tutor.tutorStatus === "pending").length ||
-      0,
-    approved:
-      tutors?.filter((tutor: any) => tutor.tutorStatus === "approved").length ||
-      0,
-    rejected:
-      tutors?.filter((tutor: any) => tutor.tutorStatus === "rejected").length ||
-      0,
-  };
+const StatusCards = ({ tutors }: { tutors: Tutor[] }) => {
+  const statusCounts = useMemo(() => {
+    const total = tutors?.length || 0;
+    const pending = tutors?.filter((tutor) => tutor.tutorStatus === "pending").length || 0;
+    const approved = tutors?.filter((tutor) => tutor.tutorStatus === "approved").length || 0;
+    const rejected = tutors?.filter((tutor) => tutor.tutorStatus === "rejected").length || 0;
+
+    return { total, pending, approved, rejected };
+  }, [tutors]);
 
   const statusItems = [
     {
@@ -182,7 +213,7 @@ const BooleanStatusBadge = ({
     },
   };
 
-  const config = statusConfig[type][status.toString() as "true" | "false"];
+  const config = statusConfig[type][status ? "true" : "false"];
   const Icon = config.icon;
 
   return (
@@ -196,7 +227,17 @@ const BooleanStatusBadge = ({
 };
 
 // --- Info Row Component for Modal ---
-const InfoRow = ({ icon: Icon, label, value, className = "" }: any) => (
+const InfoRow = ({ 
+  icon: Icon, 
+  label, 
+  value, 
+  className = "" 
+}: { 
+  icon: any; 
+  label: string; 
+  value: string | undefined; 
+  className?: string;
+}) => (
   <div className={`flex items-start space-x-3 py-3 ${className}`}>
     <div className="flex-shrink-0 w-5 h-5 text-gray-500 mt-0.5">
       <Icon className="w-5 h-5" />
@@ -218,10 +259,7 @@ const BooleanStatusToggle = ({
   currentStatus: boolean;
   newStatus: boolean;
   type: "verified" | "genius" | "premium";
-  onStatusChange: (
-    type: "verified" | "genius" | "premium",
-    value: boolean
-  ) => void;
+  onStatusChange: (type: "verified" | "genius" | "premium", value: boolean) => void;
 }) => {
   const config = {
     verified: {
@@ -302,6 +340,7 @@ const BooleanStatusToggle = ({
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
             newStatus ? "bg-green-500" : "bg-gray-300"
           }`}
+          aria-label={`Toggle ${label}`}
         >
           <span
             className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -315,40 +354,55 @@ const BooleanStatusToggle = ({
 };
 
 // --- Tutor Details Modal Component ---
-const TutorDetailsModal = ({ tutor, isOpen, onClose, onStatusUpdate }: any) => {
-  const [selectedStatus, setSelectedStatus] = useState(
-    tutor?.tutorStatus || "pending"
-  );
+interface TutorDetailsModalProps {
+  tutor: Tutor | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onStatusUpdate: (tutorId: string, statusData: any) => Promise<void>;
+}
 
-  // Initialize boolean statuses from tutor data (backend data)
+const TutorDetailsModal: React.FC<TutorDetailsModalProps> = ({ 
+  tutor, 
+  isOpen, 
+  onClose, 
+  onStatusUpdate 
+}) => {
+  const [selectedStatus, setSelectedStatus] = useState<TutorStatus>("pending");
   const [booleanStatuses, setBooleanStatuses] = useState({
-    verified: tutor?.verified || false,
-    genius: tutor?.genius || false,
-    premium: tutor?.premium || false,
+    verified: false,
+    genius: false,
+    premium: false,
   });
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Update boolean statuses when tutor data changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (tutor) {
+      setSelectedStatus(tutor.tutorStatus || "pending");
       setBooleanStatuses({
         verified: tutor.verified || false,
         genius: tutor.genius || false,
         premium: tutor.premium || false,
       });
-      setSelectedStatus(tutor.tutorStatus || "pending");
     }
   }, [tutor]);
 
   if (!isOpen || !tutor) return null;
 
-  const handleStatusUpdate = () => {
-    onStatusUpdate(tutor.id, {
-      tutorStatus: selectedStatus,
-      verified: booleanStatuses.verified,
-      genius: booleanStatuses.genius,
-      premium: booleanStatuses.premium,
-    });
-    onClose();
+  const handleStatusUpdate = async () => {
+    try {
+      setIsUpdating(true);
+      await onStatusUpdate(tutor.id, {
+        tutorStatus: selectedStatus,
+        verified: booleanStatuses.verified,
+        genius: booleanStatuses.genius,
+        premium: booleanStatuses.premium,
+      });
+      onClose();
+    } catch (error) {
+      console.error("Failed to update status:", error);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleBooleanStatusChange = (
@@ -362,9 +416,9 @@ const TutorDetailsModal = ({ tutor, isOpen, onClose, onStatusUpdate }: any) => {
   };
 
   const statusOptions = [
-    { value: "pending", label: "Pending", color: "text-yellow-600" },
-    { value: "approved", label: "Approved", color: "text-green-600" },
-    { value: "rejected", label: "Rejected", color: "text-red-600" },
+    { value: "pending" as const, label: "Pending", color: "text-yellow-600" },
+    { value: "approved" as const, label: "Approved", color: "text-green-600" },
+    { value: "rejected" as const, label: "Rejected", color: "text-red-600" },
   ];
 
   const hasChanges =
@@ -375,7 +429,7 @@ const TutorDetailsModal = ({ tutor, isOpen, onClose, onStatusUpdate }: any) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-5xl max-h-[95vh] overflow-hidden transform transition-all duration-300 scale-100">
+      <div className="bg-white rounded-2xl shadow-2xl  max-h-[95vh] overflow-hidden transform transition-all duration-300 scale-100">
         {/* Header */}
         <div className="bg-gradient-to-r bg-green-600 p-6 text-white">
           <div className="flex justify-between items-start">
@@ -388,6 +442,7 @@ const TutorDetailsModal = ({ tutor, isOpen, onClose, onStatusUpdate }: any) => {
             <button
               onClick={onClose}
               className="text-white hover:text-blue-200 text-2xl font-bold transition-colors duration-200 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full w-10 h-10 flex items-center justify-center"
+              aria-label="Close modal"
             >
               ×
             </button>
@@ -521,7 +576,7 @@ const TutorDetailsModal = ({ tutor, isOpen, onClose, onStatusUpdate }: any) => {
                       <p className="text-sm font-medium text-gray-600">
                         Experience
                       </p>
-                      <p className="text-gray900 font-medium">
+                      <p className="text-gray-900 font-medium">
                         {tutor.experience}
                       </p>
                     </div>
@@ -568,7 +623,7 @@ const TutorDetailsModal = ({ tutor, isOpen, onClose, onStatusUpdate }: any) => {
                   <div className="flex items-center space-x-4">
                     <select
                       value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      onChange={(e) => setSelectedStatus(e.target.value as TutorStatus)}
                       className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm font-medium"
                     >
                       {statusOptions.map((option) => (
@@ -597,20 +652,28 @@ const TutorDetailsModal = ({ tutor, isOpen, onClose, onStatusUpdate }: any) => {
                   <div className="flex space-x-3">
                     <button
                       onClick={onClose}
-                      className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200 font-medium"
+                      disabled={isUpdating}
+                      className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200 font-medium disabled:opacity-50"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleStatusUpdate}
-                      disabled={!hasChanges}
-                      className={`px-8 py-3 text-white rounded-xl font-medium transition-all duration-200 ${
-                        !hasChanges
+                      disabled={!hasChanges || isUpdating}
+                      className={`px-8 py-3 text-white rounded-xl font-medium transition-all duration-200 flex items-center justify-center ${
+                        !hasChanges || isUpdating
                           ? "bg-gray-400 cursor-not-allowed"
                           : "bg-green-600 hover:bg-green-800 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                       }`}
                     >
-                      Update Status
+                      {isUpdating ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Updating...
+                        </>
+                      ) : (
+                        "Update Status"
+                      )}
                     </button>
                   </div>
                 </div>
@@ -624,12 +687,19 @@ const TutorDetailsModal = ({ tutor, isOpen, onClose, onStatusUpdate }: any) => {
 };
 
 // --- Application Table Component ---
-const ApplicationTable = ({
+interface ApplicationTableProps {
+  tutors: Tutor[];
+  searchTerm: string;
+  onViewDetails: (tutor: Tutor) => void;
+  onSearchChange: (value: string) => void;
+}
+
+const ApplicationTable: React.FC<ApplicationTableProps> = ({
   tutors,
   searchTerm,
   onViewDetails,
   onSearchChange,
-}: any) => {
+}) => {
   const [districtFilter, setDistrictFilter] = useState("");
 
   const headers = [
@@ -642,19 +712,25 @@ const ApplicationTable = ({
     "Action",
   ];
 
-  const filteredTutors = tutors?.filter((tutor: any) => {
-    const matchesSearch =
-      searchTerm === "" ||
-      tutor.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tutor.email?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredTutors = useMemo(() => {
+    return tutors?.filter((tutor) => {
+      const matchesSearch =
+        searchTerm === "" ||
+        tutor.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tutor.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesDistrict =
-      districtFilter === "" ||
-      (tutor.district &&
-        tutor.district.toLowerCase().includes(districtFilter.toLowerCase()));
+      const matchesDistrict =
+        districtFilter === "" ||
+        (tutor.district &&
+          tutor.district.toLowerCase().includes(districtFilter.toLowerCase()));
 
-    return matchesSearch && matchesDistrict;
-  });
+      return matchesSearch && matchesDistrict;
+    }) || [];
+  }, [tutors, searchTerm, districtFilter]);
+
+  const handleDistrictFilterChange = useCallback((value: string) => {
+    setDistrictFilter(value);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -669,15 +745,18 @@ const ApplicationTable = ({
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              aria-label="Search tutors"
             />
           </div>
-          <div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
               placeholder="Filter by district..."
               value={districtFilter}
-              onChange={(e) => setDistrictFilter(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              onChange={(e) => handleDistrictFilterChange(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              aria-label="Filter by district"
             />
           </div>
         </div>
@@ -685,121 +764,124 @@ const ApplicationTable = ({
 
       {/* Table */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              {headers.map((header, index) => (
-                <th
-                  key={index}
-                  scope="col"
-                  className={`px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider
-                    ${header === "Action" ? "w-20 text-center" : ""} 
-                    ${header === "Registration Date" ? "w-32" : ""}
-                    ${header === "Account Status" ? "w-48" : ""}
-                  `}
-                >
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
-            {filteredTutors?.map((tutor: any) => (
-              <tr
-                key={tutor.id}
-                className="hover:bg-gray-50 transition-colors duration-150"
-              >
-                {/* Tutor Info */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div>
-                    <p className="font-semibold text-gray-900 text-sm">
-                      {tutor.fullName}
-                    </p>
-                    <p className="text-gray-600 text-xs mt-1 flex items-center">
-                      <Mail className="w-3 h-3 mr-1" />
-                      {tutor.email}
-                    </p>
-                    <p className="text-gray-600 text-xs mt-1 flex items-center">
-                      <Phone className="w-3 h-3 mr-1" />
-                      {tutor.phone}
-                    </p>
-                  </div>
-                </td>
-
-                {/* Institute & Department */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div>
-                    <p className="font-medium text-gray-900 text-sm">
-                      {tutor.Institute_name || "N/A"}
-                    </p>
-                    <p className="text-gray-600 text-xs mt-1">
-                      {tutor.department_name}
-                    </p>
-                    <p className="text-gray-500 text-xs mt-1">
-                      Year: {tutor.year}
-                    </p>
-                  </div>
-                </td>
-
-                {/* District */}
-                <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-1 max-w-xs">
-                    {tutor.district ? (
-                      <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded-lg text-xs font-medium border border-blue-200">
-                        {tutor.district}
-                      </span>
-                    ) : (
-                      <span className="inline-block bg-gray-100 text-gray-600 px-2 py-1 rounded-lg text-xs">
-                        N/A
-                      </span>
-                    )}
-                  </div>
-                </td>
-
-                {/* Status */}
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <StatusBadge status={tutor.tutorStatus} />
-                </td>
-
-                {/* Account Status */}
-                <td className="px-6 py-4">
-                  <div className="flex flex-col gap-2">
-                    <BooleanStatusBadge
-                      status={tutor.verified || false}
-                      type="verified"
-                    />
-                    <BooleanStatusBadge
-                      status={tutor.genius || false}
-                      type="genius"
-                    />
-                    <BooleanStatusBadge
-                      status={tutor.premium || false}
-                      type="premium"
-                    />
-                  </div>
-                </td>
-
-                {/* Registration Date */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {new Date(tutor.createdAt).toLocaleDateString()}
-                </td>
-
-                {/* Action */}
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                  <button
-                    onClick={() => onViewDetails(tutor)}
-                    title="View Details"
-                    className="inline-flex items-center justify-center w-10 h-10 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 transform hover:scale-105"
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                {headers.map((header, index) => (
+                  <th
+                    key={index}
+                    scope="col"
+                    className={`px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider
+                      ${header === "Action" ? "w-20 text-center" : ""} 
+                      ${header === "Registration Date" ? "w-32" : ""}
+                      ${header === "Account Status" ? "w-48" : ""}
+                    `}
                   >
-                    <Eye className="w-5 h-5" />
-                  </button>
-                </td>
+                    {header}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-100">
+              {filteredTutors.map((tutor) => (
+                <tr
+                  key={tutor.id}
+                  className="hover:bg-gray-50 transition-colors duration-150"
+                >
+                  {/* Tutor Info */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">
+                        {tutor.fullName}
+                      </p>
+                      <p className="text-gray-600 text-xs mt-1 flex items-center">
+                        <Mail className="w-3 h-3 mr-1" />
+                        {tutor.email}
+                      </p>
+                      <p className="text-gray-600 text-xs mt-1 flex items-center">
+                        <Phone className="w-3 h-3 mr-1" />
+                        {tutor.phone}
+                      </p>
+                    </div>
+                  </td>
 
-        {(!filteredTutors || filteredTutors.length === 0) && (
+                  {/* Institute & Department */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm">
+                        {tutor.Institute_name || "N/A"}
+                      </p>
+                      <p className="text-gray-600 text-xs mt-1">
+                        {tutor.department_name}
+                      </p>
+                      <p className="text-gray-500 text-xs mt-1">
+                        Year: {tutor.year}
+                      </p>
+                    </div>
+                  </td>
+
+                  {/* District */}
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1 max-w-xs">
+                      {tutor.district ? (
+                        <span className="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded-lg text-xs font-medium border border-blue-200">
+                          {tutor.district}
+                        </span>
+                      ) : (
+                        <span className="inline-block bg-gray-100 text-gray-600 px-2 py-1 rounded-lg text-xs">
+                          N/A
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Status */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <StatusBadge status={tutor.tutorStatus} />
+                  </td>
+
+                  {/* Account Status */}
+                  <td className="px-6 py-4">
+                    <div className="flex flex-col gap-2">
+                      <BooleanStatusBadge
+                        status={tutor.verified || false}
+                        type="verified"
+                      />
+                      <BooleanStatusBadge
+                        status={tutor.genius || false}
+                        type="genius"
+                      />
+                      <BooleanStatusBadge
+                        status={tutor.premium || false}
+                        type="premium"
+                      />
+                    </div>
+                  </td>
+
+                  {/* Registration Date */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {new Date(tutor.createdAt).toLocaleDateString()}
+                  </td>
+
+                  {/* Action */}
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <button
+                      onClick={() => onViewDetails(tutor)}
+                      title="View Details"
+                      className="inline-flex items-center justify-center w-10 h-10 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 transform hover:scale-105"
+                      aria-label={`View details for ${tutor.fullName}`}
+                    >
+                      <Eye className="w-5 h-5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {filteredTutors.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-400 mb-4">
               <Users className="w-16 h-16 mx-auto" />
@@ -818,20 +900,34 @@ const ApplicationTable = ({
 // --- Main Dashboard Component ---
 const TutorApplicationDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTutor, setSelectedTutor] = useState(null);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const {
     data: allTutorsData,
     isLoading,
     error,
-  } = useGetAllTutorsQuery(undefined, { refetchOnMountOrArgChange: true });
+    refetch,
+  } = useGetAllTutorsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+    pollingInterval: 30000, // Auto-refresh every 30 seconds
+  });
 
-  const [updateTutorStatus] = useUpdateTutorStatusMutation();
+  const [updateTutorStatus, { isLoading: isUpdating }] = useUpdateTutorStatusMutation();
 
-  const tutors = allTutorsData?.data || [];
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
 
-  const handleViewDetails = (tutor: any) => {
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const tutors = useMemo(() => allTutorsData?.data || [], [allTutorsData]);
+
+  const handleViewDetails = (tutor: Tutor) => {
     setSelectedTutor(tutor);
     setIsModalOpen(true);
   };
@@ -841,12 +937,14 @@ const TutorApplicationDashboard = () => {
     setSelectedTutor(null);
   };
 
-  const handleStatusUpdate = async (tutorId: any, statusData: any) => {
+  const handleStatusUpdate = async (tutorId: string, statusData: any) => {
     try {
       await updateTutorStatus({ id: tutorId, data: statusData }).unwrap();
-      // The cache will be automatically invalidated and refetched due to invalidatesTags
+      // Refetch data to get the latest updates
+      refetch();
     } catch (error) {
       console.error("Failed to update tutor status:", error);
+      // You might want to show a toast notification here
     }
   };
 
@@ -858,8 +956,9 @@ const TutorApplicationDashboard = () => {
     return (
       <div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <Loader2 className="w-16 h-16 animate-spin text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600 text-lg font-medium">Loading tutors...</p>
+          <p className="text-gray-400 text-sm mt-2">Please wait</p>
         </div>
       </div>
     );
@@ -868,12 +967,22 @@ const TutorApplicationDashboard = () => {
   if (error) {
     return (
       <div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center">
-        <div className="text-center text-red-600">
+        <div className="text-center max-w-md">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Users className="w-8 h-8 text-red-600" />
+            <AlertCircle className="w-8 h-8 text-red-600" />
           </div>
-          <p className="text-lg font-medium">Error loading tutors</p>
-          <p className="text-gray-600 mt-2">Please try again later</p>
+          <p className="text-lg font-medium text-red-600 mb-2">
+            Error loading tutors
+          </p>
+          <p className="text-gray-600 mb-4">
+            We couldn't load the tutor data. Please check your connection and try again.
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -887,9 +996,17 @@ const TutorApplicationDashboard = () => {
           <Users className="w-8 h-8 mr-3 text-blue-600" />
           Tutor Applications
         </div>
-        <p className="text-gray-600 text-lg">
-          Manage and review tutor applications efficiently
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-gray-600 text-lg">
+            Manage and review tutor applications efficiently
+          </p>
+          <div className="flex items-center space-x-2 text-sm text-gray-500">
+            <span className="flex items-center">
+              <Loader2 className={`w-3 h-3 mr-1 ${isUpdating ? 'animate-spin' : ''}`} />
+              {isUpdating ? 'Updating...' : 'Ready'}
+            </span>
+          </div>
+        </div>
       </header>
 
       {/* Status Cards */}
@@ -900,7 +1017,7 @@ const TutorApplicationDashboard = () => {
       {/* Application Table */}
       <ApplicationTable
         tutors={tutors}
-        searchTerm={searchTerm}
+        searchTerm={debouncedSearchTerm}
         onViewDetails={handleViewDetails}
         onSearchChange={handleSearchChange}
       />

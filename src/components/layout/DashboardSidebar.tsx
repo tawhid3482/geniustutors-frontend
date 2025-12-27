@@ -201,7 +201,8 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             // { id: 'demo-classes', label: 'Demo Classes', icon: BookOpen },
             // { id: 'courses', label: 'Course Management', icon: BookCheck },
             { id: 'reviews', label: 'Reviews', icon: Star },
-            { id: 'history', label: 'History', icon: History },
+            { id: 'district', label: 'District', icon: Star },
+            // { id: 'history', label: 'History', icon: History },
             { id: 'notice-board', label: 'Notice Board', icon: Megaphone },
           ],
           quick: [
