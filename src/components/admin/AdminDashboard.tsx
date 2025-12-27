@@ -12,7 +12,6 @@ import { DashboardNavbar } from "@/components/layout/DashboardNavbar";
 import { Button } from "@/components/ui/button";
 import { AdminProfile } from "./components/AdminProfile";
 import { FloatingSupportChat } from "./components/FloatingSupportChat";
-import { TuitionRequestsSection } from "./sections/TuitionRequestsSection";
 import { UserManagementSection } from "./components/UserManagementSection";
 import { TutorManagementSection } from "./components/TutorManagementSection";
 import { ReviewManagementSection } from "./components/ReviewManagementSection";
@@ -38,6 +37,7 @@ import { usePermissionMenu } from "@/hooks/usePermissionMenu";
 import { adminMenuItems, managerMenuItems } from "@/config/adminMenu";
 import PermissionAssignment from "./PermissionAssignment";
 import Category from "./components/Category";
+import TuitionRequestsSection from "./sections/TuitionRequestsSection";
 // import RefundPoliciesPage from "@/app/admin/refund-policies/page";
 
 // Icon mapping for string to component conversion

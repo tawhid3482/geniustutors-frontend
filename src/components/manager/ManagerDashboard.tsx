@@ -15,7 +15,6 @@ import { VideoTestimonialsManagement } from "../admin/VideoTestimonialsManagemen
 import FeaturedMediaManagement from "../admin/FeaturedMediaManagement";
 import { usePermissionMenu } from "@/hooks/usePermissionMenu";
 import { managerMenuItems } from "@/config/adminMenu";
-import { TuitionRequestsSection } from "../admin/sections/TuitionRequestsSection";
 import { ReviewManagementSection } from "../admin/components/ReviewManagementSection";
 import ContactRequests from "../admin/components/ContactRequests";
 import { DemoClassesSection } from "../admin/sections/DemoClassesSection";
@@ -26,6 +25,7 @@ import { HistorySection } from "../admin/sections/HistorySection";
 import PlatformControlSection from "../admin/sections/PlatformControlSection";
 import TaxonomyManagement from "../admin/TaxonomyManagement";
 import { NoticeBoardSection } from "../admin/sections/NoticeBoardSection";
+import TuitionRequestsSection from "../admin/sections/TuitionRequestsSection";
 
 export function ManagerDashboard({ user: pageUser }: { user: any }) {
   // Use the user from props or from the hook

@@ -1,5 +1,6 @@
+// EditModal.tsx
+"use client";
 
-import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,11 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,192 +20,207 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { SUBJECT_OPTIONS, CLASS_LEVELS } from "@/data/mockData";
-import mediumOptions from "@/data/mediumOptions.json";
-import { X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Edit2,
+  DollarSign,
+  Calendar,
+  Clock,
+  Users,
+  BookOpen,
+  School,
+} from "lucide-react";
+import { useState, useEffect } from "react";
 
-interface EditRequestModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onUpdate: (data: any) => Promise<void>;
-  isUpdating: boolean;
-  selectedRequest: any;
-  districtOptions: any[];
-  DistrictData: any;
-  isDistrictLoading: boolean;
+interface TutorRequest {
+  id: string;
+  tutorRequestId: string;
+  phoneNumber: string;
+  studentGender: string;
+  district: string;
+  thana: string;
+  area: string;
+  subject: string;
+  selectedSubjects: string[];
+  selectedCategories: string[];
+  selectedClasses: string[];
+  salaryRange: {
+    min: number;
+    max: number;
+  };
+  isSalaryNegotiable: boolean;
+  tutoringType: string;
+  numberOfStudents: number;
+  tutoringTime: string;
+  tutoringDays: number;
+  tutoringDuration: string;
+  studentClass: string;
+  tutorGenderPreference: string;
+  medium: string;
+  detailedLocation: string;
+  extraInformation: string;
+  status: string;
+  adminNote?: string | null;
+  user: {
+    fullName: string;
+  };
 }
 
-export function EditRequestModal({
+interface District {
+  id: string;
+  name: string;
+  thana: string[];
+  area: string[];
+}
+
+interface EditModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedRequest: TutorRequest | null;
+  districts: District[];
+  categories: any[];
+  onUpdate: (data: any) => Promise<void>;
+  isLoading?: boolean;
+}
+
+export function EditModal({
   open,
   onOpenChange,
-  onUpdate,
-  isUpdating,
   selectedRequest,
-  districtOptions,
-  DistrictData,
-  isDistrictLoading,
-}: EditRequestModalProps) {
-  const [editFormData, setEditFormData] = useState<any>({});
-  const [selectedDistrict, setSelectedDistrict] = useState("");
+  districts,
+  categories,
+  onUpdate,
+  isLoading = false,
+}: EditModalProps) {
+  const [formData, setFormData] = useState<any>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [availableThanas, setAvailableThanas] = useState<string[]>([]);
   const [availableAreas, setAvailableAreas] = useState<string[]>([]);
-  const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
 
-  // Initialize form data
   useEffect(() => {
     if (selectedRequest) {
-      const initialData = {
-        studentName: selectedRequest.studentName || "",
-        studentGender: selectedRequest.studentGender || "",
-        phoneNumber: selectedRequest.phoneNumber || "",
-        district: selectedRequest.district || "",
-        thana: selectedRequest.thana || "",
-        area: selectedRequest.area || "",
-        detailedLocation: selectedRequest.detailedLocation || "",
-        medium: selectedRequest.medium || "",
-        subject: selectedRequest.subject || "",
-        studentClass: selectedRequest.studentClass || "",
-        tutoringType: selectedRequest.tutoringType || "",
-        numberOfStudents: selectedRequest.numberOfStudents || 1,
-        tutoringDays: selectedRequest.tutoringDays || 1,
-        tutoringTime: selectedRequest.tutoringTime || "",
-        tutoringDuration: selectedRequest.tutoringDuration || "",
-        tutorGenderPreference: selectedRequest.tutorGenderPreference || "",
-        isSalaryNegotiable: selectedRequest.isSalaryNegotiable || false,
-        salaryRange: selectedRequest.salaryRange || { min: 0, max: 0 },
-        extraInformation: selectedRequest.extraInformation || "",
+      setFormData({
+        phoneNumber: selectedRequest.phoneNumber,
+        studentGender: selectedRequest.studentGender,
+        district: selectedRequest.district,
+        thana: selectedRequest.thana,
+        area: selectedRequest.area,
+        subject: selectedRequest.subject,
+        selectedSubjects: selectedRequest.selectedSubjects || [],
+        selectedCategories: selectedRequest.selectedCategories || [],
+        selectedClasses: selectedRequest.selectedClasses || [],
+        salaryRange: {
+          min: selectedRequest.salaryRange.min,
+          max: selectedRequest.salaryRange.max,
+        },
+        isSalaryNegotiable: selectedRequest.isSalaryNegotiable,
+        tutoringType: selectedRequest.tutoringType,
+        numberOfStudents: selectedRequest.numberOfStudents,
+        tutoringTime: selectedRequest.tutoringTime,
+        tutoringDays: selectedRequest.tutoringDays,
+        tutoringDuration: selectedRequest.tutoringDuration,
+        studentClass: selectedRequest.studentClass,
+        tutorGenderPreference: selectedRequest.tutorGenderPreference,
+        medium: selectedRequest.medium,
+        detailedLocation: selectedRequest.detailedLocation,
+        extraInformation: selectedRequest.extraInformation,
         adminNote: selectedRequest.adminNote || "",
-        status: selectedRequest.status || "Active",
-      };
-
-      setEditFormData(initialData);
-      setSelectedDistrict(selectedRequest.district || "");
-
-      // Parse areas if they exist
-      if (selectedRequest.area) {
-        const areasArray = typeof selectedRequest.area === 'string'
-          ? selectedRequest.area.split(',').map((a: string) => a.trim()).filter(Boolean)
-          : selectedRequest.area;
-        setSelectedAreas(Array.isArray(areasArray) ? areasArray : []);
-      }
-
-      // Load thanas and areas for the district
-      if (DistrictData?.data && selectedRequest.district) {
-        const selectedDistrictData = DistrictData.data.find(
-          (d: any) => d.name === selectedRequest.district
-        );
-        if (selectedDistrictData) {
-          setAvailableThanas(selectedDistrictData.thana || []);
-          setAvailableAreas(selectedDistrictData.area || []);
-        }
+      });
+      
+      setSelectedDistrict(selectedRequest.district);
+      
+      // Find selected district and set available thanas and areas
+      const district = districts.find(d => d.name === selectedRequest.district);
+      if (district) {
+        setAvailableThanas(district.thana || []);
+        setAvailableAreas(district.area || []);
       }
     }
-  }, [selectedRequest, DistrictData]);
+  }, [selectedRequest, districts]);
 
-  // District change handler
-  const handleDistrictChange = (district: string) => {
-    setSelectedDistrict(district);
-    handleFormChange("district", district);
-    handleFormChange("thana", "");
-    handleFormChange("area", "");
-    setAvailableThanas([]);
-    setAvailableAreas([]);
-    setSelectedAreas([]);
-
-    if (DistrictData?.data && district) {
-      const selectedDistrictData = DistrictData.data.find(
-        (d: any) => d.name === district
-      );
-      if (selectedDistrictData) {
-        setAvailableThanas(selectedDistrictData.thana || []);
+  useEffect(() => {
+    if (selectedDistrict) {
+      const district = districts.find(d => d.name === selectedDistrict);
+      if (district) {
+        setAvailableThanas(district.thana || []);
+        setAvailableAreas(district.area || []);
+        setFormData((prev: any) => ({
+          ...prev,
+          district: selectedDistrict,
+          thana: district.thana?.[0] || "",
+          area: district.area?.[0] || "",
+        }));
       }
     }
+  }, [selectedDistrict, districts]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData || !selectedRequest) return;
+    
+    await onUpdate({
+      id: selectedRequest.id,
+      ...formData,
+    });
   };
 
-  // Thana change handler
-  const handleThanaChange = (thana: string) => {
-    handleFormChange("thana", thana);
-    handleFormChange("area", "");
-    setAvailableAreas([]);
-    setSelectedAreas([]);
-
-    if (DistrictData?.data && editFormData.district) {
-      const selectedDistrictData = DistrictData.data.find(
-        (d: any) => d.name === editFormData.district
-      );
-      if (selectedDistrictData) {
-        setAvailableAreas(selectedDistrictData.area || []);
-      }
-    }
-  };
-
-  // Area selection handler
-  const handleAreaSelection = (area: string) => {
-    const newSelectedAreas = selectedAreas.includes(area)
-      ? selectedAreas.filter((a) => a !== area)
-      : [...selectedAreas, area];
-
-    setSelectedAreas(newSelectedAreas);
-    handleFormChange("area", newSelectedAreas.join(", "));
-  };
-
-  // Handle form field changes
-  const handleFormChange = (field: string, value: any) => {
-    setEditFormData((prev: any) => ({
+  const handleInputChange = (field: string, value: any) => {
+    setFormData((prev: any) => ({
       ...prev,
       [field]: value,
     }));
   };
 
-  // Handle salary range change
-  const handleSalaryRangeChange = (type: "min" | "max", value: number) => {
-    setEditFormData((prev: any) => ({
+  const handleSalaryChange = (field: 'min' | 'max', value: string) => {
+    const numValue = parseInt(value) || 0;
+    setFormData((prev: any) => ({
       ...prev,
       salaryRange: {
         ...prev.salaryRange,
-        [type]: value,
+        [field]: numValue,
       },
     }));
   };
 
-  // Handle status change
-  const handleStatusChange = (status: string) => {
-    handleFormChange("status", status);
-  };
-
-  // Handle update
-  const handleUpdate = async () => {
-    await onUpdate(editFormData);
-  };
-
-  if (!selectedRequest) return null;
+  if (!selectedRequest || !formData) return null;
 
   return (
-    
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Tuition Request</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Edit2 className="w-5 h-5" />
+            Edit Tuition Request
+          </DialogTitle>
           <DialogDescription>
-            Update the details of the tuition request
+            Edit details for request: {selectedRequest.tutorRequestId}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Student Information */}
-          <Section title="Student Information">
+        <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          {/* Basic Information */}
+          <Section title="Basic Information">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="Student Gender">
+              <div className="space-y-2">
+                <Label>Student Name</Label>
+                <Input value={selectedRequest.user.fullName} disabled />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone Number *</Label>
+                <Input
+                  value={formData.phoneNumber}
+                  onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Student Gender</Label>
                 <Select
-                  value={editFormData.studentGender || ""}
-                  onValueChange={(value) =>
-                    handleFormChange("studentGender", value)
-                  }
+                  value={formData.studentGender}
+                  onValueChange={(value) => handleInputChange('studentGender', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="male">Male</SelectItem>
@@ -213,384 +228,284 @@ export function EditRequestModal({
                     <SelectItem value="any">Any</SelectItem>
                   </SelectContent>
                 </Select>
-              </FormField>
-
-              <FormField label="Phone Number">
-                <Input
-                  value={editFormData.phoneNumber || ""}
-                  onChange={(e) =>
-                    handleFormChange("phoneNumber", e.target.value)
-                  }
-                  placeholder="Enter phone number"
-                />
-              </FormField>
+              </div>
             </div>
           </Section>
 
           {/* Location Information */}
           <Section title="Location Information">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField label="District">
-                {isDistrictLoading ? (
-                  <Input value={editFormData.district || ""} disabled />
-                ) : (
-                  <Select
-                    value={editFormData.district || ""}
-                    onValueChange={handleDistrictChange}
-                    disabled={isDistrictLoading}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          isDistrictLoading ? "Loading..." : "Select district"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {districtOptions.map((district: any) => (
-                        <SelectItem key={district.value} value={district.value}>
-                          {district.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </FormField>
-
-              <FormField label="Thana/Upazila">
-                {!editFormData.district ? (
-                  <Input value={editFormData.thana || ""} disabled />
-                ) : availableThanas.length > 0 ? (
-                  <Select
-                    value={editFormData.thana || ""}
-                    onValueChange={handleThanaChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select thana/upazila" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableThanas.map((thana) => (
-                        <SelectItem key={thana} value={thana}>
-                          {thana}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Input
-                    value={editFormData.thana || ""}
-                    onChange={(e) => handleFormChange("thana", e.target.value)}
-                    placeholder="Enter thana/upazila"
-                  />
-                )}
-              </FormField>
-
-              <div className="md:col-span-3 space-y-2">
+              <div className="space-y-2">
+                <Label>District *</Label>
+                <Select
+                  value={selectedDistrict}
+                  onValueChange={setSelectedDistrict}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {districts.map((district) => (
+                      <SelectItem key={district.id} value={district.name}>
+                        {district.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Thana</Label>
+                <Select
+                  value={formData.thana}
+                  onValueChange={(value) => handleInputChange('thana', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableThanas.map((thana, index) => (
+                      <SelectItem key={index} value={thana}>
+                        {thana}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label>Area</Label>
-                {!editFormData.thana ? (
-                  <Input value={editFormData.area || ""} disabled />
-                ) : availableAreas.length > 0 ? (
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {availableAreas.map((area) => (
-                        <AreaChip
-                          key={area}
-                          area={area}
-                          selected={selectedAreas.includes(area)}
-                          onSelect={() => handleAreaSelection(area)}
-                        />
-                      ))}
-                    </div>
-                    {selectedAreas.length > 0 && (
-                      <SelectedItemsDisplay
-                        items={selectedAreas}
-                        onRemove={handleAreaSelection}
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <Input
-                    value={editFormData.area || ""}
-                    onChange={(e) => handleFormChange("area", e.target.value)}
-                    placeholder="Enter area"
-                  />
-                )}
+                <Select
+                  value={formData.area}
+                  onValueChange={(value) => handleInputChange('area', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableAreas.map((area, index) => (
+                      <SelectItem key={index} value={area}>
+                        {area}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-
-              <div className="md:col-span-3 space-y-2">
-                <Label>Detailed Location</Label>
-                <Input
-                  value={editFormData.detailedLocation || ""}
-                  onChange={(e) =>
-                    handleFormChange("detailedLocation", e.target.value)
-                  }
-                  placeholder="Enter detailed location"
-                />
-              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Detailed Location</Label>
+              <Textarea
+                value={formData.detailedLocation}
+                onChange={(e) => handleInputChange('detailedLocation', e.target.value)}
+                placeholder="House number, street, landmarks..."
+              />
             </div>
           </Section>
 
           {/* Academic Information */}
           <Section title="Academic Information">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="Medium">
+              <div className="space-y-2">
+                <Label>Subject *</Label>
+                <Input
+                  value={formData.subject}
+                  onChange={(e) => handleInputChange('subject', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Medium</Label>
+                <Input
+                  value={formData.medium}
+                  onChange={(e) => handleInputChange('medium', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Student Class</Label>
+                <Input
+                  value={formData.studentClass}
+                  onChange={(e) => handleInputChange('studentClass', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Tutoring Type</Label>
                 <Select
-                  value={editFormData.medium || ""}
-                  onValueChange={(value) => handleFormChange("medium", value)}
+                  value={formData.tutoringType}
+                  onValueChange={(value) => handleInputChange('tutoringType', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select medium" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mediumOptions.mediums.map((medium) => (
-                      <SelectItem key={medium.value} value={medium.value}>
-                        {medium.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
-
-              <FormField label="Subject">
-                <Select
-                  value={editFormData.subject || ""}
-                  onValueChange={(value) => handleFormChange("subject", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select subject" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Select subject</SelectItem>
-                    {SUBJECT_OPTIONS.map((subject) => (
-                      <SelectItem key={subject} value={subject}>
-                        {subject}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
-
-              <FormField label="Class Level">
-                <Select
-                  value={editFormData.studentClass || ""}
-                  onValueChange={(value) =>
-                    handleFormChange("studentClass", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select class level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Select class level</SelectItem>
-                    {CLASS_LEVELS.map((classLevel) => (
-                      <SelectItem key={classLevel} value={classLevel}>
-                        {classLevel}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
-
-              <FormField label="Tutoring Type">
-                <Select
-                  value={editFormData.tutoringType || ""}
-                  onValueChange={(value) =>
-                    handleFormChange("tutoringType", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select tutoring type" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Home Tutoring">Home Tutoring</SelectItem>
                     <SelectItem value="Online Tutoring">Online Tutoring</SelectItem>
-                    <SelectItem value="Both">Both</SelectItem>
+                    <SelectItem value="Group Tutoring">Group Tutoring</SelectItem>
+                    <SelectItem value="Center Based">Center Based</SelectItem>
                   </SelectContent>
                 </Select>
-              </FormField>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Selected Categories</Label>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((category) => (
+                  <div key={category.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={formData.selectedCategories.includes(category.name)}
+                      onCheckedChange={(checked) => {
+                        const newCategories = checked
+                          ? [...formData.selectedCategories, category.name]
+                          : formData.selectedCategories.filter((c: string) => c !== category.name);
+                        handleInputChange('selectedCategories', newCategories);
+                      }}
+                    />
+                    <Label className="text-sm">{category.name}</Label>
+                  </div>
+                ))}
+              </div>
             </div>
           </Section>
 
-          {/* Tutoring Details */}
-          <Section title="Tutoring Details">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField label="Number of Students">
-                <Input
-                  type="number"
-                  min="1"
-                  value={editFormData.numberOfStudents || 1}
-                  onChange={(e) =>
-                    handleFormChange(
-                      "numberOfStudents",
-                      parseInt(e.target.value) || 1
-                    )
-                  }
-                />
-              </FormField>
-
-              <FormField label="Days per Week">
+          {/* Tutoring Schedule */}
+          <Section title="Tutoring Schedule">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label>Tutoring Days (per week)</Label>
                 <Input
                   type="number"
                   min="1"
                   max="7"
-                  value={editFormData.tutoringDays || 1}
-                  onChange={(e) =>
-                    handleFormChange(
-                      "tutoringDays",
-                      parseInt(e.target.value) || 1
-                    )
-                  }
+                  value={formData.tutoringDays}
+                  onChange={(e) => handleInputChange('tutoringDays', parseInt(e.target.value) || 1)}
                 />
-              </FormField>
-
-              <FormField label="Preferred Time">
+              </div>
+              <div className="space-y-2">
+                <Label>Tutoring Time</Label>
                 <Input
-                  value={editFormData.tutoringTime || ""}
-                  onChange={(e) =>
-                    handleFormChange("tutoringTime", e.target.value)
-                  }
-                  placeholder="e.g., 4:00 PM - 6:00 PM"
+                  type="time"
+                  value={formData.tutoringTime}
+                  onChange={(e) => handleInputChange('tutoringTime', e.target.value)}
                 />
-              </FormField>
-
-              <FormField label="Duration per Session">
-                <Select
-                  value={editFormData.tutoringDuration || ""}
-                  onValueChange={(value) =>
-                    handleFormChange("tutoringDuration", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select duration" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="30 minutes">30 minutes</SelectItem>
-                    <SelectItem value="1 hour">1 hour</SelectItem>
-                    <SelectItem value="1.5 hours">1.5 hours</SelectItem>
-                    <SelectItem value="2 hours">2 hours</SelectItem>
-                    <SelectItem value="2.5 hours">2.5 hours</SelectItem>
-                    <SelectItem value="3 hours">3 hours</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormField>
+              </div>
+              <div className="space-y-2">
+                <Label>Duration per Session</Label>
+                <Input
+                  value={formData.tutoringDuration}
+                  onChange={(e) => handleInputChange('tutoringDuration', e.target.value)}
+                  placeholder="e.g., 2 hours"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Number of Students</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={formData.numberOfStudents}
+                  onChange={(e) => handleInputChange('numberOfStudents', parseInt(e.target.value) || 1)}
+                />
+              </div>
             </div>
           </Section>
 
-          {/* Tutor Preferences */}
-          <Section title="Tutor Preferences">
+          {/* Salary Information */}
+          <Section title="Salary Information">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Minimum Salary (৳)</Label>
+                <Input
+                  type="number"
+                  value={formData.salaryRange.min}
+                  onChange={(e) => handleSalaryChange('min', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Maximum Salary (৳)</Label>
+                <Input
+                  type="number"
+                  value={formData.salaryRange.max}
+                  onChange={(e) => handleSalaryChange('max', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2 flex items-end">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={formData.isSalaryNegotiable}
+                    onCheckedChange={(checked) => 
+                      handleInputChange('isSalaryNegotiable', checked)
+                    }
+                  />
+                  <Label>Salary Negotiable</Label>
+                </div>
+              </div>
+            </div>
+          </Section>
+
+          {/* Preferences */}
+          <Section title="Preferences">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="Preferred Tutor Gender">
+              <div className="space-y-2">
+                <Label>Preferred Tutor Gender</Label>
                 <Select
-                  value={editFormData.tutorGenderPreference || ""}
-                  onValueChange={(value) =>
-                    handleFormChange("tutorGenderPreference", value)
-                  }
+                  value={formData.tutorGenderPreference}
+                  onValueChange={(value) => handleInputChange('tutorGenderPreference', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select preference" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="any">Any</SelectItem>
                     <SelectItem value="male">Male</SelectItem>
                     <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="any">Any</SelectItem>
                   </SelectContent>
                 </Select>
-              </FormField>
-
-              <FormField label="Minimum Salary (৳)">
+              </div>
+              <div className="space-y-2">
+                <Label>Selected Classes</Label>
                 <Input
-                  type="number"
-                  min="0"
-                  value={editFormData.salaryRange?.min || 0}
-                  onChange={(e) =>
-                    handleSalaryRangeChange("min", parseInt(e.target.value))
-                  }
+                  value={formData.selectedClasses.join(", ")}
+                  onChange={(e) => handleInputChange('selectedClasses', e.target.value.split(", "))}
+                  placeholder="Separate with commas"
                 />
-              </FormField>
-
-              <FormField label="Maximum Salary (৳)">
-                <Input
-                  type="number"
-                  min="0"
-                  value={editFormData.salaryRange?.max || 0}
-                  onChange={(e) =>
-                    handleSalaryRangeChange("max", parseInt(e.target.value))
-                  }
-                />
-              </FormField>
-
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={editFormData.isSalaryNegotiable || false}
-                  onCheckedChange={(checked) =>
-                    handleFormChange("isSalaryNegotiable", checked)
-                  }
-                />
-                <Label className="cursor-pointer">Salary is Negotiable</Label>
               </div>
             </div>
           </Section>
 
           {/* Additional Information */}
           <Section title="Additional Information">
-            <div className="space-y-4">
-              <FormField label="Extra Information">
-                <Textarea
-                  value={editFormData.extraInformation || ""}
-                  onChange={(e) =>
-                    handleFormChange("extraInformation", e.target.value)
-                  }
-                  placeholder="Any additional information..."
-                  rows={3}
-                />
-              </FormField>
-
-              <FormField label="Admin Notes">
-                <Textarea
-                  value={editFormData.adminNote || ""}
-                  onChange={(e) => handleFormChange("adminNote", e.target.value)}
-                  placeholder="Internal admin notes..."
-                  rows={2}
-                />
-              </FormField>
+            <div className="space-y-2">
+              <Label>Extra Information</Label>
+              <Textarea
+                value={formData.extraInformation}
+                onChange={(e) => handleInputChange('extraInformation', e.target.value)}
+                placeholder="Any additional requirements or information..."
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Admin Note</Label>
+              <Textarea
+                value={formData.adminNote}
+                onChange={(e) => handleInputChange('adminNote', e.target.value)}
+                placeholder="Add admin notes here..."
+                rows={2}
+              />
             </div>
           </Section>
 
-          {/* Status Update */}
-          <Section title="Status">
-            <div className="flex gap-2">
-              {(["Active", "Inactive", "Completed", "Assign"] as const).map(
-                (status) => (
-                  <Button
-                    key={status}
-                    variant={
-                      editFormData.status === status ? "default" : "outline"
-                    }
-                    size="sm"
-                    onClick={() => handleStatusChange(status)}
-                  >
-                    {status}
-                  </Button>
-                )
-              )}
-            </div>
-          </Section>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleUpdate} disabled={isUpdating}>
-            {isUpdating ? "Updating..." : "Update Request"}
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Updating..." : "Update Request"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
 }
 
-// Reuse helper components from CreateRequestModal
+// Helper Components
 function Section({
   title,
   children,
@@ -599,79 +514,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">{title}</h3>
+    <div className="space-y-3">
+      <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
       {children}
-    </div>
-  );
-}
-
-function FormField({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      {children}
-    </div>
-  );
-}
-
-function AreaChip({
-  area,
-  selected,
-  onSelect,
-}: {
-  area: string;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <div
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm cursor-pointer border ${
-        selected
-          ? "bg-green-100 text-green-800 border-green-300"
-          : "bg-gray-100 text-gray-800 border-gray-300"
-      }`}
-      onClick={onSelect}
-    >
-      <span>{area}</span>
-      {selected && <span className="text-xs">✓</span>}
-    </div>
-  );
-}
-
-function SelectedItemsDisplay({
-  items,
-  onRemove,
-}: {
-  items: string[];
-  onRemove: (item: string) => void;
-}) {
-  return (
-    <div className="space-y-1">
-      <p className="text-sm font-medium">Selected:</p>
-      <div className="flex flex-wrap gap-1">
-        {items.map((item) => (
-          <div
-            key={item}
-            className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded text-sm"
-          >
-            <span>{item}</span>
-            <button
-              type="button"
-              onClick={() => onRemove(item)}
-              className="text-red-500 hover:text-red-700 text-xs"
-            >
-              ×
-            </button>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
