@@ -40,6 +40,9 @@ import Category from "./components/Category";
 import TuitionRequestsSection from "./sections/TuitionRequestsSection";
 import TutorConnectSection from "./sections/TutorConnectSection";
 import ManageDistrict from "./components/ManageDistrict";
+import PaymentAccount from "./components/PaymentAccount";
+import RefoundPolicy from "./components/RefoundPolicy";
+import AppointmentLetter from "./components/AppointmentLetter";
 // import RefundPoliciesPage from "@/app/admin/refund-policies/page";
 
 // Icon mapping for string to component conversion
@@ -519,6 +522,15 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
   const renderNotes = () => {
     return <AdminNotesSection />;
   };
+  const renderPaymentAccount = () => {
+    return <PaymentAccount />;
+  };
+  const renderRefoundPolicy = () => {
+    return <RefoundPolicy />;
+  };
+  const renderAppointmentLetter = () => {
+    return <AppointmentLetter />;
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 w-full admin-dashboard">
@@ -595,6 +607,9 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
             {activeTab === "approval-letter" && renderApprovalLetters()}
             {activeTab === "confirmation-letter" && renderConfirmationLetters()}
             {activeTab === "notes" && renderNotes()}
+            {activeTab === "refound" && renderRefoundPolicy()}
+            {activeTab === "appointment-letter" && renderAppointmentLetter()}
+            {activeTab === "payment-account" && renderPaymentAccount()}
             {activeTab === "tuition-jobs" && <TuitionJobsSection />}
           </div>
         </main>

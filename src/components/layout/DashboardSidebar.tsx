@@ -38,6 +38,12 @@ import {
   StickyNote,
   Megaphone,
   MessageCircle,
+  Lock,
+  Navigation,
+  Mail,
+  LandPlot,
+  X,
+  Ticket,
 } from 'lucide-react';
 import { useState } from 'react';
 import { MenuItem } from '@/hooks/usePermissionMenu';
@@ -201,9 +207,12 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             // { id: 'demo-classes', label: 'Demo Classes', icon: BookOpen },
             // { id: 'courses', label: 'Course Management', icon: BookCheck },
             { id: 'reviews', label: 'Reviews', icon: Star },
-            { id: 'district', label: 'District', icon: Star },
+            { id: 'district', label: 'District', icon: LandPlot },
             // { id: 'history', label: 'History', icon: History },
+            { id: 'appointment-letter', label: 'Appointment Letter', icon: Mail },
             { id: 'notice-board', label: 'Notice Board', icon: Megaphone },
+            { id: 'payment-account', label: 'Payment Account', icon: Navigation },
+            { id: 'refound', label: 'Refound Policy', icon: Ticket },
           ],
           quick: [
             { 
