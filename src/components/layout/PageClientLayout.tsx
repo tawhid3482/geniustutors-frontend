@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 // import { LoginDialog } from "@/components/auth/LoginDialog";
 import { useAuth } from "@/contexts/AuthContext.next";
+import { LoginDialog } from "../auth/LoginDialog";
 
 interface PageClientLayoutProps {
   children: React.ReactNode;
@@ -37,8 +38,8 @@ export function PageClientLayout({
             avatar: user.avatar
           } : undefined}
           onLogout={handleLogout}
-          // LoginComponent={LoginDialog}
-          // RegisterComponent={LoginDialog}
+          LoginComponent={LoginDialog}
+          RegisterComponent={LoginDialog}
         />
       )}
       <main className="flex-1 overflow-x-hidden w-full">{children}</main>

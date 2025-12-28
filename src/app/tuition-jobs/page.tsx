@@ -51,6 +51,7 @@ import { useGetAllAreaQuery } from "@/redux/features/area/areaApi";
 import { useGetAllTutorRequestsForPublicQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
 import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
 
+
 // Helper function to convert area string to array
 const parseAreaString = (areaString: string): string[] => {
   if (!areaString || typeof areaString !== "string") return [];
@@ -606,8 +607,13 @@ export default function TuitionJobs() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  
+
   return (
     <div className="container mx-auto py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6">
+
+
+
       {/* Page Header */}
       <div className="mb-4 sm:mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold">Tuition Jobs</h1>
