@@ -56,7 +56,7 @@ interface DashboardSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onLogout: () => void;
-  role: 'STUDENT_GUARDIAN' | 'TUTOR' | 'ADMIN' ;
+  role: 'STUDENT_GUARDIAN' | 'TUTOR' | 'ADMIN' | "SUPER_ADMIN" ;
   menuItems?: MenuItem[];
 }
 
