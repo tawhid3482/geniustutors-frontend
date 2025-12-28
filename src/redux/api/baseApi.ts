@@ -9,7 +9,7 @@ export const baseApi = createApi({
     // baseUrl: "https://geniustutorss-backend.vercel.app/api",
     // baseUrl: "http://localhost:5008/api",
     // baseUrl: "http://160.25.7.224:5000/api",
-    baseUrl: "https://www.geniustutorss.com/api/api",
+    baseUrl: "https://geniustutorss.com/api/api",
   }),
   endpoints: () => ({}),
   tagTypes: tagTypesList,
