@@ -148,7 +148,7 @@ const SettingsSection = () => {
         // Sign out and redirect to login page
         setTimeout(() => {
           signOut();
-          router.push("/auth/signin");
+          router.push("/");
           toast({
             title: "Please Login Again",
             description:

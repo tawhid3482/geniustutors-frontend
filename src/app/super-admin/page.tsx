@@ -13,7 +13,7 @@ export default function SuperAdminPage() {
   useEffect(() => {
     // Check if user is authenticated
     if (!loading && !user) {
-      router.push('/admin');
+      router.push('/');
       return;
     }
     

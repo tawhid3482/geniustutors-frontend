@@ -28,7 +28,7 @@ export default function AdminResetPassword() {
   useEffect(() => {
     if (!token || !phone) {
       toast.error('Invalid reset link. Please request a new password reset.')
-      router.push('/admin')
+      router.push('/')
     }
   }, [token, phone, router])
 
@@ -68,7 +68,7 @@ export default function AdminResetPassword() {
         setSuccess(true)
         toast.success('Password reset successfully!')
         setTimeout(() => {
-          router.push('/admin')
+          router.push('/')
         }, 3000)
       } else {
         toast.error(data.error || 'Failed to reset password')
@@ -89,7 +89,7 @@ export default function AdminResetPassword() {
           </div>
           <h1 className="text-2xl font-bold text-red-600 mb-2">Invalid Reset Link</h1>
           <p className="text-green-600/80 mb-4">The password reset link is invalid or has expired.</p>
-          <Button onClick={() => router.push('/admin')} className="bg-green-600 hover:bg-green-700">
+          <Button onClick={() => router.push('/')} className="bg-green-600 hover:bg-green-700">
             Go to Admin Login
           </Button>
         </div>
@@ -195,7 +195,7 @@ export default function AdminResetPassword() {
             <div className="text-center">
               <button
                 type="button"
-                onClick={() => router.push('/admin')}
+                onClick={() => router.push('/')}
                 className="text-green-600 hover:text-green-700 font-medium text-sm transition-colors"
               >
                 Back to Admin Login

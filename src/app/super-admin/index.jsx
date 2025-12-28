@@ -13,7 +13,7 @@ export default function SuperAdminPage() {
   useEffect(() => {
     // Check if user is authenticated
     if (!loading && !user) {
-      router.push('/admin');
+      router.push('/');
       return;
     }
     
@@ -22,7 +22,7 @@ export default function SuperAdminPage() {
       if (user.role !== 'SUPER_ADMIN') {
         // If not a super admin, redirect to appropriate page
         if (user.role === 'ADMIN' || user.role === 'MANGER') {
-          router.push('/admin');
+          router.push('/');
         } else {
           router.push('/');
         }

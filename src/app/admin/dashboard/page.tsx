@@ -14,7 +14,7 @@ export default function AdminDashboardPage() {
     if (!loading) {
       if (!user) {
         // User not logged in, redirect to admin login
-        router.push('/admin');
+        router.push('/');
         return;
       }
 

@@ -192,7 +192,7 @@ export function TutorDashboard() {
             {activeTab === "demo-classes" && <DemoClassesSection tutorId={user?.id || ''} />}
             {activeTab === "subscription" && <EnhancedUpgradeSection />}
             {activeTab === "notifications" && <NotificationsSection />}
-            {activeTab === "confirmation-letter" && <ConfirmationLetterSection tutorId={user?.id || ''} />}
+            {activeTab === "confirmation-letter" && <ConfirmationLetterSection />}
             {activeTab === "tutoring-history" && <TutoringHistorySection />}
             {activeTab === "payment-section" && <PaymentSection />}
             {activeTab === "genius-verification" && <EnhancedUpgradeSection />}
@@ -237,16 +237,7 @@ export function TutorDashboard() {
         </div>
       )}
       
-              {/* Floating Tutor Chat Widget */}
-              {/* <FloatingTutorChat
-          chatContacts={chatContacts}
-          chatMessages={chatMessages}
-          selectedChat={selectedChat}
-          setSelectedChat={setSelectedChat}
-          newMessage={newMessage}
-          setNewMessage={setNewMessage}
-          handleSendMessage={sendMessage}
-        /> */}
+      
     </div>
   );
 }

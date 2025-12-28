@@ -13,7 +13,7 @@ export default function SuperAdminDashboardPage() {
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.push('/admin');
+        router.push('/');
         return;
       }
 

@@ -76,7 +76,6 @@ import { StudentProfile } from "./StudentProfile";
 import { StudentCourses } from "./StudentCourses";
 import { JoinCommunity } from "./JoinCommunity";
 import { DemoClassesSection } from "../DemoClassesSection";
-import { ApprovalLetterSection } from "../ApprovalLetterSection";
 import GuardianNotesSection from "../GuardianNotesSection";
 
 // Import services
@@ -113,6 +112,7 @@ import { useGetAllTutorRequestsQuery } from "@/redux/features/tutorRequest/tutor
 import { useGetAllTutorsQuery } from "@/redux/features/tutorHub/tutorHubApi";
 import StudentReviews from "./StudentReviews";
 import StudentSettings from "./StudentSettings";
+import ApprovalLetterSection from "../ApprovalLetterSection";
 
 export function StudentDashboardMain() {
   const { user, signOut, updateUserProfile } = useAuth();
@@ -992,7 +992,7 @@ export function StudentDashboardMain() {
               <DemoClassesSection studentId={user.id} />
             )}
             {activeTab === "approval-letter" && user?.id && (
-              <ApprovalLetterSection studentId={user.id} />
+              <ApprovalLetterSection  />
             )}
             {activeTab === "reviews" && <StudentReviews />}
             {activeTab === "settings" && <StudentSettings />}

@@ -44,6 +44,7 @@ import {
   LandPlot,
   X,
   Ticket,
+  MailCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 import { MenuItem } from '@/hooks/usePermissionMenu';
@@ -55,7 +56,7 @@ interface DashboardSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onLogout: () => void;
-  role: 'STUDENT_GUARDIAN' | 'TUTOR' | 'ADMIN' | 'SUPER_ADMIN' | 'MANAGER';
+  role: 'STUDENT_GUARDIAN' | 'TUTOR' | 'ADMIN' ;
   menuItems?: MenuItem[];
 }
 
@@ -213,6 +214,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'notice-board', label: 'Notice Board', icon: Megaphone },
             { id: 'payment-account', label: 'Payment Account', icon: Navigation },
             { id: 'refound', label: 'Refound Policy', icon: Ticket },
+            { id: 'appointment', label: 'All Appointment', icon: MailCheck },
           ],
           quick: [
             { 

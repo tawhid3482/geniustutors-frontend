@@ -29,8 +29,6 @@ import PlatformControlSection from "./sections/PlatformControlSection";
 import TaxonomyManagement from "./TaxonomyManagement";
 import { TutoringHistorySection } from "./sections/TutoringHistorySection";
 import { NoticeBoardSection } from "./sections/NoticeBoardSection";
-import { ApprovalLettersManagement } from "./sections/ApprovalLettersManagement";
-import { ConfirmationLettersManagement } from "./sections/ConfirmationLettersManagement";
 import AdminNotesSection from "./AdminNotesSection";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePermissionMenu } from "@/hooks/usePermissionMenu";
@@ -43,6 +41,9 @@ import ManageDistrict from "./components/ManageDistrict";
 import PaymentAccount from "./components/PaymentAccount";
 import RefoundPolicy from "./components/RefoundPolicy";
 import AppointmentLetter from "./components/AppointmentLetter";
+import ConfirmationLettersManagement from "./sections/ConfirmationLettersManagement";
+import ApprovalLettersManagement from "./sections/ApprovalLettersManagement";
+import AllAppointment from "./components/AllAppointment";
 // import RefundPoliciesPage from "@/app/admin/refund-policies/page";
 
 // Icon mapping for string to component conversion
@@ -611,6 +612,7 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
             {activeTab === "appointment-letter" && renderAppointmentLetter()}
             {activeTab === "payment-account" && renderPaymentAccount()}
             {activeTab === "tuition-jobs" && <TuitionJobsSection />}
+            {activeTab === "appointment" && <AllAppointment />}
           </div>
         </main>
       </div>

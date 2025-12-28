@@ -86,18 +86,22 @@ const AppointmentLetter = () => {
   const [senderId, setSenderId] = useState("");
   const [sending, setSending] = useState(false);
   const [sendSuccess, setSendSuccess] = useState(false);
-  
+
   const [sendAppointmentToStudent] = useSendAppointmentToStudentMutation();
 
   // Convert logo to base64 URL
   useEffect(() => {
     const loadLogo = async () => {
       try {
-        if (typeof logoImage === 'string') {
+        if (typeof logoImage === "string") {
           setLogoUrl(logoImage);
-        } else if (logoImage && typeof logoImage === 'object' && 'src' in logoImage) {
+        } else if (
+          logoImage &&
+          typeof logoImage === "object" &&
+          "src" in logoImage
+        ) {
           setLogoUrl(logoImage.src);
-          
+
           const response = await fetch(logoImage.src);
           const blob = await response.blob();
           const reader = new FileReader();
@@ -111,7 +115,7 @@ const AppointmentLetter = () => {
         setLogoUrl("");
       }
     };
-    
+
     loadLogo();
   }, []);
 
@@ -187,9 +191,9 @@ const AppointmentLetter = () => {
 
   const generatePDF = async () => {
     if (!pdfRef.current) return;
-    
+
     setIsGeneratingPDF(true);
-    
+
     try {
       const content = pdfRef.current;
       const originalStyles = {
@@ -203,57 +207,60 @@ const AppointmentLetter = () => {
         lineHeight: content.style.lineHeight,
         padding: content.style.padding,
       };
-      
-      content.style.display = 'block';
-      content.style.position = 'absolute';
-      content.style.left = '0px';
-      content.style.top = '0px';
-      content.style.width = '794px';
-      content.style.backgroundColor = '#ffffff';
-      content.style.color = '#000000';
-      content.style.lineHeight = '1.4';
-      content.style.padding = '30px';
-      
+
+      content.style.display = "block";
+      content.style.position = "absolute";
+      content.style.left = "0px";
+      content.style.top = "0px";
+      content.style.width = "794px";
+      content.style.backgroundColor = "#ffffff";
+      content.style.color = "#000000";
+      content.style.lineHeight = "1.4";
+      content.style.padding = "30px";
+
       const canvas = await html2canvas(content, {
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
         windowWidth: 794,
         onclone: (clonedDoc, element) => {
-          element.style.lineHeight = '1.4';
-          element.style.padding = '30px';
-          
-          const lists = element.querySelectorAll('ol, ul');
-          lists.forEach(list => {
+          element.style.lineHeight = "1.4";
+          element.style.padding = "30px";
+
+          const lists = element.querySelectorAll("ol, ul");
+          lists.forEach((list) => {
             if (list instanceof HTMLElement) {
-              list.style.marginTop = '5px';
-              list.style.marginBottom = '5px';
+              list.style.marginTop = "5px";
+              list.style.marginBottom = "5px";
             }
           });
-          
-          const paragraphs = element.querySelectorAll('p');
-          paragraphs.forEach(p => {
+
+          const paragraphs = element.querySelectorAll("p");
+          paragraphs.forEach((p) => {
             if (p instanceof HTMLElement) {
-              p.style.marginTop = '5px';
-              p.style.marginBottom = '5px';
+              p.style.marginTop = "5px";
+              p.style.marginBottom = "5px";
             }
           });
-          
-          const signatureDivs = element.querySelectorAll('div[style*="margin-top"]');
-          signatureDivs.forEach(div => {
+
+          const signatureDivs = element.querySelectorAll(
+            'div[style*="margin-top"]'
+          );
+          signatureDivs.forEach((div) => {
             if (div instanceof HTMLElement && div.style.marginTop) {
               const currentMargin = parseInt(div.style.marginTop);
               if (currentMargin > 20) {
-                div.style.marginTop = (currentMargin * 0.5) + 'px';
+                div.style.marginTop = currentMargin * 0.5 + "px";
               }
             }
           });
         },
       });
 
-      Object.keys(originalStyles).forEach(key => {
-        content.style[key as any] = originalStyles[key as keyof typeof originalStyles];
+      Object.keys(originalStyles).forEach((key) => {
+        content.style[key as any] =
+          originalStyles[key as keyof typeof originalStyles];
       });
 
       const imgData = canvas.toDataURL("image/png", 1.0);
@@ -265,11 +272,11 @@ const AppointmentLetter = () => {
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
+
       const pageHeight = pdf.internal.pageSize.getHeight();
-      
+
       if (pdfHeight > pageHeight) {
-        const scaleFactor = pageHeight / pdfHeight * 0.95;
+        const scaleFactor = (pageHeight / pdfHeight) * 0.95;
         pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight * scaleFactor);
       } else {
         const yOffset = (pageHeight - pdfHeight) / 2;
@@ -279,7 +286,6 @@ const AppointmentLetter = () => {
       pdf.save(
         `Appointment_Letter_${letterData.tutorName.replace(/\s+/g, "_")}.pdf`
       );
-      
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Failed to generate PDF. Please try again.");
@@ -289,9 +295,9 @@ const AppointmentLetter = () => {
   };
 
   const printLetter = () => {
-    const printWindow = window.open('', '_blank', 'width=900,height=600');
+    const printWindow = window.open("", "_blank", "width=900,height=600");
     if (!printWindow) {
-      alert('Please allow popups for printing');
+      alert("Please allow popups for printing");
       return;
     }
 
@@ -435,7 +441,11 @@ const AppointmentLetter = () => {
         <body>
           <div class="letter-container">
             <div class="letter-header">
-              ${logoUrl ? `<img src="${logoUrl}" alt="Logo" class="company-logo" />` : ''}
+              ${
+                logoUrl
+                  ? `<img src="${logoUrl}" alt="Logo" class="company-logo" />`
+                  : ""
+              }
               <h1>APPOINTMENT LETTER</h1>
               <p class="subtitle">Official Appointment Confirmation</p>
             </div>
@@ -451,7 +461,9 @@ const AppointmentLetter = () => {
                   </div>
                 </div>
                 <div style="text-align: right; font-size: 11px;">
-                  <div><strong>Date:</strong> ${formatDate(letterData.date)}</div>
+                  <div><strong>Date:</strong> ${formatDate(
+                    letterData.date
+                  )}</div>
                 </div>
               </div>
             </div>
@@ -467,7 +479,9 @@ const AppointmentLetter = () => {
               <p><strong>Dear ${letterData.tutorName},</strong></p>
               <p>
                 We are pleased to inform you that you have been selected for the position of 
-                <strong> ${letterData.position}</strong> at ${letterData.companyName}. 
+                <strong> ${letterData.position}</strong> at ${
+      letterData.companyName
+    }. 
                 This letter serves as confirmation of your appointment, effective from 
                 <strong> ${formatDate(letterData.joiningDate)}</strong>.
               </p>
@@ -507,12 +521,22 @@ const AppointmentLetter = () => {
 
             <div class="section-title">TERMS & CONDITIONS</div>
             <ol class="terms-list">
-              ${letterData.terms.map((term, index) => `
+              ${letterData.terms
+                .map(
+                  (term, index) => `
                 <li>${term.text}</li>
-              `).join('')}
-              <li>The probation period for this position is <strong>${letterData.probationPeriod}</strong>.</li>
-              <li>Working days are <strong>${letterData.workingDays}</strong>.</li>
-              <li>The notice period required is <strong>${letterData.noticePeriod}</strong>.</li>
+              `
+                )
+                .join("")}
+              <li>The probation period for this position is <strong>${
+                letterData.probationPeriod
+              }</strong>.</li>
+              <li>Working days are <strong>${
+                letterData.workingDays
+              }</strong>.</li>
+              <li>The notice period required is <strong>${
+                letterData.noticePeriod
+              }</strong>.</li>
             </ol>
 
             <div class="closing-section">
@@ -572,7 +596,7 @@ const AppointmentLetter = () => {
     return new Promise(async (resolve, reject) => {
       try {
         if (!pdfRef.current) throw new Error("PDF content not found");
-        
+
         const content = pdfRef.current;
         const originalStyles = {
           display: content.style.display,
@@ -585,27 +609,28 @@ const AppointmentLetter = () => {
           lineHeight: content.style.lineHeight,
           padding: content.style.padding,
         };
-        
-        content.style.display = 'block';
-        content.style.position = 'absolute';
-        content.style.left = '0px';
-        content.style.top = '0px';
-        content.style.width = '794px';
-        content.style.backgroundColor = '#ffffff';
-        content.style.color = '#000000';
-        content.style.lineHeight = '1.4';
-        content.style.padding = '30px';
-        
+
+        content.style.display = "block";
+        content.style.position = "absolute";
+        content.style.left = "0px";
+        content.style.top = "0px";
+        content.style.width = "794px";
+        content.style.backgroundColor = "#ffffff";
+        content.style.color = "#000000";
+        content.style.lineHeight = "1.4";
+        content.style.padding = "30px";
+
         const canvas = await html2canvas(content, {
           scale: 2,
           useCORS: true,
           logging: false,
-          backgroundColor: '#ffffff',
+          backgroundColor: "#ffffff",
           windowWidth: 794,
         });
 
-        Object.keys(originalStyles).forEach(key => {
-          content.style[key as any] = originalStyles[key as keyof typeof originalStyles];
+        Object.keys(originalStyles).forEach((key) => {
+          content.style[key as any] =
+            originalStyles[key as keyof typeof originalStyles];
         });
 
         const imgData = canvas.toDataURL("image/png", 1.0);
@@ -617,11 +642,11 @@ const AppointmentLetter = () => {
 
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
+
         const pageHeight = pdf.internal.pageSize.getHeight();
-        
+
         if (pdfHeight > pageHeight) {
-          const scaleFactor = pageHeight / pdfHeight * 0.95;
+          const scaleFactor = (pageHeight / pdfHeight) * 0.95;
           pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight * scaleFactor);
         } else {
           const yOffset = (pageHeight - pdfHeight) / 2;
@@ -629,9 +654,8 @@ const AppointmentLetter = () => {
         }
 
         // Convert PDF to blob
-        const pdfBlob = pdf.output('blob');
+        const pdfBlob = pdf.output("blob");
         resolve(pdfBlob);
-        
       } catch (error) {
         reject(error);
       }
@@ -640,7 +664,7 @@ const AppointmentLetter = () => {
 
   // Convert blob to File object
   const blobToFile = (blob: Blob, fileName: string): File => {
-    const file = new File([blob], fileName, { type: 'application/pdf' });
+    const file = new File([blob], fileName, { type: "application/pdf" });
     return file;
   };
 
@@ -654,44 +678,46 @@ const AppointmentLetter = () => {
     try {
       // Step 1: Generate PDF as blob
       const pdfBlob = await generatePDFAsBlob();
-      
+
       // Step 2: Convert blob to File object
-      const pdfFile = blobToFile(pdfBlob, `Appointment_${letterData.tutorName}_${senderId}.pdf`);
-      
+      const pdfFile = blobToFile(
+        pdfBlob,
+        `Appointment_${letterData.tutorName}_${senderId}.pdf`
+      );
+
       // Step 3: Upload PDF to image upload endpoint and get URL
       console.log("Uploading PDF to image server...");
       const pdfUrl = await uploadImage(pdfFile);
       console.log("PDF uploaded successfully:", pdfUrl);
-      
+
       // Step 4: Prepare data for backend
       const appointmentData = {
-        studentId: senderId,  // This will be used as senderId in backend
-        pdf: pdfUrl          // The URL returned from image upload
+        studentId: senderId, // This will be used as senderId in backend
+        pdf: pdfUrl, // The URL returned from image upload
       };
-      
+
       console.log("Sending to backend:", appointmentData);
-      
+
       // Step 5: Send data to backend (without file, just URL)
       const response = await sendAppointmentToStudent(appointmentData).unwrap();
-      
-      console.log('Backend response:', response);
-      
+
+      console.log("Backend response:", response);
+
       setSendSuccess(true);
       setTimeout(() => {
         setShowSendModal(false);
         setSendSuccess(false);
         setSenderId("");
       }, 2000);
-      
+
       toast({
         title: "Success",
         description: "Appointment letter sent and saved successfully",
         variant: "default",
       });
-      
     } catch (error: any) {
       console.error("Error sending appointment:", error);
-      
+
       if (error?.data?.message) {
         toast({
           title: "Error",
@@ -1015,7 +1041,7 @@ const AppointmentLetter = () => {
                       Print
                     </button>
                   </div>
-                  
+
                   <button
                     onClick={() => setShowSendModal(true)}
                     className="w-full flex items-center justify-center px-4 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors duration-200"
@@ -1031,14 +1057,14 @@ const AppointmentLetter = () => {
           {/* Right Side - Letter Preview */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="space-y-4" style={{ lineHeight: '1.4' }}>
+              <div className="space-y-4" style={{ lineHeight: "1.4" }}>
                 {/* Letter Header */}
                 <div className="text-center border-b pb-4 mb-4">
                   <div className="flex items-center justify-center mb-3">
                     {logoUrl && (
-                      <img 
-                        src={logoUrl} 
-                        alt="Genius Tutor Logo" 
+                      <img
+                        src={logoUrl}
+                        alt="Genius Tutor Logo"
                         className="h-14 w-auto"
                       />
                     )}
@@ -1113,12 +1139,16 @@ const AppointmentLetter = () => {
                       <table className="w-full text-sm">
                         <tbody>
                           <tr>
-                            <td className="py-1 font-medium w-1/3">Position:</td>
+                            <td className="py-1 font-medium w-1/3">
+                              Position:
+                            </td>
                             <td className="py-1">{letterData.position}</td>
                           </tr>
                           <tr>
                             <td className="py-1 font-medium">Joining Date:</td>
-                            <td className="py-1">{formatDate(letterData.joiningDate)}</td>
+                            <td className="py-1">
+                              {formatDate(letterData.joiningDate)}
+                            </td>
                           </tr>
                           <tr>
                             <td className="py-1 font-medium">Salary:</td>
@@ -1133,8 +1163,12 @@ const AppointmentLetter = () => {
                             <td className="py-1">{letterData.workingDays}</td>
                           </tr>
                           <tr>
-                            <td className="py-1 font-medium">Probation Period:</td>
-                            <td className="py-1">{letterData.probationPeriod}</td>
+                            <td className="py-1 font-medium">
+                              Probation Period:
+                            </td>
+                            <td className="py-1">
+                              {letterData.probationPeriod}
+                            </td>
                           </tr>
                           <tr>
                             <td className="py-1 font-medium">Notice Period:</td>
@@ -1237,159 +1271,355 @@ const AppointmentLetter = () => {
         </div>
 
         {/* Hidden PDF Content - Optimized for single page */}
-        <div 
+        <div
           ref={pdfRef}
           style={{
-            position: 'absolute',
-            left: '-9999px',
-            top: '1px',
-            width: '794px',
-            backgroundColor: '#ffffff',
-            color: '#000000',
-            padding: '30px',
-            boxSizing: 'border-box',
-            fontFamily: 'Arial, sans-serif',
-            fontSize: '16px',
-            lineHeight: '1.5',
+            position: "absolute",
+            left: "-9999px",
+            top: "1px",
+            width: "794px",
+            backgroundColor: "#ffffff",
+            color: "#000000",
+            padding: "30px",
+            boxSizing: "border-box",
+            fontFamily: "Arial, sans-serif",
+            fontSize: "16px",
+            lineHeight: "1.5",
           }}
         >
-          <div style={{ textAlign: 'center', borderBottom: '2px solid #000', paddingBottom: '10px', marginBottom: '15px' }}>
+          <div
+            style={{
+              textAlign: "center",
+              borderBottom: "2px solid #000",
+              paddingBottom: "10px",
+              marginBottom: "15px",
+            }}
+          >
             {logoUrl && (
-              <img 
-                src={logoUrl} 
-                alt="Logo" 
-                style={{ 
-                  maxHeight: '80px', 
-                  height: 'auto', 
-                  margin: '0 auto 10px',
-                  display: 'block' 
-                }} 
+              <img
+                src={logoUrl}
+                alt="Logo"
+                style={{
+                  maxHeight: "80px",
+                  height: "auto",
+                  margin: "0 auto 10px",
+                  display: "block",
+                }}
               />
             )}
-            <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0', color: '#000000' }}>
+            <h1
+              style={{
+                fontSize: "18px",
+                fontWeight: "bold",
+                margin: "5px 0",
+                color: "#000000",
+              }}
+            >
               APPOINTMENT LETTER
             </h1>
-            <p style={{ color: '#555555', margin: '2px 0', fontSize: '14px' }}>
+            <p style={{ color: "#555555", margin: "2px 0", fontSize: "14px" }}>
               Official Appointment Confirmation
             </p>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              marginBottom: "15px",
+            }}
+          >
             <div style={{ flex: 1 }}>
-              <h2 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '5px', color: '#000000' }}>
+              <h2
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  marginBottom: "5px",
+                  color: "#000000",
+                }}
+              >
                 {letterData.companyName}
               </h2>
-              <div style={{ color: '#555555', fontSize: '14px' }}>
-                <p style={{ margin: '3px 0' }}>{letterData.companyAddress}</p>
-                <p style={{ margin: '3px 0' }}>{letterData.companyPhone}</p>
-                <p style={{ margin: '3px 0' }}>{letterData.companyEmail}</p>
+              <div style={{ color: "#555555", fontSize: "14px" }}>
+                <p style={{ margin: "3px 0" }}>{letterData.companyAddress}</p>
+                <p style={{ margin: "3px 0" }}>{letterData.companyPhone}</p>
+                <p style={{ margin: "3px 0" }}>{letterData.companyEmail}</p>
               </div>
             </div>
-            <div style={{ textAlign: 'right', fontSize: '14px' }}>
-              <div style={{ fontWeight: '600', marginBottom: '3px' }}>Date:</div>
+            <div style={{ textAlign: "right", fontSize: "14px" }}>
+              <div style={{ fontWeight: "600", marginBottom: "3px" }}>
+                Date:
+              </div>
               <div>{formatDate(letterData.date)}</div>
             </div>
           </div>
 
-          <div style={{ background: '#f9fafb', padding: '10px', borderRadius: '4px', marginBottom: '15px', fontSize: '14px' }}>
-            <div style={{ fontWeight: '600', marginBottom: '3px' }}>To:</div>
-            <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#000000', marginTop: '2px' }}>
+          <div
+            style={{
+              background: "#f9fafb",
+              padding: "10px",
+              borderRadius: "4px",
+              marginBottom: "15px",
+              fontSize: "14px",
+            }}
+          >
+            <div style={{ fontWeight: "600", marginBottom: "3px" }}>To:</div>
+            <div
+              style={{
+                fontSize: "15px",
+                fontWeight: "bold",
+                color: "#000000",
+                marginTop: "2px",
+              }}
+            >
               {letterData.tutorName}
             </div>
           </div>
 
-          <div style={{ marginBottom: '15px' }}>
-            <p style={{ fontWeight: '600', marginBottom: '5px', fontSize: '14px' }}>
+          <div style={{ marginBottom: "15px" }}>
+            <p
+              style={{
+                fontWeight: "600",
+                marginBottom: "5px",
+                fontSize: "14px",
+              }}
+            >
               Dear {letterData.tutorName},
             </p>
-            <p style={{ marginTop: '5px', lineHeight: '1.4' }}>
-              We are pleased to inform you that you have been selected for the position of 
-              <strong> {letterData.position}</strong> at {letterData.companyName}. 
-              This letter serves as confirmation of your appointment, effective from 
+            <p style={{ marginTop: "5px", lineHeight: "1.4" }}>
+              We are pleased to inform you that you have been selected for the
+              position of
+              <strong> {letterData.position}</strong> at{" "}
+              {letterData.companyName}. This letter serves as confirmation of
+              your appointment, effective from
               <strong> {formatDate(letterData.joiningDate)}</strong>.
             </p>
           </div>
 
-          <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#000000', marginBottom: '10px' }}>
+          <div
+            style={{
+              fontWeight: "bold",
+              fontSize: "14px",
+              color: "#000000",
+              marginBottom: "10px",
+            }}
+          >
             APPOINTMENT DETAILS
           </div>
-          
-          <table style={{ width: '100%', marginBottom: '15px', borderCollapse: 'collapse', fontSize: '14px' }}>
+
+          <table
+            style={{
+              width: "100%",
+              marginBottom: "15px",
+              borderCollapse: "collapse",
+              fontSize: "14px",
+            }}
+          >
             <tbody>
               <tr>
-                <td style={{ padding: '4px 6px', border: '1px solid #ddd', fontWeight: '600', width: '35%' }}>Position:</td>
-                <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>{letterData.position}</td>
+                <td
+                  style={{
+                    padding: "4px 6px",
+                    border: "1px solid #ddd",
+                    fontWeight: "600",
+                    width: "35%",
+                  }}
+                >
+                  Position:
+                </td>
+                <td style={{ padding: "4px 6px", border: "1px solid #ddd" }}>
+                  {letterData.position}
+                </td>
               </tr>
               <tr>
-                <td style={{ padding: '4px 6px', border: '1px solid #ddd', fontWeight: '600' }}>Joining Date:</td>
-                <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>{formatDate(letterData.joiningDate)}</td>
+                <td
+                  style={{
+                    padding: "4px 6px",
+                    border: "1px solid #ddd",
+                    fontWeight: "600",
+                  }}
+                >
+                  Joining Date:
+                </td>
+                <td style={{ padding: "4px 6px", border: "1px solid #ddd" }}>
+                  {formatDate(letterData.joiningDate)}
+                </td>
               </tr>
               <tr>
-                <td style={{ padding: '4px 6px', border: '1px solid #ddd', fontWeight: '600' }}>Salary:</td>
-                <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>{letterData.salary}</td>
+                <td
+                  style={{
+                    padding: "4px 6px",
+                    border: "1px solid #ddd",
+                    fontWeight: "600",
+                  }}
+                >
+                  Salary:
+                </td>
+                <td style={{ padding: "4px 6px", border: "1px solid #ddd" }}>
+                  {letterData.salary}
+                </td>
               </tr>
               <tr>
-                <td style={{ padding: '4px 6px', border: '1px solid #ddd', fontWeight: '600' }}>Working Hours:</td>
-                <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>{letterData.tuitionTime}</td>
+                <td
+                  style={{
+                    padding: "4px 6px",
+                    border: "1px solid #ddd",
+                    fontWeight: "600",
+                  }}
+                >
+                  Working Hours:
+                </td>
+                <td style={{ padding: "4px 6px", border: "1px solid #ddd" }}>
+                  {letterData.tuitionTime}
+                </td>
               </tr>
               <tr>
-                <td style={{ padding: '4px 6px', border: '1px solid #ddd', fontWeight: '600' }}>Working Days:</td>
-                <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>{letterData.workingDays}</td>
+                <td
+                  style={{
+                    padding: "4px 6px",
+                    border: "1px solid #ddd",
+                    fontWeight: "600",
+                  }}
+                >
+                  Working Days:
+                </td>
+                <td style={{ padding: "4px 6px", border: "1px solid #ddd" }}>
+                  {letterData.workingDays}
+                </td>
               </tr>
               <tr>
-                <td style={{ padding: '4px 6px', border: '1px solid #ddd', fontWeight: '600' }}>Probation Period:</td>
-                <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>{letterData.probationPeriod}</td>
+                <td
+                  style={{
+                    padding: "4px 6px",
+                    border: "1px solid #ddd",
+                    fontWeight: "600",
+                  }}
+                >
+                  Probation Period:
+                </td>
+                <td style={{ padding: "4px 6px", border: "1px solid #ddd" }}>
+                  {letterData.probationPeriod}
+                </td>
               </tr>
               <tr>
-                <td style={{ padding: '4px 6px', border: '1px solid #ddd', fontWeight: '600' }}>Notice Period:</td>
-                <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>{letterData.noticePeriod}</td>
+                <td
+                  style={{
+                    padding: "4px 6px",
+                    border: "1px solid #ddd",
+                    fontWeight: "600",
+                  }}
+                >
+                  Notice Period:
+                </td>
+                <td style={{ padding: "4px 6px", border: "1px solid #ddd" }}>
+                  {letterData.noticePeriod}
+                </td>
               </tr>
             </tbody>
           </table>
 
-          <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#000000', marginBottom: '8px' }}>
+          <div
+            style={{
+              fontWeight: "bold",
+              fontSize: "14px",
+              color: "#000000",
+              marginBottom: "8px",
+            }}
+          >
             TERMS & CONDITIONS
           </div>
-          
-          <ol style={{ marginLeft: '15px', marginBottom: '15px', color: '#000000', lineHeight: '1.3', fontSize: '13px' }}>
+
+          <ol
+            style={{
+              marginLeft: "15px",
+              marginBottom: "15px",
+              color: "#000000",
+              lineHeight: "1.3",
+              fontSize: "13px",
+            }}
+          >
             {letterData.terms.map((term, index) => (
-              <li key={term.id} style={{ marginBottom: '3px' }}>
+              <li key={term.id} style={{ marginBottom: "3px" }}>
                 {term.text}
               </li>
             ))}
-            <li style={{ marginBottom: '3px' }}>
-              The probation period for this position is <strong>{letterData.probationPeriod}</strong>.
+            <li style={{ marginBottom: "3px" }}>
+              The probation period for this position is{" "}
+              <strong>{letterData.probationPeriod}</strong>.
             </li>
-            <li style={{ marginBottom: '3px' }}>
+            <li style={{ marginBottom: "3px" }}>
               Working days are <strong>{letterData.workingDays}</strong>.
             </li>
-            <li style={{ marginBottom: '3px' }}>
-              The notice period required is <strong>{letterData.noticePeriod}</strong>.
+            <li style={{ marginBottom: "3px" }}>
+              The notice period required is{" "}
+              <strong>{letterData.noticePeriod}</strong>.
             </li>
           </ol>
 
-          <div style={{ marginBottom: '15px', lineHeight: '1.4', fontSize: '14px' }}>
-            <p>We believe that your skills and experience will be a valuable addition to our team.</p>
-            <p style={{ marginTop: '5px' }}>Please sign and return a copy of this letter to confirm your acceptance.</p>
+          <div
+            style={{
+              marginBottom: "15px",
+              lineHeight: "1.4",
+              fontSize: "14px",
+            }}
+          >
+            <p>
+              We believe that your skills and experience will be a valuable
+              addition to our team.
+            </p>
+            <p style={{ marginTop: "5px" }}>
+              Please sign and return a copy of this letter to confirm your
+              acceptance.
+            </p>
           </div>
 
-          <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #000', paddingTop: '15px', fontSize: '14px' }}>
-            <div style={{ width: '45%', textAlign: 'center' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>
+          <div
+            style={{
+              marginTop: "30px",
+              display: "flex",
+              justifyContent: "space-between",
+              borderTop: "1px solid #000",
+              paddingTop: "15px",
+              fontSize: "14px",
+            }}
+          >
+            <div style={{ width: "45%", textAlign: "center" }}>
+              <div style={{ fontWeight: "bold", marginBottom: "10px" }}>
                 For {letterData.companyName}
               </div>
-              <div style={{ marginTop: '30px', borderTop: '1px solid #000', width: '120px', display: 'inline-block' }}></div>
-              <div style={{ marginTop: '5px', fontWeight: '600' }}>Authorized Signatory</div>
-              <div style={{ color: '#666', fontSize: '12px' }}>HR Department</div>
+              <div
+                style={{
+                  marginTop: "30px",
+                  borderTop: "1px solid #000",
+                  width: "120px",
+                  display: "inline-block",
+                }}
+              ></div>
+              <div style={{ marginTop: "5px", fontWeight: "600" }}>
+                Authorized Signatory
+              </div>
+              <div style={{ color: "#666", fontSize: "12px" }}>
+                HR Department
+              </div>
             </div>
-            <div style={{ width: '45%', textAlign: 'center' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>
+            <div style={{ width: "45%", textAlign: "center" }}>
+              <div style={{ fontWeight: "bold", marginBottom: "10px" }}>
                 Accepted By
               </div>
-              <div style={{ marginTop: '30px', borderTop: '1px solid #000', width: '120px', display: 'inline-block' }}></div>
-              <div style={{ marginTop: '5px', fontWeight: '600' }}>{letterData.tutorName}</div>
-              <div style={{ color: '#666', fontSize: '12px' }}>Tutor</div>
-              <div style={{ marginTop: '5px' }}>Date: _______________</div>
+              <div
+                style={{
+                  marginTop: "30px",
+                  borderTop: "1px solid #000",
+                  width: "120px",
+                  display: "inline-block",
+                }}
+              ></div>
+              <div style={{ marginTop: "5px", fontWeight: "600" }}>
+                {letterData.tutorName}
+              </div>
+              <div style={{ color: "#666", fontSize: "12px" }}>Tutor</div>
+              <div style={{ marginTop: "5px" }}>Date: _______________</div>
             </div>
           </div>
         </div>
@@ -1409,10 +1639,12 @@ const AppointmentLetter = () => {
               <p className="text-gray-600 text-center mb-6">
                 Enter sender ID (Student or Tutor ID)
               </p>
-              
+
               {sendSuccess ? (
                 <div className="text-center p-4 bg-green-50 rounded-lg mb-6">
-                  <div className="text-green-600 font-semibold">✓ Sent Successfully!</div>
+                  <div className="text-green-600 font-semibold">
+                    ✓ Sent Successfully!
+                  </div>
                   <p className="text-green-700 text-sm mt-2">
                     Appointment letter has been saved successfully.
                   </p>
@@ -1434,7 +1666,7 @@ const AppointmentLetter = () => {
                       This ID will be stored as the sender in the database
                     </p>
                   </div>
-                  
+
                   <div className="flex justify-center space-x-3">
                     <button
                       onClick={() => {
@@ -1456,7 +1688,7 @@ const AppointmentLetter = () => {
                           Sending...
                         </>
                       ) : (
-                        'Send Letter'
+                        "Send Letter"
                       )}
                     </button>
                   </div>

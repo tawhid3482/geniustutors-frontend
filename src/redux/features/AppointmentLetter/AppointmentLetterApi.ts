@@ -14,13 +14,13 @@ const AppointmentLetterApi = baseApi.injectEndpoints({
       invalidatesTags: [tagTypes.AppointmentLetter],
     }),
 
-    // GetAllAppointmentLetter: builder.query({
-    //   query: () => ({
-    //     url: "/appointment",
-    //     method: "GET",
-    //   }),
-    //   providesTags: [tagTypes.AppointmentLetter],
-    // }),
+    GetAllAppointmentLetterForAdmin: builder.query({
+      query: () => ({
+        url: "/appointment",
+        method: "GET",
+      }),
+      providesTags: [tagTypes.AppointmentLetter],
+    }),
 
     GetAllAppointmentLetter: builder.query({
       query: (id:string) => ({
@@ -58,7 +58,7 @@ export const {
 
     useSendAppointmentToStudentMutation,
     useDeleteAppointmentLetterMutation,
-   
+   useGetAllAppointmentLetterForAdminQuery,
     useGetAllAppointmentLetterQuery,
     useUpdateAppointmentLetterMutation,
 
