@@ -447,28 +447,7 @@ export default function TutorRequestPage() {
         return;
       }
 
-      // Validate form data
-      if (
-        !formData.phoneNumber ||
-        !formData.studentGender ||
-        !formData.district ||
-        !formData.thana || // thana validation added
-        !formData.area ||
-        !formData.tutorGenderPreference ||
-        !formData.medium ||
-        !formData.tutoringType ||
-        !formData.tutoringDuration ||
-        !formData.tutoringDays ||
-        !formData.numberOfStudents
-      ) {
-        toast({
-          title: "Missing Information",
-          description: "Please fill in all required fields (including thana)",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
+      // Validate for
 
       if ((formData.selectedCategories || []).length === 0) {
         toast({
