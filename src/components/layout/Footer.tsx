@@ -23,7 +23,7 @@ export const Footer = () => {
       instagram: '',
       linkedin: ''
     },
-    footerCredit: '© 2025 Tutor Today. All rights reserved | Developed by <a href="https://webbytestudio.com" target="_blank" class="text-primary hover:text-primary/80 transition-colors">WebByte Studio</a>'
+    footerCredit: '© 2025 Tutor Today. All rights reserved | Developed by <a href="https://nextgent.org/" target="_blank" class="text-primary hover:text-primary/80 transition-colors">NextGent.org</a>'
   });
   
   useEffect(() => {

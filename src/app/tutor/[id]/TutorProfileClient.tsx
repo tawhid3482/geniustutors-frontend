@@ -731,21 +731,21 @@ export default function TutorProfileClient({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 text-sm">
+                  {/* <div className="flex items-center gap-2 text-sm">
                     <Phone className="h-4 w-4 text-gray-400" />
                     <div>
                       <span className="text-gray-600">Phone: </span>
                       <span className="font-semibold">{tutor.phone || "N/A"}</span>
                     </div>
-                  </div>
+                  </div> */}
 
-                  <div className="flex items-center gap-2 text-sm">
+                  {/* <div className="flex items-center gap-2 text-sm">
                     <Mail className="h-4 w-4 text-gray-400" />
                     <div>
                       <span className="text-gray-600">Email: </span>
                       <span className="font-semibold">{tutor.email || "N/A"}</span>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* Member Since */}
@@ -937,12 +937,12 @@ export default function TutorProfileClient({
                     </div>
 
                     {/* Bio */}
-                    {tutor.bio && (
+                    {/* {tutor.bio && (
                       <div className="space-y-4 pt-4 border-t">
                         <h3 className="font-semibold text-gray-900">Bio</h3>
                         <p className="text-gray-700">{tutor.bio}</p>
                       </div>
-                    )}
+                    )} */}
 
                     {/* Additional Info */}
                     {tutor.other_skills && tutor.other_skills.length > 0 && (
@@ -1494,7 +1494,7 @@ export default function TutorProfileClient({
                           />
                         </div>
 
-                        <div>
+                        {/* <div>
                           <Label htmlFor="phone">Phone Number *</Label>
                           <Input
                             id="phone"
@@ -1508,7 +1508,7 @@ export default function TutorProfileClient({
                             placeholder="Enter your phone number"
                             className="mt-1"
                           />
-                        </div>
+                        </div> */}
 
                         <div>
                           <Label htmlFor="location">Location *</Label>
@@ -1698,7 +1698,6 @@ export default function TutorProfileClient({
                             onClick={handleSubmitApplication}
                             disabled={
                               isSubmittingApplication || 
-                              !applicationForm.phone || 
                               !applicationForm.name ||
                               !applicationForm.location ||
                               !applicationForm.class ||

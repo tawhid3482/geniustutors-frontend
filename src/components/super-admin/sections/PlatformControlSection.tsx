@@ -49,7 +49,7 @@ export default function PlatformControlSection() {
     twitter_url: '',
     instagram_url: '',
     linkedin_url: '',
-    footer_credit: '© 2025 Tutor Today. All rights reserved | Developed by WebByte Studio',
+    footer_credit: '© 2025 Tutor Today. All rights reserved | Developed by NextGent.org',
     commission_rate: 10,
     fixed_fee: 0,
     maintenance_mode: false
@@ -648,7 +648,7 @@ export default function PlatformControlSection() {
                   name="footer_credit"
                   value={websiteSettings.footer_credit}
                   onChange={handleInputChange}
-                  placeholder="© 2025 Tutor Today. All rights reserved | Developed by WebByte Studio"
+                  placeholder="© 2025 Tutor Today. All rights reserved | Developed by NextGent.org"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   This text will be displayed in the footer of the website. You can include copyright information and developer credits. 

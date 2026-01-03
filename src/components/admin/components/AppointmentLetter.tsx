@@ -40,7 +40,6 @@ interface AppointmentLetterData {
   companyAddress: string;
   companyPhone: string;
   companyEmail: string;
-  probationPeriod: string;
   workingDays: string;
   noticePeriod: string;
 }
@@ -48,10 +47,10 @@ interface AppointmentLetterData {
 const AppointmentLetter = () => {
   const [logoUrl, setLogoUrl] = useState<string>("");
   const [letterData, setLetterData] = useState<AppointmentLetterData>({
-    tutorName: "John Doe",
-    position: "Mathematics Tutor",
-    joiningDate: "2024-01-15",
-    salary: "$25/hour",
+    tutorName: "Tawhidul Islam",
+    position: "ICT Tutor",
+    joiningDate: "2025-01-01",
+    salary: "$2000/month",
     tuitionTime: "Monday to Friday, 4 PM - 7 PM",
     date: new Date().toISOString().split("T")[0],
     terms: [
@@ -69,11 +68,10 @@ const AppointmentLetter = () => {
         text: "Any changes in schedule must be communicated one week in advance.",
       },
     ],
-    companyName: "Genius Tutor Academy",
+    companyName: "Genius Tutor",
     companyAddress: "123 Education Street, Dhaka 1205",
     companyPhone: "+880 1234-567890",
     companyEmail: "hr@geniustutor.edu",
-    probationPeriod: "3 months",
     workingDays: "Monday to Friday",
     noticePeriod: "30 days",
   });
@@ -509,10 +507,7 @@ const AppointmentLetter = () => {
                 <td>Working Days:</td>
                 <td>${letterData.workingDays}</td>
               </tr>
-              <tr>
-                <td>Probation Period:</td>
-                <td>${letterData.probationPeriod}</td>
-              </tr>
+             
               <tr>
                 <td>Notice Period:</td>
                 <td>${letterData.noticePeriod}</td>
@@ -528,9 +523,7 @@ const AppointmentLetter = () => {
               `
                 )
                 .join("")}
-              <li>The probation period for this position is <strong>${
-                letterData.probationPeriod
-              }</strong>.</li>
+            
               <li>Working days are <strong>${
                 letterData.workingDays
               }</strong>.</li>
@@ -866,20 +859,7 @@ const AppointmentLetter = () => {
                   />
                 </div>
 
-                {/* Probation Period */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Probation Period
-                  </label>
-                  <input
-                    type="text"
-                    name="probationPeriod"
-                    value={letterData.probationPeriod}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    placeholder="e.g., 3 months"
-                  />
-                </div>
+            
 
                 {/* Notice Period */}
                 <div>
@@ -1162,14 +1142,7 @@ const AppointmentLetter = () => {
                             <td className="py-1 font-medium">Working Days:</td>
                             <td className="py-1">{letterData.workingDays}</td>
                           </tr>
-                          <tr>
-                            <td className="py-1 font-medium">
-                              Probation Period:
-                            </td>
-                            <td className="py-1">
-                              {letterData.probationPeriod}
-                            </td>
-                          </tr>
+                       
                           <tr>
                             <td className="py-1 font-medium">Notice Period:</td>
                             <td className="py-1">{letterData.noticePeriod}</td>
@@ -1190,21 +1163,10 @@ const AppointmentLetter = () => {
                             <span>{term.text}</span>
                           </li>
                         ))}
+                     
                         <li className="flex">
                           <span className="mr-1">
                             {letterData.terms.length + 1}.
-                          </span>
-                          <span>
-                            The probation period for this position is{" "}
-                            <span className="font-semibold">
-                              {letterData.probationPeriod}
-                            </span>
-                            .
-                          </span>
-                        </li>
-                        <li className="flex">
-                          <span className="mr-1">
-                            {letterData.terms.length + 2}.
                           </span>
                           <span>
                             Working days are{" "}
@@ -1216,7 +1178,7 @@ const AppointmentLetter = () => {
                         </li>
                         <li className="flex">
                           <span className="mr-1">
-                            {letterData.terms.length + 3}.
+                            {letterData.terms.length + 2}.
                           </span>
                           <span>
                             The notice period required is{" "}
@@ -1488,20 +1450,7 @@ const AppointmentLetter = () => {
                   {letterData.workingDays}
                 </td>
               </tr>
-              <tr>
-                <td
-                  style={{
-                    padding: "4px 6px",
-                    border: "1px solid #ddd",
-                    fontWeight: "600",
-                  }}
-                >
-                  Probation Period:
-                </td>
-                <td style={{ padding: "4px 6px", border: "1px solid #ddd" }}>
-                  {letterData.probationPeriod}
-                </td>
-              </tr>
+            
               <tr>
                 <td
                   style={{
@@ -1544,10 +1493,6 @@ const AppointmentLetter = () => {
                 {term.text}
               </li>
             ))}
-            <li style={{ marginBottom: "3px" }}>
-              The probation period for this position is{" "}
-              <strong>{letterData.probationPeriod}</strong>.
-            </li>
             <li style={{ marginBottom: "3px" }}>
               Working days are <strong>{letterData.workingDays}</strong>.
             </li>

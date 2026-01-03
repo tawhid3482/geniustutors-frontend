@@ -307,13 +307,13 @@ export default function PlatformControlSection() {
                     name="footer_credit"
                     value={websiteSettings.footer_credit}
                     onChange={handleInputChange}
-                    placeholder="© 2025 Tutor Today. All rights reserved | Developed by WebByte Studio"
+                    placeholder="© 2025 Tutor Today. All rights reserved | Developed by NextGent.org"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     You can include a link by adding HTML anchor tags. Example:
                     "© 2025 Tutor Today. All rights reserved | Developed by
-                    &lt;a href='https://webbytestudio.com'
-                    target='_blank'&gt;WebByte Studio&lt;/a&gt;"
+                    &lt;a href='https://nextgent.org'
+                    target='_blank'&gt;NextGent.org&lt;/a&gt;"
                   </p>
                 </div>
               </CardContent>

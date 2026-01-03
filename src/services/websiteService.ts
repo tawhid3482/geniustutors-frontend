@@ -55,7 +55,7 @@ export const getWebsiteInfo = async (): Promise<WebsiteInfo> => {
       googleTagManagerId: '',
       customHeadCode: '',
       customFooterCode: '',
-      footerCredit: '© 2025 Tutor Today. All rights reserved | Developed by <a href="https://webbytestudio.com" target="_blank" class="text-primary hover:text-primary/80 transition-colors">WebByte Studio</a>'
+      footerCredit: '© 2025 Tutor Today. All rights reserved | Developed by <a href="https://nextgent.org" target="_blank" class="text-primary hover:text-primary/80 transition-colors">NextGent.org</a>'
     };
   }
 };

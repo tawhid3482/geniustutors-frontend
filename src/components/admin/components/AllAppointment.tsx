@@ -2,13 +2,17 @@ import {
   useDeleteAppointmentLetterMutation,
   useGetAllAppointmentLetterForAdminQuery,
 } from "@/redux/features/AppointmentLetter/AppointmentLetterApi";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { toast } from "react-hot-toast";
 
 const AllAppointment = () => {
   const [selectedLetter, setSelectedLetter] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateFilter, setDateFilter] = useState("all"); // "all", "today", "week", "month", "custom"
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
 
   const {
     data: AllAppointment,
@@ -78,6 +82,94 @@ const AllAppointment = () => {
     return pdfUrl.split("/").pop() || "appointment-letter.pdf";
   };
 
+  // Filter data based on search and date filters
+  const filteredData = useMemo(() => {
+    if (!AllAppointment?.data) return [];
+
+    let filtered = [...AllAppointment.data];
+
+    // Apply search filter
+    if (searchTerm.trim() !== "") {
+      filtered = filtered.filter(
+        (letter) =>
+          letter.senderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          letter.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          getFileName(letter.pdf)
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply date filter
+    if (dateFilter !== "all") {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      filtered = filtered.filter((letter) => {
+        const letterDate = new Date(letter.createdAt);
+
+        switch (dateFilter) {
+          case "today":
+            return letterDate >= today;
+          case "week":
+            const weekAgo = new Date(today);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return letterDate >= weekAgo;
+          case "month":
+            const monthAgo = new Date(today);
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            return letterDate >= monthAgo;
+          case "custom":
+            if (customStartDate && customEndDate) {
+              const startDate = new Date(customStartDate);
+              const endDate = new Date(customEndDate);
+              endDate.setHours(23, 59, 59, 999);
+              return letterDate >= startDate && letterDate <= endDate;
+            }
+            return true;
+          default:
+            return true;
+        }
+      });
+    }
+
+    return filtered;
+  }, [
+    AllAppointment?.data,
+    searchTerm,
+    dateFilter,
+    customStartDate,
+    customEndDate,
+  ]);
+
+  // Calculate statistics based on filtered data
+  const stats = useMemo(() => {
+    if (!filteredData) return { total: 0, todayCount: 0, uniqueSenders: 0 };
+
+    const today = new Date().toDateString();
+    const todayCount = filteredData.filter((letter: any) => {
+      const letterDate = new Date(letter.createdAt).toDateString();
+      return today === letterDate;
+    }).length;
+
+    const uniqueSenders = new Set(
+      filteredData.map((letter: any) => letter.senderId)
+    ).size;
+
+    return {
+      total: filteredData.length,
+      todayCount,
+      uniqueSenders,
+    };
+  }, [filteredData]);
+
+  const resetFilters = () => {
+    setSearchTerm("");
+    setDateFilter("all");
+    setCustomStartDate("");
+    setCustomEndDate("");
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -99,7 +191,8 @@ const AllAppointment = () => {
               📄 All Appointment Letters
             </h1>
             <p className="text-gray-600">
-              Total {AllAppointment?.data?.length || 0} appointment letters
+              Showing {stats.total} of {AllAppointment?.data?.length || 0}{" "}
+              appointment letters
             </p>
           </div>
           <div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-100">
@@ -108,6 +201,153 @@ const AllAppointment = () => {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Search and Filter Section */}
+      <div className="bg-white rounded-xl shadow-md border p-6 mb-8">
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Search Input */}
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Search by Sender ID, Letter ID, or File Name
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by Sender ID (e.g., A01), Letter ID, or file name..."
+                className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <svg
+                    className="h-5 w-5 text-gray-400 hover:text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Date Filter */}
+          <div className="w-full lg:w-64">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Filter by Date
+            </label>
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Dates</option>
+              <option value="today">Today</option>
+              <option value="week">Last 7 Days</option>
+              <option value="month">Last 30 Days</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+
+          {/* Reset Button */}
+          <div className="flex items-end">
+            <button
+              onClick={resetFilters}
+              className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors whitespace-nowrap"
+            >
+              Reset Filters
+            </button>
+          </div>
+        </div>
+
+        {/* Custom Date Range Inputs */}
+        {dateFilter === "custom" && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                End Date
+              </label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Active Filters Badge */}
+        {(searchTerm || dateFilter !== "all") && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {searchTerm && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                Search: "{searchTerm}"
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="ml-2 text-blue-600 hover:text-blue-800"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            {dateFilter !== "all" && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                Date: {dateFilter.charAt(0).toUpperCase() + dateFilter.slice(1)}
+                {dateFilter === "custom" &&
+                  customStartDate &&
+                  customEndDate && (
+                    <span className="ml-1">
+                      ({customStartDate} to {customEndDate})
+                    </span>
+                  )}
+                <button
+                  onClick={() => setDateFilter("all")}
+                  className="ml-2 text-green-600 hover:text-green-800"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -130,10 +370,8 @@ const AllAppointment = () => {
               </svg>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total Letters</p>
-              <p className="text-2xl font-bold text-gray-800">
-                {AllAppointment?.data?.length || 0}
-              </p>
+              <p className="text-sm text-gray-500">Filtered Letters</p>
+              <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
             </div>
           </div>
         </div>
@@ -158,11 +396,7 @@ const AllAppointment = () => {
             <div>
               <p className="text-sm text-gray-500">Recent (Today)</p>
               <p className="text-2xl font-bold text-gray-800">
-                {AllAppointment?.data?.filter((letter: any) => {
-                  const today = new Date().toDateString();
-                  const letterDate = new Date(letter.createdAt).toDateString();
-                  return today === letterDate;
-                }).length || 0}
+                {stats.todayCount}
               </p>
             </div>
           </div>
@@ -188,13 +422,7 @@ const AllAppointment = () => {
             <div>
               <p className="text-sm text-gray-500">Unique Senders</p>
               <p className="text-2xl font-bold text-gray-800">
-                {
-                  new Set(
-                    AllAppointment?.data?.map(
-                      (letter: any) => letter.senderId
-                    ) || []
-                  ).size
-                }
+                {stats.uniqueSenders}
               </p>
             </div>
           </div>
@@ -226,7 +454,7 @@ const AllAppointment = () => {
       </div>
 
       {/* Appointment Letters Grid */}
-      {AllAppointment?.data?.length === 0 ? (
+      {stats.total === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl shadow-lg">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-4">
             <svg
@@ -247,12 +475,22 @@ const AllAppointment = () => {
             No appointment letters found
           </h3>
           <p className="text-gray-500 max-w-md mx-auto">
-            There are no appointment letters in the system yet.
+            {searchTerm || dateFilter !== "all"
+              ? "No results match your filters. Try adjusting your search criteria."
+              : "There are no appointment letters in the system yet."}
           </p>
+          {(searchTerm || dateFilter !== "all") && (
+            <button
+              onClick={resetFilters}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Clear All Filters
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {AllAppointment?.data?.map((letter: any) => (
+          {filteredData.map((letter: any) => (
             <div
               key={letter.id}
               className="bg-white rounded-xl shadow-lg overflow-hidden border hover:shadow-xl transition-shadow duration-300"
@@ -431,7 +669,7 @@ const AllAppointment = () => {
         </div>
       )}
 
-      {/* View PDF Modal */}
+      {/* View PDF Modal (Keep this same as before) */}
       {isViewModalOpen && selectedLetter && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
@@ -501,7 +739,7 @@ const AllAppointment = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal (Keep this same as before) */}
       {isDeleteModalOpen && selectedLetter && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl transform transition-all">

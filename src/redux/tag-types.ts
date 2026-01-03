@@ -27,6 +27,7 @@ export enum tagTypes {
   assignTutor = "assignTutor",
   AppointmentLetter = "AppointmentLetter",
   Course = "Course",
+  Enrollment = "Enrollment",
 }
 
 export const tagTypesList = [
@@ -57,4 +58,5 @@ export const tagTypesList = [
   tagTypes.assignTutor,
   tagTypes.AppointmentLetter,
   tagTypes.Course,
+  tagTypes.Enrollment,
 ];
