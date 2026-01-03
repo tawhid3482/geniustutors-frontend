@@ -215,6 +215,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'payment-account', label: 'Payment Account', icon: Navigation },
             { id: 'refound', label: 'Refound Policy', icon: Ticket },
             { id: 'appointment', label: 'All Appointment', icon: MailCheck },
+            { id: 'courses', label: 'Courses', icon: BookOpen },
           ],
           quick: [
             { 

@@ -50,6 +50,7 @@ import {
   type EnrollmentsResponse
 } from '@/services/courseService';
 import { API_BASE_URL } from '@/config/api';
+import { useCreateCourseMutation, useDeleteCourseMutation, useGetAllCourseQuery, useUpdateCourseMutation } from '@/redux/features/course/courseApi';
 
 export default function CourseManagement() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -60,6 +61,15 @@ export default function CourseManagement() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+
+
+  const {data:AllCourse}=useGetAllCourseQuery(undefined);
+
+  console.log('AllCourse:',AllCourse);
+
+  const [createCourse]=useCreateCourseMutation()
+  const [updateCourse]=useUpdateCourseMutation()
+  const [deleteCourse]= useDeleteCourseMutation()
   
   // Enrollment state
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
