@@ -44,6 +44,7 @@ import AppointmentLetter from "./components/AppointmentLetter";
 import ConfirmationLettersManagement from "./sections/ConfirmationLettersManagement";
 import ApprovalLettersManagement from "./sections/ApprovalLettersManagement";
 import AllAppointment from "./components/AllAppointment";
+import TutorDocument from "./sections/TutorDocument";
 // import RefundPoliciesPage from "@/app/admin/refund-policies/page";
 
 // Icon mapping for string to component conversion
@@ -532,6 +533,9 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
   const renderAppointmentLetter = () => {
     return <AppointmentLetter />;
   };
+  const renderTutorDocument = () => {
+    return <TutorDocument />;
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 w-full admin-dashboard">
@@ -613,6 +617,7 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
             {activeTab === "payment-account" && renderPaymentAccount()}
             {activeTab === "tuition-jobs" && <TuitionJobsSection />}
             {activeTab === "appointment" && <AllAppointment />}
+            {activeTab === "document" && renderTutorDocument()}
           </div>
         </main>
       </div>

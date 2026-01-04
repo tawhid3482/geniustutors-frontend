@@ -675,7 +675,7 @@ export default function CourseManagement() {
       0
     );
     const activeEnrollments = enrollments.filter(
-      (e) => e.user.status === "active"
+      (e) => e.status === "active"
     ).length;
 
     return {
@@ -920,12 +920,12 @@ export default function CourseManagement() {
         </div>
 
         <div>
-          <Label>Main Video URL</Label>
+          <Label>Main Video URL OR Ebook URL</Label>
           <Input
             type="text"
             value={courseForm.video_url}
             onChange={(e) => handleInputChange("video_url", e.target.value)}
-            placeholder="https://youtube.com/embed/..."
+            placeholder="https://url.com/..."
           />
         </div>
       </div>

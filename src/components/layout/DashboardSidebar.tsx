@@ -45,6 +45,7 @@ import {
   X,
   Ticket,
   MailCheck,
+  ListChecks,
 } from 'lucide-react';
 import { useState } from 'react';
 import { MenuItem } from '@/hooks/usePermissionMenu';
@@ -142,7 +143,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'profile', label: 'Update Profile', icon: User },
             // { id: 'demo-classes', label: 'Demo Class', icon: BookOpen },
             { id: 'approval-letter', label: 'Approval Letter', icon: FileCheck },
-            // { id: 'courses', label: 'My Course', icon: BookCheck },
+            { id: 'courses', label: 'My Course', icon: BookCheck },
             // { id: 'reviews', label: 'Reviews', icon: Star },
           ],
           quick: [
@@ -172,6 +173,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             // { id: 'assignments', label: 'Assignments', icon: CheckCircle2 },
             // { id: 'courses', label: 'My Course', icon: BookOpen },
             { id: 'reviews', label: 'Reviews', icon: Star },
+            { id: 'document', label: 'My Document', icon: FileText },
           ],
           quick: [
             { id: 'join-community', label: 'Join Our Community', icon: Users2 },
@@ -216,6 +218,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             { id: 'refound', label: 'Refound Policy', icon: Ticket },
             { id: 'appointment', label: 'All Appointment', icon: MailCheck },
             { id: 'courses', label: 'Courses', icon: BookOpen },
+            { id: 'document', label: 'Document', icon:ListChecks  },
           ],
           quick: [
             { 

@@ -15,15 +15,15 @@ const DocumentApi = baseApi.injectEndpoints({
     }),
 
     GetAllDocument: builder.query({
-      query: () => ({
-        url: "/document",
+      query: (id: string) => ({
+        url: `/document/admin/${id}`,
         method: "GET",
       }),
       providesTags: [tagTypes.Document],
     }),
 
     GetAllDocumentUser: builder.query({
-      query: ({ id }) => ({
+      query: (id: string) => ({
         url: `/document/user/${id}`,
         method: "GET",
       }),

@@ -389,11 +389,7 @@ const CoursesPage = () => {
                         <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
                           {course.category}
                         </span>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Star className="w-4 h-4 text-yellow-500 fill-current mr-1" />
-                          <span>4.8</span>
-                          <span className="ml-1">(1.2k)</span>
-                        </div>
+                        
                       </div>
                       
                       <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2">
@@ -427,11 +423,11 @@ const CoursesPage = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex items-baseline">
                             <span className="text-2xl font-bold text-gray-900">
-                              ₹{course.price?.toLocaleString() || "0"}
+                              ৳{course.price?.toLocaleString() || "0"}
                             </span>
                             {course.original_price > course.price && (
                               <span className="text-sm text-gray-500 line-through ml-2">
-                                ₹{course.original_price?.toLocaleString()}
+                                ৳{course.original_price?.toLocaleString()}
                               </span>
                             )}
                           </div>
@@ -442,7 +438,7 @@ const CoursesPage = () => {
                         </div>
                       </div>
                     </div>
-                  </div>b
+                  </div>
                 </Link>
               ))}
             </div>

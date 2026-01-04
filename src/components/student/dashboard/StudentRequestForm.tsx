@@ -679,30 +679,10 @@ export function StudentRequestForm({
                                       </div>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <Mail className="h-4 w-4 text-gray-500" />
-                                    <div>
-                                      <div className="text-xs text-gray-500">
-                                        Email
-                                      </div>
-                                      <div className="font-medium">
-                                        {application.tutor.email}
-                                      </div>
-                                    </div>
-                                  </div>
+                             
                                 </div>
                                 <div className="space-y-3">
-                                  <div className="flex items-center gap-2">
-                                    <Phone className="h-4 w-4 text-gray-500" />
-                                    <div>
-                                      <div className="text-xs text-gray-500">
-                                        Phone
-                                      </div>
-                                      <div className="font-medium">
-                                        {application.tutor.phone}
-                                      </div>
-                                    </div>
-                                  </div>
+                              
                                   <div className="flex items-center gap-2">
                                     <Hash className="h-4 w-4 text-gray-500" />
                                     <div>

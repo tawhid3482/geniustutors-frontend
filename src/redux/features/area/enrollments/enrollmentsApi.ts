@@ -23,8 +23,15 @@ const EnrollmentApi = baseApi.injectEndpoints({
     }),
 
     GetAllEnrollmentUser: builder.query({
-      query: ({ id }) => ({
+      query: ( id :string) => ({
         url: `/enrollment/user/${id}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.Enrollment],
+    }),
+    GetStudentEnrollmentCourses: builder.query({
+      query: ( id :string) => ({
+        url: `/enrollment/student/${id}`,
         method: "GET",
       }),
       providesTags: [tagTypes.Enrollment],
@@ -57,4 +64,5 @@ export const {
   useDeleteEnrollmentMutation,
   useUpdateEnrollmentMutation,
   useGetAllEnrollmentUserQuery,
+  useGetStudentEnrollmentCoursesQuery
 } = EnrollmentApi;

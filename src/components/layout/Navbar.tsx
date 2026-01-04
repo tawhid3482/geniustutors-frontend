@@ -74,9 +74,7 @@ export const Navbar = ({
   const handleDashboard = async () => {
     router.push("/dashboard");
   };
-  const handleRegistration = async()=>{
-    router.push("/registration")
-  }
+
 
   // console.log(user)
 
@@ -143,7 +141,7 @@ export const Navbar = ({
           {/* Right Side */}
           <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
             {/* Theme Toggle */}
-            <ThemeToggle />
+            {/* <ThemeToggle /> */}
 
             {user ? (
               <>
@@ -154,7 +152,7 @@ export const Navbar = ({
                       variant="ghost"
                       className="relative h-7 w-7 sm:h-8 sm:w-8 rounded-full"
                     >
-                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8 border">
                         <AvatarImage
                           src={user?.avatar || undefined}
                           alt={user?.fullName || "User"}

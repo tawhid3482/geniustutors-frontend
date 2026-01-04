@@ -983,8 +983,7 @@ export function StudentDashboardMain() {
             )}
             {activeTab === "courses" && (
               <StudentCourses
-                enrollments={enrolledCourses}
-                isLoadingEnrollments={isLoadingCourses}
+               
               />
             )}
             {activeTab === "join-community" && <JoinCommunity />}

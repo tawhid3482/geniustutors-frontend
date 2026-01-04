@@ -118,7 +118,7 @@ export default function ProfileSection() {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const userId = user?.id;
+  const userId = user?.id ;
 
   // RTK Query Hooks
   const {
@@ -133,7 +133,7 @@ export default function ProfileSection() {
     data: documentData,
     refetch: refetchDocuments,
     isLoading: isLoadingDocuments,
-  } = useGetAllDocumentUserQuery({ id: userId });
+  } = useGetAllDocumentUserQuery({ id: userId }as any);
 
   const { data: districtData } = useGetAllDistrictsQuery(undefined);
   const { data: categoryData } = useGetAllCategoryQuery(undefined);
