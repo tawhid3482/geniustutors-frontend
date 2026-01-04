@@ -129,7 +129,7 @@ export const Footer = () => {
             <h3 className="text-base sm:text-lg font-semibold text-foreground">Support</h3>
             <ul className="space-y-1 sm:space-y-2">
               <li>
-                <Link href="/about" className="text-sm sm:text-base text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/about-us" className="text-sm sm:text-base text-muted-foreground hover:text-primary transition-colors">
                   About Us
                 </Link>
               </li>
@@ -143,11 +143,7 @@ export const Footer = () => {
                   FAQ
                 </Link>
               </li>
-              <li>
-                <Link href="/tutor-signup" className="text-sm sm:text-base text-muted-foreground hover:text-primary transition-colors">
-                  Tutor Registration
-                </Link>
-              </li>
+           
             </ul>
           </div>
 

@@ -2,7 +2,7 @@
 const nextConfig = {
   // Standard Next.js configuration
   images: {
-    domains: ['localhost', 'backend.geniustutorss.com', 'randomuser.me'],
+    domains: ['localhost', 'backend.geniustutorss.com', 'randomuser.me','geniustutorss.com'],
   },
   env: {
     NEXT_PUBLIC_STATIC_EXPORT: 'false',

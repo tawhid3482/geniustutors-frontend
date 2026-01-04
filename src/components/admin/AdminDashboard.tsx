@@ -45,6 +45,7 @@ import ConfirmationLettersManagement from "./sections/ConfirmationLettersManagem
 import ApprovalLettersManagement from "./sections/ApprovalLettersManagement";
 import AllAppointment from "./components/AllAppointment";
 import TutorDocument from "./sections/TutorDocument";
+import AdminCreateTuitionRequest from "./components/AdminCreateTuitionRequest";
 // import RefundPoliciesPage from "@/app/admin/refund-policies/page";
 
 // Icon mapping for string to component conversion
@@ -618,6 +619,7 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
             {activeTab === "tuition-jobs" && <TuitionJobsSection />}
             {activeTab === "appointment" && <AllAppointment />}
             {activeTab === "document" && renderTutorDocument()}
+            {activeTab === "admin-tuition-request" && <AdminCreateTuitionRequest />}
           </div>
         </main>
       </div>

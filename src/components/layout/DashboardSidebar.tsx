@@ -46,6 +46,7 @@ import {
   Ticket,
   MailCheck,
   ListChecks,
+  PlusCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { MenuItem } from '@/hooks/usePermissionMenu';
@@ -200,7 +201,8 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
         return {
           main: [
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-            { id: 'tution-request', label: 'Tution Requests', icon: Briefcase },
+            { id: 'tution-request', label: 'Tuition Requests', icon: Briefcase },
+            { id: 'admin-tuition-request', label: 'Create Tuition Requests', icon:PlusCircle },
             { id: 'tutor-connect', label: 'Tutor Connect', icon: BookCheck },
             { id: 'users', label: 'User Management', icon: Users },
             // { id: 'role-management', label: 'Role Management', icon: Key },

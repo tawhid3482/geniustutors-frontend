@@ -1,13 +1,12 @@
 "use client";
-
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
-import FAq from "@/components/ui/FAq";
-import { useAuth } from "@/contexts/AuthContext.next";
 import { LoginDialog } from "@/components/auth/LoginDialog";
+import { Footer } from "@/components/layout/Footer";
+import { Navbar } from "@/components/layout/Navbar";
+import AboutClient from "@/components/marketing/AboutClient";
+import { useAuth } from "@/contexts/AuthContext.next";
+import React from "react";
 
-
-export default function FAQPage() {
+const AboutUs = () => {
   const { user, signOut } = useAuth();
   const handleLogout = async () => {
     try {
@@ -33,9 +32,11 @@ export default function FAQPage() {
         LoginComponent={LoginDialog}
         RegisterComponent={LoginDialog}
       />
-      <FAq />
+      <AboutClient />
 
       <Footer />
     </div>
   );
-}
+};
+
+export default AboutUs;

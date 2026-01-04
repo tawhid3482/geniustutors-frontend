@@ -38,8 +38,8 @@ export const getWebsiteInfo = async (): Promise<WebsiteInfo> => {
     return {
       siteName: 'Tutor Connect',
       siteLogo: '/Genius-Tutor-Logo.png',
-      contactEmail: 'contact@tutorconnect.com',
-      contactPhone: '+880-1234-567890',
+      contactEmail: 'geniustutors12@gmail.com',
+      contactPhone: '+8801516-528101',
       address: 'Dhaka, Bangladesh',
       socialLinks: {
         facebook: '',
