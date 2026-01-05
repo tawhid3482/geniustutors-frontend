@@ -1149,7 +1149,7 @@ export function PaymentSection() {
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setSearchQuery(e.target.value)
                       }
-                      className="pl-10"
+                      className="pl-10 border-2 border-green-500"
                     />
                   </div>
                 </div>

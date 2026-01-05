@@ -435,16 +435,7 @@ export function TutoringHistorySection() {
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Search className="h-4 w-4 mr-2" />
-              Search
-            </Button>
-            <Button variant="outline" size="sm">
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
-            </Button>
-          </div>
+      
         </div>
 
         {/* Loading State */}

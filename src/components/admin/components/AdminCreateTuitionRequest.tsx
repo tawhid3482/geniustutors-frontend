@@ -1,5 +1,4 @@
 "use client";
-import React from 'react';
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -39,6 +38,8 @@ import {
   CheckCircle2,
   School,
   GraduationCap,
+  X,
+  Plus,
 } from "lucide-react";
 import { taxonomyService, Category } from "@/services/taxonomyService";
 import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
@@ -55,9 +56,8 @@ interface District {
   color?: string;
 }
 
-
-const AdminCreateTuitionRequest = () => {
-    const router = useRouter();
+export default function AdminCreateTuitionRequest() {
+  const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,10 +71,6 @@ const AdminCreateTuitionRequest = () => {
   } = useGetAllDistrictsQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
-
-  console.log(districtData)
-
-
 
   const {
     data: categoryData,
@@ -94,6 +90,9 @@ const AdminCreateTuitionRequest = () => {
   const [availableAreas, setAvailableAreas] = useState<string[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [customArea, setCustomArea] = useState<string>("");
+
+  // Subject input state
+  const [customSubject, setCustomSubject] = useState<string>("");
 
   // Form data state
   const [formData, setFormData] = useState<TutorRequestFormData>({
@@ -286,12 +285,6 @@ const AdminCreateTuitionRequest = () => {
   useEffect(() => {
     if (formData.selectedCategories && formData.selectedCategories.length > 0) {
       fetchMultiCategoryTaxonomy(formData.selectedCategories);
-      // Reset selected subjects and classes when categories change
-      setFormData((prev) => ({
-        ...prev,
-        selectedSubjects: [],
-        selectedClasses: [],
-      }));
     } else {
       // Clear subjects and classes when no categories are selected
       setSubjects([]);
@@ -366,13 +359,46 @@ const AdminCreateTuitionRequest = () => {
     }));
   };
 
-  // Handle subject selection
+  // Handle subject selection from dropdown
   const handleSubjectSelection = (subjectName: string) => {
     setFormData((prev) => {
       const currentSubjects = prev.selectedSubjects || [];
       const subjects = currentSubjects.includes(subjectName)
         ? currentSubjects.filter((s) => s !== subjectName)
         : [...currentSubjects, subjectName];
+
+      return {
+        ...prev,
+        selectedSubjects: subjects,
+      };
+    });
+  };
+
+  // Handle custom subject addition
+  const handleAddCustomSubject = () => {
+    if (customSubject.trim()) {
+      const subjectName = customSubject.trim();
+      setFormData((prev) => {
+        const currentSubjects = prev.selectedSubjects || [];
+        
+        // Check if subject already exists
+        if (!currentSubjects.includes(subjectName)) {
+          return {
+            ...prev,
+            selectedSubjects: [...currentSubjects, subjectName],
+          };
+        }
+        return prev;
+      });
+      setCustomSubject("");
+    }
+  };
+
+  // Remove subject from selection
+  const handleRemoveSubject = (subjectToRemove: string) => {
+    setFormData((prev) => {
+      const currentSubjects = prev.selectedSubjects || [];
+      const subjects = currentSubjects.filter((s) => s !== subjectToRemove);
 
       return {
         ...prev,
@@ -449,7 +475,76 @@ const AdminCreateTuitionRequest = () => {
         return;
       }
 
-      // Validate for
+      // Validate form
+      if (!formData.phoneNumber) {
+        toast({
+          title: "Missing Information",
+          description: "Please enter phone number",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.studentGender) {
+        toast({
+          title: "Missing Information",
+          description: "Please select student gender",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.detailedLocation) {
+        toast({
+          title: "Missing Information",
+          description: "Please enter address",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.tutorGenderPreference) {
+        toast({
+          title: "Missing Information",
+          description: "Please select tutor gender preference",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!selectedDistrict) {
+        toast({
+          title: "Missing Information",
+          description: "Please select district",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!selectedThana) {
+        toast({
+          title: "Missing Information",
+          description: "Please select thana",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (selectedAreas.length === 0) {
+        toast({
+          title: "Missing Information",
+          description: "Please select at least one area",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
       if ((formData.selectedCategories || []).length === 0) {
         toast({
@@ -461,13 +556,60 @@ const AdminCreateTuitionRequest = () => {
         return;
       }
 
-      if (
-        (formData.selectedSubjects || []).length === 0 ||
-        (formData.selectedClasses || []).length === 0
-      ) {
+      if ((formData.selectedSubjects || []).length === 0) {
         toast({
           title: "Missing Information",
-          description: "Please select at least one subject and class",
+          description: "Please select or add at least one subject",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if ((formData.selectedClasses || []).length === 0) {
+        toast({
+          title: "Missing Information",
+          description: "Please select at least one class",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.tutoringType) {
+        toast({
+          title: "Missing Information",
+          description: "Please select tutoring type",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.numberOfStudents) {
+        toast({
+          title: "Missing Information",
+          description: "Please enter number of students",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.tutoringDuration) {
+        toast({
+          title: "Missing Information",
+          description: "Please select tutoring duration",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.tutoringDays) {
+        toast({
+          title: "Missing Information",
+          description: "Please select tutoring days",
           variant: "destructive",
         });
         setIsSubmitting(false);
@@ -729,8 +871,7 @@ const AdminCreateTuitionRequest = () => {
       `}</style>
       <div className="mb-4 sm:mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-black-900 mb-2 sm:mb-3">
-         
-         Create Tuition Request
+          Are you looking for a tutor?
         </h1>
         <p className="text-gray-600 text-sm sm:text-base">
           Then fill out the form and tell us which class/area you are looking
@@ -738,7 +879,7 @@ const AdminCreateTuitionRequest = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-4 sm:mb-6">
+      <div className="grid grid-cols-1  gap-4 sm:gap-6 md:gap-8 mb-4 sm:mb-6">
         <div className="lg:col-span-2">
           <Card className="w-full shadow-lg border-gray-200">
             <CardContent className="p-4 sm:p-6">
@@ -754,7 +895,7 @@ const AdminCreateTuitionRequest = () => {
                           handleChange("phoneNumber", e.target.value)
                         }
                         placeholder="Phone Number *"
-                        className="w-full h-10 sm:h-11"
+                        className="w-full h-10 sm:h-11 border-2 border-green-500"
                       />
                     </div>
 
@@ -784,7 +925,7 @@ const AdminCreateTuitionRequest = () => {
                           handleChange("detailedLocation", e.target.value)
                         }
                         placeholder="Address *"
-                        className="w-full h-10 sm:h-11"
+                        className="w-full h-10 sm:h-11 border-2 border-green-500"
                       />
                     </div>
 
@@ -1015,6 +1156,7 @@ const AdminCreateTuitionRequest = () => {
                       )}
                     </div>
 
+                    {/* Subjects Section with dropdown and manual input */}
                     <div className="space-y-2">
                       {isLoadingTaxonomy ? (
                         <div className="text-center py-4 text-sm">
@@ -1034,7 +1176,7 @@ const AdminCreateTuitionRequest = () => {
                           disabled={!formData.selectedCategories.length}
                         >
                           <SelectTrigger className="h-10 sm:h-11">
-                            <SelectValue placeholder="Subjects *" />
+                            <SelectValue placeholder="Select Subjects *" />
                           </SelectTrigger>
                           <SelectContent>
                             {subjects
@@ -1050,23 +1192,54 @@ const AdminCreateTuitionRequest = () => {
                           </SelectContent>
                         </Select>
                       )}
+
+                      {/* Custom subject input */}
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          placeholder="Type custom subject"
+                          value={customSubject}
+                          onChange={(e) => setCustomSubject(e.target.value)}
+                          className="h-10 sm:h-11 bg-white/80  border border-green-500 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddCustomSubject();
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleAddCustomSubject}
+                          className="bg-green-600 hover:bg-green-700 text-white h-10 sm:h-11"
+                          disabled={!customSubject.trim()}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Selected subjects display */}
                       {formData.selectedSubjects.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          {formData.selectedSubjects.map((subject, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-xs sm:text-sm"
-                            >
-                              <span>{subject}</span>
-                              <button
-                                type="button"
-                                onClick={() => handleSubjectSelection(subject)}
-                                className="text-red-500 hover:text-red-700 text-xs"
+                        <div className="mt-2">
+                          <p className="text-xs font-medium text-green-800 mb-1">
+                            Selected Subjects ({formData.selectedSubjects.length}):
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {formData.selectedSubjects.map((subject, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs"
                               >
-                                ×
-                              </button>
-                            </div>
-                          ))}
+                                <span>{subject}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveSubject(subject)}
+                                  className="ml-1 text-red-500 hover:text-red-700"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1170,7 +1343,7 @@ const AdminCreateTuitionRequest = () => {
                           )
                         }
                         placeholder="Total Students*"
-                        className="w-full h-11"
+                        className="w-full h-11 border-2 border-green-500"
                       />
                     </div>
 
@@ -1226,7 +1399,7 @@ const AdminCreateTuitionRequest = () => {
                         onChange={(e) =>
                           handleChange("tutoringTime", e.target.value)
                         }
-                        className="w-full h-10 sm:h-11"
+                        className="w-full h-10 sm:h-11 border-2 border-green-500"
                       />
                       <p className="text-xs text-gray-500">Tutoring Time *</p>
                     </div>
@@ -1246,7 +1419,7 @@ const AdminCreateTuitionRequest = () => {
                           })
                         }
                         placeholder="Minimum Salary *"
-                        className="w-full h-10 sm:h-11"
+                        className="w-full h-10 sm:h-11 border-2 border-green-500"
                       />
                     </div>
 
@@ -1263,7 +1436,7 @@ const AdminCreateTuitionRequest = () => {
                           })
                         }
                         placeholder="Maximum Salary *"
-                        className="w-full h-10 sm:h-11"
+                        className="w-full h-10 sm:h-11 border-2 border-green-500"
                       />
                     </div>
 
@@ -1275,7 +1448,7 @@ const AdminCreateTuitionRequest = () => {
                           handleChange("extraInformation", e.target.value)
                         }
                         placeholder="Additional Information"
-                        className="w-full min-h-[80px] sm:min-h-[100px]"
+                        className="w-full min-h-[80px] sm:min-h-[100px] border-2 border-green-500"
                       />
                     </div>
 
@@ -1331,47 +1504,8 @@ const AdminCreateTuitionRequest = () => {
           </Card>
         </div>
 
-        {/* HELP & INFO Section */}
-        <div className="lg:col-span-1 max-w-sm">
-          <Card className="w-full shadow-lg border-gray-200 h-fit bg-white">
-            <CardHeader className="bg-white p-3 sm:p-4">
-              <CardTitle className="text-base sm:text-lg font-bold text-black-900 text-center">
-                HELP & INFO
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-4">
-              <div className="space-y-3 sm:space-y-4 text-center">
-                <div className="space-y-3 sm:space-y-4">
-                  <div className="space-y-2 sm:space-y-3">
-                    <div>
-                      <h4 className="font-bold text-black-900 mb-1 text-xs sm:text-sm">
-                        Q. If i cant get the desired tutor ?
-                      </h4>
-                      <p className="text-gray-600 text-xs">
-                        Just fill up the request tutor form and send us. We will
-                        try to find your desired tutor.
-                      </p>
-                    </div>
-
-                    <div>
-                      <h4 className="font-bold text-black-900 mb-1 text-xs sm:text-sm">
-                        Q. what will happen after fill the forms ?
-                      </h4>
-                      <p className="text-gray-600 text-xs">
-                        After fill up the form the information will be sent to
-                        genius-tutors support team. They will review/ verify the
-                        info and will publish on the available tuitions section.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+       
       </div>
     </div>
   );
-};
-
-export default AdminCreateTuitionRequest;
+}

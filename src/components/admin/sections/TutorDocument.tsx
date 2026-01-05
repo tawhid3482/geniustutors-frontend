@@ -218,7 +218,7 @@ const TutorDocument: React.FC = () => {
                 <input
                   type="text"
                   placeholder="Search by name, email, phone, or tutor ID..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border-2 border-green-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -229,7 +229,7 @@ const TutorDocument: React.FC = () => {
               <div className="relative">
                 <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <select
-                  className="pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                  className="pl-10 pr-4 py-3 border-2 border-green-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
                 >
@@ -260,7 +260,7 @@ const TutorDocument: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="relative">
-                      <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-red-600 rounded-full flex items-center justify-center">
                         <User className="w-8 h-8 text-white" />
                       </div>
                       {tutor.user.id === currentUser?.id && (
@@ -362,7 +362,7 @@ const TutorDocument: React.FC = () => {
                                 onClick={() =>
                                   window.open(doc.file_url, "_blank")
                                 }
-                                className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg flex items-center justify-center hover:bg-blue-700 transition-colors"
+                                className="flex-1 py-2.5 bg-green-600 text-white rounded-lg flex items-center justify-center hover:bg-blue-700 transition-colors"
                               >
                                 <Eye className="w-4 h-4 mr-2" />
                                 View File
@@ -375,7 +375,7 @@ const TutorDocument: React.FC = () => {
                                     `${doc.type}_${doc.id}`
                                   )
                                 }
-                                className="flex-1 py-2.5 border border-blue-600 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
+                                className="flex-1 py-2.5 border border-green-600 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
                               >
                                 <Download className="w-4 h-4 mr-2" />
                                 Download

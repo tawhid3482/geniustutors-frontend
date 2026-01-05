@@ -36,6 +36,7 @@ import { TutoringHistorySection } from './TutoringHistorySection';
 import { PaymentSection } from './PaymentSection';
 import StudentApply from './dashboard/StudentApply';
 import MyDocument from './dashboard/MyDocument';
+import MyStudents from './dashboard/MyStudents';
 
 
 
@@ -201,6 +202,7 @@ export function TutorDashboard() {
             {activeTab === "note" && <NoteSection />}
             {activeTab === "settings" && <SettingsSection />}
             {activeTab === "document" && <MyDocument />}
+            {activeTab === "my-student" && <MyStudents />}
 
           </div>
         </main>

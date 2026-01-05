@@ -351,16 +351,13 @@ function DetailsModal({
             <Section title="Academic Information">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <InfoField
-                  label="Subject"
-                  value={selectedRequest.subject}
-                  icon={<BookOpen className="w-4 h-4" />}
+                  label="Selected Classes"
+                  value={
+                    selectedRequest.selectedClasses?.join(", ") ||
+                    "Not specified"
+                  }
                 />
-                <InfoField
-                  label="Medium"
-                  value={selectedRequest.medium}
-                  icon={<GraduationCap className="w-4 h-4" />}
-                />
-                <InfoField label="Class" value={selectedRequest.studentClass} />
+
                 <InfoField
                   label="Tutoring Type"
                   value={selectedRequest.tutoringType}
@@ -369,7 +366,7 @@ function DetailsModal({
 
               <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Selected Categories
+                  Selected Medium
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {selectedRequest.selectedCategories?.map((cat, index) => (
@@ -453,31 +450,20 @@ function DetailsModal({
                   value={selectedRequest.tutorGenderPreference}
                 />
                 <InfoField
-                  label="Selected Classes"
+                  label="Extra Information"
                   value={
-                    selectedRequest.selectedClasses?.join(", ") ||
-                    "Not specified"
+                    selectedRequest.extraInformation ||
+                    "No additional information provided"
                   }
+                  type="textarea"
                 />
               </div>
-            </Section>
-
-            {/* Additional Information */}
-            <Section title="Additional Information">
-              <InfoField
-                label="Extra Information"
-                value={
-                  selectedRequest.extraInformation ||
-                  "No additional information provided"
-                }
-                type="textarea"
-              />
             </Section>
 
             {/* Admin Notes */}
             <Section title="Admin Notes">
               <InfoField
-                label="Admin Notes"
+                label=""
                 value={selectedRequest.adminNote || "No admin notes added"}
                 type="textarea"
               />
@@ -511,9 +497,10 @@ function EditModal({
   const [availableAreas, setAvailableAreas] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMediums, setSelectedMediums] = useState<string[]>([]);
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [manualSubject, setManualSubject] = useState("");
 
   useEffect(() => {
     if (selectedRequest) {
@@ -769,7 +756,7 @@ function EditModal({
               {/* Multiple Subjects */}
               <div className="space-y-2 mt-4">
                 <MultipleSelect
-                  label="Edits Subjects"
+                  label="Edit Subjects"
                   options={SUBJECT_OPTIONS}
                   selectedValues={selectedSubjects}
                   onAdd={(value) => {
@@ -782,8 +769,33 @@ function EditModal({
                       selectedSubjects.filter((subj) => subj !== value)
                     );
                   }}
-                  placeholder="Add additional subjects..."
+                  placeholder="Select subjects..."
                 />
+
+                {/* Manual Add */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={manualSubject}
+                    onChange={(e) => setManualSubject(e.target.value)}
+                    placeholder="Manually add subject"
+                    className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const value = manualSubject.trim();
+                      if (value && !selectedSubjects.includes(value)) {
+                        setSelectedSubjects([...selectedSubjects, value]);
+                        setManualSubject("");
+                      }
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Add
+                  </button>
+                </div>
               </div>
 
               {/* Classes */}
@@ -1451,7 +1463,7 @@ const TuitionRequestsSection = () => {
 
   return (
     <div className="min-h-screen bg-white p-6">
-<Toaster
+      <Toaster
         position="top-right"
         reverseOrder={false}
         containerStyle={{
@@ -1460,27 +1472,27 @@ const TuitionRequestsSection = () => {
         toastOptions={{
           duration: 4000,
           style: {
-            background: '#363636',
-            color: '#fff',
+            background: "#363636",
+            color: "#fff",
             zIndex: 9999,
           },
           success: {
             duration: 3000,
             iconTheme: {
-              primary: '#10B981',
-              secondary: '#fff',
+              primary: "#10B981",
+              secondary: "#fff",
             },
           },
           error: {
             duration: 4000,
             iconTheme: {
-              primary: '#EF4444',
-              secondary: '#fff',
+              primary: "#EF4444",
+              secondary: "#fff",
             },
           },
         }}
       />
-      
+
       {/* Header Section */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Tuition Requests</h1>
@@ -1524,7 +1536,7 @@ const TuitionRequestsSection = () => {
             placeholder="Search by ID, name, district, or subject..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border-2 border-green-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
         <div className="flex items-center space-x-3">
@@ -1532,7 +1544,7 @@ const TuitionRequestsSection = () => {
             <Filter className="w-4 h-4" />
             <span>Filter</span>
           </button>
-        
+
           <button
             onClick={() => refetch()}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -1726,8 +1738,6 @@ const TuitionRequestsSection = () => {
                                 <CheckCircle className="w-4 h-4 mr-2" />
                                 Mark as Completed
                               </button>
-
-                              
                             </div>
                           </div>
                         </>

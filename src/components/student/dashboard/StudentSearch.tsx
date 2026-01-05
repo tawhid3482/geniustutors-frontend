@@ -357,7 +357,7 @@ export function StudentSearch() {
             <div className="lg:col-span-2 xl:col-span-3">
               <Label>Search Tutors</Label>
               <Input
-                className="mt-1"
+                className="mt-1 border-2 border-green-500"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search tutors by name, email, institute or subjects..."

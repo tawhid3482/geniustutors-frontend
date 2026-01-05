@@ -294,7 +294,7 @@ export function NoticeBoardSection() {
                 placeholder="Search notices by title or content..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="pl-9 border-2 border-green-500"
               />
             </div>
           </div>

@@ -579,7 +579,7 @@ export function ReviewManagementSection() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
                   placeholder="Search reviews..."
-                  className="pl-8"
+                  className="pl-8 border-2 border-green-500"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   disabled={isProcessing}

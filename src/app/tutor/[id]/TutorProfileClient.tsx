@@ -614,7 +614,7 @@ export default function TutorProfileClient({
                         <ShieldCheck className="h-4 w-4 text-white" />
                       </div>
                     )}
-                    {tutor.premium && (
+                    {tutor.genius && (
                       <div
                         className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center shadow-lg"
                         title="Premium Tutor"
@@ -622,14 +622,7 @@ export default function TutorProfileClient({
                         <Award className="h-4 w-4 text-white" />
                       </div>
                     )}
-                    {tutor.genius && (
-                      <div
-                        className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg"
-                        title="Genius Tutor"
-                      >
-                        <Star className="h-3 w-3 text-white" />
-                      </div>
-                    )}
+                   
                   </div>
                 </div>
 

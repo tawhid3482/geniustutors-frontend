@@ -1010,6 +1010,7 @@ export default function ProfileSection() {
                   value={profile.fullName}
                   onChange={handleProfileChange}
                   placeholder="Full Name"
+                  className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1020,6 +1021,7 @@ export default function ProfileSection() {
                   onChange={handleProfileChange}
                   placeholder="Email"
                   disabled
+                   className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1029,6 +1031,7 @@ export default function ProfileSection() {
                   value={profile.phone}
                   onChange={handleProfileChange}
                   placeholder="Mobile Number"
+                   className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1038,6 +1041,7 @@ export default function ProfileSection() {
                   value={profile.alternative_number}
                   onChange={handleProfileChange}
                   placeholder="Alternative Phone"
+                   className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1063,6 +1067,7 @@ export default function ProfileSection() {
                   value={profile.religion}
                   onChange={handleProfileChange}
                   placeholder="Religion"
+                   className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1072,6 +1077,7 @@ export default function ProfileSection() {
                   value={profile.nationality}
                   onChange={handleProfileChange}
                   placeholder="Nationality"
+                  className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1113,6 +1119,7 @@ export default function ProfileSection() {
                   value={profile.Institute_name}
                   onChange={handleProfileChange}
                   placeholder="Institute Name"
+                   className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1122,6 +1129,7 @@ export default function ProfileSection() {
                   value={profile.department_name}
                   onChange={handleProfileChange}
                   placeholder="Department"
+                   className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1131,6 +1139,7 @@ export default function ProfileSection() {
                   value={profile.year}
                   onChange={handleProfileChange}
                   placeholder="Year/Semester"
+                   className="border-2 border-green-500"
                 />
               </div>
             </div>
@@ -1147,6 +1156,7 @@ export default function ProfileSection() {
                   value={profile.location}
                   onChange={handleProfileChange}
                   placeholder="Your location (e.g., Road No, House No)"
+                   className="border-2 border-green-500"
                 />
               </div>
             </div>
@@ -1165,6 +1175,7 @@ export default function ProfileSection() {
                 placeholder="Select curriculum/medium"
                 options={getBackgroundOptions()}
                 maxSelections={10}
+                 className="border-2 border-green-500"
               />
             </div>
 
@@ -1177,6 +1188,7 @@ export default function ProfileSection() {
                 placeholder="Select classes you can teach"
                 options={getClassLevels()}
                 maxSelections={10}
+                 className="border-2 border-green-500"
               />
             </div>
 
@@ -1189,6 +1201,7 @@ export default function ProfileSection() {
                 placeholder="Select categories"
                 options={getCategoryOptions()}
                 maxSelections={10}
+                 className="border-2 border-green-500"
               />
             </div>
 
@@ -1201,6 +1214,7 @@ export default function ProfileSection() {
                 placeholder="Select subjects you can teach"
                 options={getSubjectOptions()}
                 maxSelections={10}
+                 className="border-2 border-green-500"
               />
             </div>
 
@@ -1257,6 +1271,7 @@ export default function ProfileSection() {
                   placeholder="Select availability days"
                   options={getAvailabilityOptions()}
                   maxSelections={10}
+                   className="border-2 border-green-500"
                 />
               </div>
             </div>
@@ -1333,6 +1348,7 @@ export default function ProfileSection() {
                   value={profile.preferred_areas}
                   onValueChange={handlePreferredAreasChange}
                   placeholder="Select preferred areas"
+                   className="border-2 border-green-500"
                   options={tuitionAvailableAreas.map((area) => ({
                     value: area,
                     label: area,
@@ -1359,6 +1375,7 @@ export default function ProfileSection() {
                   value={profile.expected_salary}
                   onChange={handleProfileChange}
                   placeholder="Expected Monthly Salary"
+                   className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1370,6 +1387,7 @@ export default function ProfileSection() {
                   placeholder="Hourly rate in BDT"
                   type="number"
                   min="0"
+                   className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1381,6 +1399,7 @@ export default function ProfileSection() {
                   placeholder="Enter your experience"
                   type="number"
                   min="0"
+                   className="border-2 border-green-500"
                 />
               </div>
             </div>
@@ -1400,6 +1419,7 @@ export default function ProfileSection() {
                     value: skill,
                     label: skill,
                   }))}
+                   className="border-2 border-green-500"
                   maxSelections={5}
                 />
               </div>
@@ -1410,6 +1430,7 @@ export default function ProfileSection() {
                   value={profile.social_media_links}
                   onChange={handleProfileChange}
                   placeholder="Facebook, LinkedIn, etc."
+                   className="border-2 border-green-500"
                 />
               </div>
             </div>
@@ -1421,6 +1442,7 @@ export default function ProfileSection() {
                 onChange={handleProfileChange}
                 placeholder="Tell us about yourself, your teaching style, etc."
                 rows={4}
+                 className="border-2 border-green-500"
               />
             </div>
           </div>

@@ -189,7 +189,7 @@ const BooleanStatusBadge = ({
     },
     genius: {
       true: {
-        colorClasses: "bg-purple-100 text-purple-800 border-purple-300",
+        colorClasses: "bg-blue-200 text-blue-800 border-blue-300",
         icon: Star,
         label: "Genius",
       },
@@ -395,7 +395,7 @@ const TutorDetailsModal: React.FC<TutorDetailsModalProps> = ({
         tutorStatus: selectedStatus,
         verified: booleanStatuses.verified,
         genius: booleanStatuses.genius,
-        premium: booleanStatuses.premium,
+        premium: booleanStatuses.genius,
       });
       onClose();
     } catch (error) {
@@ -605,12 +605,12 @@ const TutorDetailsModal: React.FC<TutorDetailsModalProps> = ({
                     type="genius"
                     onStatusChange={handleBooleanStatusChange}
                   />
-                  <BooleanStatusToggle
+                  {/* <BooleanStatusToggle
                     currentStatus={tutor.premium || false}
                     newStatus={booleanStatuses.premium}
                     type="premium"
                     onStatusChange={handleBooleanStatusChange}
-                  />
+                  /> */}
                 </div>
               </div>
 
@@ -738,24 +738,24 @@ const ApplicationTable: React.FC<ApplicationTableProps> = ({
       <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-green-400" />
             <input
               type="text"
               placeholder="Search by name or email..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              className="w-full pl-10 pr-4 py-3 border-2 border-green-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
               aria-label="Search tutors"
             />
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-green-400" />
             <input
               type="text"
               placeholder="Filter by district..."
               value={districtFilter}
               onChange={(e) => handleDistrictFilterChange(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              className="w-full pl-10 pr-4 py-3 border-2 border-green-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
               aria-label="Filter by district"
             />
           </div>
@@ -852,10 +852,10 @@ const ApplicationTable: React.FC<ApplicationTableProps> = ({
                         status={tutor.genius || false}
                         type="genius"
                       />
-                      <BooleanStatusBadge
+                      {/* <BooleanStatusBadge
                         status={tutor.premium || false}
                         type="premium"
-                      />
+                      /> */}
                     </div>
                   </td>
 
@@ -938,6 +938,7 @@ const TutorApplicationDashboard = () => {
   };
 
   const handleStatusUpdate = async (tutorId: string, statusData: any) => {
+    console.log("Updating tutor ID:", tutorId, "with data:", statusData);
     try {
       await updateTutorStatus({ id: tutorId, data: statusData }).unwrap();
       // Refetch data to get the latest updates

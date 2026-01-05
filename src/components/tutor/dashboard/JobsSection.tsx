@@ -232,7 +232,7 @@ const JobsSection = () => {
                 placeholder="Search jobs by subject, class, location, or category..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 border-2 border-green-500"
               />
             </div>
 

@@ -38,6 +38,8 @@ import {
   CheckCircle2,
   School,
   GraduationCap,
+  X,
+  Plus,
 } from "lucide-react";
 import { taxonomyService, Category } from "@/services/taxonomyService";
 import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
@@ -70,10 +72,6 @@ export default function TutorRequestPage() {
     refetchOnMountOrArgChange: true,
   });
 
-  console.log(districtData)
-
-
-
   const {
     data: categoryData,
     isLoading: isLoadingCategories,
@@ -92,6 +90,9 @@ export default function TutorRequestPage() {
   const [availableAreas, setAvailableAreas] = useState<string[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [customArea, setCustomArea] = useState<string>("");
+
+  // Subject input state
+  const [customSubject, setCustomSubject] = useState<string>("");
 
   // Form data state
   const [formData, setFormData] = useState<TutorRequestFormData>({
@@ -284,12 +285,6 @@ export default function TutorRequestPage() {
   useEffect(() => {
     if (formData.selectedCategories && formData.selectedCategories.length > 0) {
       fetchMultiCategoryTaxonomy(formData.selectedCategories);
-      // Reset selected subjects and classes when categories change
-      setFormData((prev) => ({
-        ...prev,
-        selectedSubjects: [],
-        selectedClasses: [],
-      }));
     } else {
       // Clear subjects and classes when no categories are selected
       setSubjects([]);
@@ -364,13 +359,46 @@ export default function TutorRequestPage() {
     }));
   };
 
-  // Handle subject selection
+  // Handle subject selection from dropdown
   const handleSubjectSelection = (subjectName: string) => {
     setFormData((prev) => {
       const currentSubjects = prev.selectedSubjects || [];
       const subjects = currentSubjects.includes(subjectName)
         ? currentSubjects.filter((s) => s !== subjectName)
         : [...currentSubjects, subjectName];
+
+      return {
+        ...prev,
+        selectedSubjects: subjects,
+      };
+    });
+  };
+
+  // Handle custom subject addition
+  const handleAddCustomSubject = () => {
+    if (customSubject.trim()) {
+      const subjectName = customSubject.trim();
+      setFormData((prev) => {
+        const currentSubjects = prev.selectedSubjects || [];
+        
+        // Check if subject already exists
+        if (!currentSubjects.includes(subjectName)) {
+          return {
+            ...prev,
+            selectedSubjects: [...currentSubjects, subjectName],
+          };
+        }
+        return prev;
+      });
+      setCustomSubject("");
+    }
+  };
+
+  // Remove subject from selection
+  const handleRemoveSubject = (subjectToRemove: string) => {
+    setFormData((prev) => {
+      const currentSubjects = prev.selectedSubjects || [];
+      const subjects = currentSubjects.filter((s) => s !== subjectToRemove);
 
       return {
         ...prev,
@@ -447,7 +475,76 @@ export default function TutorRequestPage() {
         return;
       }
 
-      // Validate for
+      // Validate form
+      if (!formData.phoneNumber) {
+        toast({
+          title: "Missing Information",
+          description: "Please enter phone number",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.studentGender) {
+        toast({
+          title: "Missing Information",
+          description: "Please select student gender",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.detailedLocation) {
+        toast({
+          title: "Missing Information",
+          description: "Please enter address",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.tutorGenderPreference) {
+        toast({
+          title: "Missing Information",
+          description: "Please select tutor gender preference",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!selectedDistrict) {
+        toast({
+          title: "Missing Information",
+          description: "Please select district",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!selectedThana) {
+        toast({
+          title: "Missing Information",
+          description: "Please select thana",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (selectedAreas.length === 0) {
+        toast({
+          title: "Missing Information",
+          description: "Please select at least one area",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
       if ((formData.selectedCategories || []).length === 0) {
         toast({
@@ -459,13 +556,60 @@ export default function TutorRequestPage() {
         return;
       }
 
-      if (
-        (formData.selectedSubjects || []).length === 0 ||
-        (formData.selectedClasses || []).length === 0
-      ) {
+      if ((formData.selectedSubjects || []).length === 0) {
         toast({
           title: "Missing Information",
-          description: "Please select at least one subject and class",
+          description: "Please select or add at least one subject",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if ((formData.selectedClasses || []).length === 0) {
+        toast({
+          title: "Missing Information",
+          description: "Please select at least one class",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.tutoringType) {
+        toast({
+          title: "Missing Information",
+          description: "Please select tutoring type",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.numberOfStudents) {
+        toast({
+          title: "Missing Information",
+          description: "Please enter number of students",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.tutoringDuration) {
+        toast({
+          title: "Missing Information",
+          description: "Please select tutoring duration",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.tutoringDays) {
+        toast({
+          title: "Missing Information",
+          description: "Please select tutoring days",
           variant: "destructive",
         });
         setIsSubmitting(false);
@@ -751,7 +895,7 @@ export default function TutorRequestPage() {
                           handleChange("phoneNumber", e.target.value)
                         }
                         placeholder="Phone Number *"
-                        className="w-full h-10 sm:h-11"
+                        className="w-full h-10 sm:h-11 border-2 border-green-500"
                       />
                     </div>
 
@@ -781,7 +925,7 @@ export default function TutorRequestPage() {
                           handleChange("detailedLocation", e.target.value)
                         }
                         placeholder="Address *"
-                        className="w-full h-10 sm:h-11"
+                        className="w-full h-10 sm:h-11 border-2 border-green-500"
                       />
                     </div>
 
@@ -872,7 +1016,7 @@ export default function TutorRequestPage() {
                           {/* Area selection dropdown */}
                           {availableAreas.length > 0 && (
                             <Select onValueChange={handleAreaSelect}>
-                              <SelectTrigger className="h-10 sm:h-11">
+                              <SelectTrigger className="h-10 sm:h-11 ">
                                 <SelectValue placeholder="Select area *" />
                               </SelectTrigger>
                               <SelectContent className="max-h-80">
@@ -1012,6 +1156,7 @@ export default function TutorRequestPage() {
                       )}
                     </div>
 
+                    {/* Subjects Section with dropdown and manual input */}
                     <div className="space-y-2">
                       {isLoadingTaxonomy ? (
                         <div className="text-center py-4 text-sm">
@@ -1031,7 +1176,7 @@ export default function TutorRequestPage() {
                           disabled={!formData.selectedCategories.length}
                         >
                           <SelectTrigger className="h-10 sm:h-11">
-                            <SelectValue placeholder="Subjects *" />
+                            <SelectValue placeholder="Select Subjects *" />
                           </SelectTrigger>
                           <SelectContent>
                             {subjects
@@ -1047,23 +1192,54 @@ export default function TutorRequestPage() {
                           </SelectContent>
                         </Select>
                       )}
+
+                      {/* Custom subject input */}
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          placeholder="Type custom subject"
+                          value={customSubject}
+                          onChange={(e) => setCustomSubject(e.target.value)}
+                          className="h-10 sm:h-11 bg-white/80 border-gray-200 focus:border-green-500 focus:ring-green-500/20 rounded-xl text-sm transition-all duration-300 backdrop-blur-sm"
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddCustomSubject();
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleAddCustomSubject}
+                          className="bg-green-600 hover:bg-green-700 text-white h-10 sm:h-11"
+                          disabled={!customSubject.trim()}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Selected subjects display */}
                       {formData.selectedSubjects.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          {formData.selectedSubjects.map((subject, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-xs sm:text-sm"
-                            >
-                              <span>{subject}</span>
-                              <button
-                                type="button"
-                                onClick={() => handleSubjectSelection(subject)}
-                                className="text-red-500 hover:text-red-700 text-xs"
+                        <div className="mt-2">
+                          <p className="text-xs font-medium text-green-800 mb-1">
+                            Selected Subjects ({formData.selectedSubjects.length}):
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {formData.selectedSubjects.map((subject, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs"
                               >
-                                ×
-                              </button>
-                            </div>
-                          ))}
+                                <span>{subject}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveSubject(subject)}
+                                  className="ml-1 text-red-500 hover:text-red-700"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1167,7 +1343,7 @@ export default function TutorRequestPage() {
                           )
                         }
                         placeholder="Total Students*"
-                        className="w-full h-11"
+                        className="w-full h-11 border-2 border-green-500"
                       />
                     </div>
 
@@ -1223,7 +1399,7 @@ export default function TutorRequestPage() {
                         onChange={(e) =>
                           handleChange("tutoringTime", e.target.value)
                         }
-                        className="w-full h-10 sm:h-11"
+                        className="w-full h-10 sm:h-11 border-2 border-green-500"
                       />
                       <p className="text-xs text-gray-500">Tutoring Time *</p>
                     </div>
@@ -1243,7 +1419,7 @@ export default function TutorRequestPage() {
                           })
                         }
                         placeholder="Minimum Salary *"
-                        className="w-full h-10 sm:h-11"
+                        className="w-full h-10 sm:h-11 border-2 border-green-500"
                       />
                     </div>
 
@@ -1260,7 +1436,7 @@ export default function TutorRequestPage() {
                           })
                         }
                         placeholder="Maximum Salary *"
-                        className="w-full h-10 sm:h-11"
+                        className="w-full h-10 sm:h-11 border-2 border-green-500"
                       />
                     </div>
 
@@ -1272,7 +1448,7 @@ export default function TutorRequestPage() {
                           handleChange("extraInformation", e.target.value)
                         }
                         placeholder="Additional Information"
-                        className="w-full min-h-[80px] sm:min-h-[100px]"
+                        className="w-full min-h-[80px] sm:min-h-[100px] border-2 border-green-500"
                       />
                     </div>
 

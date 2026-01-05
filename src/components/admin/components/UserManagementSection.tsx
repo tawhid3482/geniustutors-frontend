@@ -550,7 +550,7 @@ export function UserManagementSection() {
                 placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 border-2 border-green-500"
               />
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
@@ -578,7 +578,7 @@ export function UserManagementSection() {
             <Button
               variant="outline"
               onClick={clearFilters}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto border-2 border-green-500"
             >
               <Filter className="h-4 w-4 mr-2" />
               Clear Filters
@@ -1119,7 +1119,7 @@ export function UserManagementSection() {
           </DialogHeader>
 
           {editingUser && (
-            <div className="space-y-6 py-4">
+            <div className="space-y-6 py-4 overflow-auto">
               {/* Basic Information */}
               <div>
                 <h3 className="text-lg font-semibold mb-4">
@@ -1234,7 +1234,7 @@ export function UserManagementSection() {
               </div>
 
               {/* Account Status */}
-              <div>
+              {/* <div>
                 <h3 className="text-lg font-semibold mb-4">Account Status</h3>
                 <div className="grid grid-cols-1 gap-4">
                   <div className="flex items-center justify-between p-4 border rounded-lg">
@@ -1324,7 +1324,7 @@ export function UserManagementSection() {
                     </Select>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           )}
 

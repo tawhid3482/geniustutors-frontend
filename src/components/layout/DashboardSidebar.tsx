@@ -47,6 +47,7 @@ import {
   MailCheck,
   ListChecks,
   PlusCircle,
+  Users2Icon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { MenuItem } from '@/hooks/usePermissionMenu';
@@ -175,6 +176,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             // { id: 'courses', label: 'My Course', icon: BookOpen },
             { id: 'reviews', label: 'Reviews', icon: Star },
             { id: 'document', label: 'My Document', icon: FileText },
+            { id: 'my-student', label: 'My Student', icon: Users2Icon },
           ],
           quick: [
             { id: 'join-community', label: 'Join Our Community', icon: Users2 },

@@ -232,7 +232,7 @@ const AllAppointment = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by Sender ID (e.g., A01), Letter ID, or file name..."
-                className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="pl-10 pr-4 py-3 w-full border-2 border-green-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               {searchTerm && (
                 <button
@@ -265,7 +265,7 @@ const AllAppointment = () => {
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border-2 border-green-500 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">All Dates</option>
               <option value="today">Today</option>
@@ -279,7 +279,7 @@ const AllAppointment = () => {
           <div className="flex items-end">
             <button
               onClick={resetFilters}
-              className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors whitespace-nowrap"
+              className="px-4 py-3 border-2 border-green-500 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors whitespace-nowrap"
             >
               Reset Filters
             </button>

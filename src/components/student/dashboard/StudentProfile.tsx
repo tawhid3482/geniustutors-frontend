@@ -314,7 +314,7 @@ export function StudentProfile() {
               <Label htmlFor="name">Full Name *</Label>
               <Input
                 id="name"
-                className="mt-1"
+                className="mt-1 border-2 border-green-500"
                 value={profileForm.fullName}
                 onChange={(e) =>
                   handleProfileFormChange("fullName", e.target.value)
@@ -326,7 +326,7 @@ export function StudentProfile() {
               <Label htmlFor="email">Email *</Label>
               <Input
                 id="email"
-                className="mt-1"
+                className="mt-1 border-2 border-green-500"
                 value={profileForm.email}
                 onChange={(e) =>
                   handleProfileFormChange("email", e.target.value)
@@ -339,7 +339,7 @@ export function StudentProfile() {
               <Label htmlFor="phone">Phone *</Label>
               <Input
                 id="phone"
-                className="mt-1"
+                className="mt-1 border-2 border-green-500"
                 value={profileForm.phone}
                 onChange={(e) =>
                   handleProfileFormChange("phone", e.target.value)

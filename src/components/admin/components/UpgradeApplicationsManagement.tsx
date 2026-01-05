@@ -455,7 +455,7 @@ const TransactionManagement = () => {
                 placeholder="Search transactions..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 border-2 border-green-500"
               />
             </div>
 
@@ -502,7 +502,7 @@ const TransactionManagement = () => {
                 setTypeFilter("all");
               }}
             >
-              <Filter className="h-4 w-4 mr-2" />
+              <Filter className="h-4 w-4 mr-2 " />
               Clear Filters
             </Button>
           </div>
