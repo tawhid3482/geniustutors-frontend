@@ -75,8 +75,7 @@ export default function AdminLoginPage() {
         const user = response.data?.user || response.data?.[0]; // Try both formats
         const token = response.data?.token || response.data?.[1]; // Try both formats
 
-        console.log("User:", user);
-        console.log("Token:", token);
+        
 
         if (token && user) {
           // Store in localStorage
