@@ -6,9 +6,9 @@ import { tagTypesList } from "../tag-types";
 export const baseApi = createApi({
   reducerPath: "api",
   baseQuery: axiosBaseQuery({
-    baseUrl: "https://geniustutorss-backend.vercel.app/api",
+    // baseUrl: "https://geniustutorss-backend.vercel.app/api",
     // baseUrl: "http://localhost:5008/api",
-    // baseUrl: "https://geniustutorss.com/api/api",
+    baseUrl: "https://geniustutorss.com/api/api",
   }),
   endpoints: () => ({}),
   tagTypes: tagTypesList,
