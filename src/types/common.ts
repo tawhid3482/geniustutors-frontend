@@ -54,3 +54,41 @@ export interface ICourseApiResponse {
   message?: string;
   success?: boolean;
 }
+
+export interface Message {
+  id: string;
+  text: string;
+  senderId: string;
+  conversationId: string;
+  createdAt: string;
+  sender?: {
+    id: string;
+    fullName: string;
+    avatar: string;
+    role: string;
+  };
+}
+
+export interface Conversation {
+  id: string;
+  members: string[];
+  messages: Message[];
+  users: Array<{
+    id: string;
+    fullName: string;
+    avatar: string;
+    role: string;
+    phone: string;
+  }>;
+  updatedAt: string;
+  lastMessage?: Message | null;
+  unreadCount?: number;
+}
+
+export interface User {
+  id: string;
+  fullName: string;
+  avatar?: string;
+  role: string;
+  phone: string;
+}

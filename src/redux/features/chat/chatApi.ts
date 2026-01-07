@@ -3,10 +3,10 @@ import { tagTypes } from "@/redux/tag-types";
 
 const ChatApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    createChat: builder.mutation({
+    createConversation: builder.mutation({
       query: (formData) => {
         return {
-          url: "/categories/create",
+          url: "/chat/conversation",
           method: "POST",
           data: formData,
         };
@@ -14,18 +14,61 @@ const ChatApi = baseApi.injectEndpoints({
       invalidatesTags: [tagTypes.Chat],
     }),
 
-    getAllChat: builder.query({
-      query: () => ({
-        url: "/categories",
+    getUserConversations: builder.query({
+      query: (id: string) => ({
+        url: `/chat/conversations/${id}`,
         method: "GET",
       }),
       providesTags: [tagTypes.Chat],
     }),
-    
-    updateChat: builder.mutation({
+
+    getConversationById: builder.query({
+      query: (id: string) => ({
+        url: `/chat/conversations/${id}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.Chat],
+    }),
+
+    getAllMessages: builder.query({
+      query: (id: string) => ({
+        url: `/chat/messages/${id}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.Chat],
+    }),
+
+    getOrCreateConversation: builder.query({
+      query: ({ userId1, userId2 }: { userId1: string; userId2: string }) => ({
+        url: `/chat/get-or-create/${userId1}/${userId2}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.Chat],
+    }),
+
+    checkConversation: builder.query({
+      query: ({ userId1, userId2 }: { userId1: string; userId2: string }) => ({
+        url: `/chat/check/${userId1}/${userId2}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.Chat],
+    }),
+
+    createMessage: builder.mutation({
+      query: (formData) => {
+        return {
+          url: "/chat/message",
+          method: "POST",
+          data: formData,
+        };
+      },
+      invalidatesTags: [tagTypes.Chat],
+    }),
+
+    updateMessage: builder.mutation({
       query: ({ id, data }) => {
         return {
-          url: `/categories/update/${id}`,
+          url: `/chat/message/${id}`,
           method: "PATCH",
           data: data,
         };
@@ -33,10 +76,11 @@ const ChatApi = baseApi.injectEndpoints({
       invalidatesTags: [tagTypes.Chat],
     }),
 
-    deleteChat: builder.mutation({
-      query: (id: string) => ({
-        url: `/categories/delete/${id}`,
+    deleteMessage: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/chat/message/${id}`,
         method: "DELETE",
+        data: data,
       }),
       invalidatesTags: [tagTypes.Chat],
     }),
@@ -44,8 +88,14 @@ const ChatApi = baseApi.injectEndpoints({
 });
 
 export const {
-useCreateChatMutation,
-useGetAllChatQuery,
-useDeleteChatMutation,
-useUpdateChatMutation
+  useCreateConversationMutation,
+  useCheckConversationQuery,
+  useCreateMessageMutation,
+  useDeleteMessageMutation,
+  useGetAllMessagesQuery,
+  useGetConversationByIdQuery,
+  useGetOrCreateConversationQuery,
+  useGetUserConversationsQuery,
+  useUpdateMessageMutation,
+  
 } = ChatApi;

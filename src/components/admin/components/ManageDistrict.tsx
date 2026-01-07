@@ -242,32 +242,32 @@ const ManageDistrict = () => {
 
   // Submit edit
   const handleSubmitEdit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!editDistrict) return;
+    e.preventDefault();
+    if (!editDistrict) return;
 
-  try {
-    // শুধুমাত্র update-able fields পাঠাও
-    const dataToUpdate = {
-      name: editDistrict.name,
-      thana: editThanaList.filter((t) => t.trim() !== ""),
-      area: editAreaList.filter((a) => a.trim() !== ""),
-      color: editDistrict.color,
-    };
+    try {
+      // শুধুমাত্র update-able fields পাঠাও
+      const dataToUpdate = {
+        name: editDistrict.name,
+        thana: editThanaList.filter((t) => t.trim() !== ""),
+        area: editAreaList.filter((a) => a.trim() !== ""),
+        color: editDistrict.color,
+      };
 
-    await updateDistrict({
-      id: editDistrict.id, // where clause
-      data: dataToUpdate,  // only update-able fields
-    }).unwrap();
+      await updateDistrict({
+        id: editDistrict.id, // where clause
+        data: dataToUpdate, // only update-able fields
+      }).unwrap();
 
-    setIsEditModalOpen(false);
-    setEditDistrict(null);
-    setEditThanaList([]);
-    setEditAreaList([]);
-    refetch(); // Refresh the data
-  } catch (error) {
-    console.error("Failed to update district:", error);
-  }
-};
+      setIsEditModalOpen(false);
+      setEditDistrict(null);
+      setEditThanaList([]);
+      setEditAreaList([]);
+      refetch(); // Refresh the data
+    } catch (error) {
+      console.error("Failed to update district:", error);
+    }
+  };
 
   // Delete district
   const handleDeleteDistrict = async () => {
@@ -423,7 +423,6 @@ const ManageDistrict = () => {
                     <h3 className="text-xl font-bold text-gray-800">
                       {district.name}
                     </h3>
-                    
                   </div>
                   <div className="flex flex-wrap gap-2 mt-2">
                     <span className="text-sm text-gray-600 flex items-center gap-1">
@@ -876,7 +875,7 @@ const ManageDistrict = () => {
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && selectedDistrict && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-2xl ">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center gap-3 text-red-600 mb-2">
                 <div className="p-2 bg-red-50 rounded-lg">

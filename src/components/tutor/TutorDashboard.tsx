@@ -241,7 +241,7 @@ export function TutorDashboard() {
         </div>
       )}
       
-      
+      <FloatingTutorChat />
     </div>
   );
 }

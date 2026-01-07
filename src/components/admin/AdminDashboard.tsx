@@ -46,6 +46,8 @@ import ApprovalLettersManagement from "./sections/ApprovalLettersManagement";
 import AllAppointment from "./components/AllAppointment";
 import TutorDocument from "./sections/TutorDocument";
 import AdminCreateTuitionRequest from "./components/AdminCreateTuitionRequest";
+import { FloatingTutorChat } from "../tutor/components/FloatingTutorChat";
+import TutorDue from "./components/TutorDue";
 // import RefundPoliciesPage from "@/app/admin/refund-policies/page";
 
 // Icon mapping for string to component conversion
@@ -620,6 +622,7 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
             {activeTab === "appointment" && <AllAppointment />}
             {activeTab === "document" && renderTutorDocument()}
             {activeTab === "admin-tuition-request" && <AdminCreateTuitionRequest />}
+            {activeTab === "due" && <TutorDue />}
           </div>
         </main>
       </div>
@@ -661,15 +664,9 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
       )}
       
       {/* Floating Support Chat Widget */}
-      {/* <FloatingSupportChat
-        chatContacts={chatContacts}
-        chatMessages={chatMessages}
-        selectedChat={selectedChat}
-        setSelectedChat={setSelectedChat}
-        newMessage={newMessage}
-        setNewMessage={setNewMessage}
-        handleSendMessage={handleSendMessage}
-      /> */}
+      <FloatingTutorChat />
+       
+      
     </div>
   );
 }

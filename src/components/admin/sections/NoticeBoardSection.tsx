@@ -30,8 +30,17 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { Megaphone, Plus, Trash2, Eye, Search } from "lucide-react";
-import { useRole } from "@/contexts/RoleContext";
+import { 
+  Megaphone, 
+  Plus, 
+  Trash2, 
+  Eye, 
+  Search, 
+  ChevronLeft, 
+  ChevronRight, 
+  ChevronsLeft, 
+  ChevronsRight 
+} from "lucide-react";
 import {
   useCreateNoticeMutation,
   useDeleteNoticeMutation,
@@ -41,7 +50,6 @@ import {
 
 export function NoticeBoardSection() {
   const { toast } = useToast();
-  const { canDelete } = useRole();
 
   // State management
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -51,6 +59,10 @@ export function NoticeBoardSection() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Form state for creating new notice
   const [newNotice, setNewNotice] = useState({
@@ -65,22 +77,39 @@ export function NoticeBoardSection() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
+      // Reset to first page when search changes
+      setCurrentPage(1);
     }, 500);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // RTK Query hooks with proper filtering
-  const { 
-    data: noticesResponse, 
-    isLoading, 
-    error, 
-    refetch 
-  } = useGetAllNoticeQuery({
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [typeFilter, statusFilter]);
+
+  // RTK Query hooks with pagination and filtering
+  const queryParams = {
+    page: currentPage,
+    limit: pageSize,
     ...(typeFilter !== "all" && { type: typeFilter }),
     ...(statusFilter !== "all" && { status: statusFilter }),
     ...(debouncedSearch && { search: debouncedSearch }),
-  });
+  };
+
+  // Debug: log query parameters
+  console.log("API Query Params:", queryParams);
+
+  const {
+    data: noticesResponse,
+    isLoading,
+    error,
+    refetch,
+  } = useGetAllNoticeQuery(queryParams);
+
+  // Debug: log API response
+  console.log("API Response:", noticesResponse);
 
   const [createNotice, { isLoading: isCreating }] = useCreateNoticeMutation();
   const [updateNotice, { isLoading: isUpdating }] = useUpdateNoticeMutation();
@@ -88,11 +117,16 @@ export function NoticeBoardSection() {
 
   const notices = noticesResponse?.data || [];
   const pagination = noticesResponse?.pagination || {
-    total: 0,
-    page: 1,
-    limit: 50,
-    totalPages: 0,
+    total: notices.length,
+    page: currentPage,
+    limit: pageSize,
+    totalPages: Math.ceil(notices.length / pageSize),
   };
+
+  // Debug: log pagination data
+  console.log("Pagination data:", pagination);
+  console.log("Total notices:", pagination.total);
+  console.log("Total pages:", pagination.totalPages);
 
   // Manual filtering as fallback (if API doesn't support filtering)
   const filteredNotices = useMemo(() => {
@@ -100,29 +134,73 @@ export function NoticeBoardSection() {
 
     return notices.filter((notice: any) => {
       // Search filter
-      const matchesSearch = debouncedSearch 
+      const matchesSearch = debouncedSearch
         ? notice.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
           notice.content.toLowerCase().includes(debouncedSearch.toLowerCase())
         : true;
 
       // Type filter
-      const matchesType = typeFilter !== "all" 
-        ? notice.type === typeFilter 
-        : true;
+      const matchesType =
+        typeFilter !== "all" ? notice.type === typeFilter : true;
 
       // Status filter
-      const matchesStatus = statusFilter !== "all" 
-        ? notice.status === statusFilter 
-        : true;
+      const matchesStatus =
+        statusFilter !== "all" ? notice.status === statusFilter : true;
 
       return matchesSearch && matchesType && matchesStatus;
     });
   }, [notices, debouncedSearch, typeFilter, statusFilter]);
 
   // Use filteredNotices if API doesn't handle filtering, otherwise use notices
-  const displayNotices = debouncedSearch || typeFilter !== "all" || statusFilter !== "all" 
-    ? filteredNotices 
-    : notices;
+  const displayNotices =
+    debouncedSearch || typeFilter !== "all" || statusFilter !== "all"
+      ? filteredNotices
+      : notices;
+
+  // Calculate pagination information
+  const totalPages = Math.max(1, Math.ceil(pagination.total / pagination.limit));
+  const startItem = (currentPage - 1) * pagination.limit + 1;
+  const endItem = Math.min(currentPage * pagination.limit, pagination.total);
+
+  // Debug: log pagination calculations
+  console.log("Calculated totalPages:", totalPages);
+  console.log("Start item:", startItem, "End item:", endItem);
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  // If API doesn't return pagination, implement client-side pagination
+  const paginatedNotices = useMemo(() => {
+    if (!displayNotices.length) return [];
+    
+    // If API already handled pagination, return all notices
+    if (noticesResponse?.pagination) {
+      return displayNotices;
+    }
+    
+    // Client-side pagination fallback
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return displayNotices.slice(startIndex, endIndex);
+  }, [displayNotices, currentPage, pageSize, noticesResponse?.pagination]);
+
+  // Calculate total for client-side pagination
+  const totalItems = displayNotices.length;
+  const clientSideTotalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const finalTotalPages = noticesResponse?.pagination ? totalPages : clientSideTotalPages;
+  const finalTotalItems = noticesResponse?.pagination ? pagination.total : totalItems;
+  const finalStartItem = (currentPage - 1) * pageSize + 1;
+  const finalEndItem = Math.min(currentPage * pageSize, finalTotalItems);
 
   const handleCreateNotice = async () => {
     if (!newNotice.title.trim() || !newNotice.content.trim()) {
@@ -166,17 +244,13 @@ export function NoticeBoardSection() {
   };
 
   const handleDeleteNotice = async (noticeId: string) => {
-    if (!confirm("Are you sure you want to delete this notice?")) {
-      return;
-    }
-
     try {
       const response = await deleteNotice(noticeId).unwrap();
 
       if (response.success) {
         // Refetch the notices to get the updated list
         refetch();
-        
+
         toast({
           title: "Success",
           description: "Notice deleted successfully",
@@ -201,6 +275,7 @@ export function NoticeBoardSection() {
     setSearchQuery("");
     setTypeFilter("all");
     setStatusFilter("all");
+    setCurrentPage(1);
   };
 
   const getTypeBadge = (type: string) => {
@@ -263,7 +338,33 @@ export function NoticeBoardSection() {
     });
   };
 
-  const hasActiveFilters = searchQuery || typeFilter !== "all" || statusFilter !== "all";
+  const hasActiveFilters =
+    searchQuery || typeFilter !== "all" || statusFilter !== "all";
+
+  // Generate page numbers for pagination
+  const generatePageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (finalTotalPages <= maxVisiblePages) {
+      for (let i = 1; i <= finalTotalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      let start = Math.max(1, currentPage - 2);
+      let end = Math.min(finalTotalPages, start + maxVisiblePages - 1);
+      
+      if (end - start + 1 < maxVisiblePages) {
+        start = end - maxVisiblePages + 1;
+      }
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+    
+    return pages;
+  };
 
   return (
     <div className="space-y-6">
@@ -332,7 +433,7 @@ export function NoticeBoardSection() {
             )}
           </div>
         </div>
-        
+
         {/* Active filters indicator */}
         {hasActiveFilters && (
           <div className="mt-3 flex flex-wrap gap-2">
@@ -352,7 +453,7 @@ export function NoticeBoardSection() {
               </Badge>
             )}
             <Badge variant="outline" className="ml-auto">
-              {displayNotices.length} notice(s) found
+              {finalTotalItems} total notice(s)
             </Badge>
           </div>
         )}
@@ -387,8 +488,8 @@ export function NoticeBoardSection() {
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8">
                   <div className="text-red-600">Error loading notices</div>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => refetch()}
                     className="mt-2"
                   >
@@ -396,17 +497,17 @@ export function NoticeBoardSection() {
                   </Button>
                 </TableCell>
               </TableRow>
-            ) : displayNotices.length === 0 ? (
+            ) : paginatedNotices.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8">
                   <div className="text-muted-foreground">
-                    {hasActiveFilters 
-                      ? "No notices match your filters. Try adjusting your search criteria." 
+                    {hasActiveFilters
+                      ? "No notices match your filters. Try adjusting your search criteria."
                       : "No notices found. Create your first notice to get started."}
                   </div>
                   {hasActiveFilters && (
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={handleClearFilters}
                       className="mt-2"
                     >
@@ -416,10 +517,13 @@ export function NoticeBoardSection() {
                 </TableCell>
               </TableRow>
             ) : (
-              displayNotices.map((notice: any) => (
+              paginatedNotices.map((notice: any) => (
                 <TableRow key={notice.id}>
                   <TableCell className="font-medium">
-                    <div className="max-w-[200px] truncate" title={notice.title}>
+                    <div
+                      className="max-w-[200px] truncate"
+                      title={notice.title}
+                    >
                       {notice.title}
                     </div>
                   </TableCell>
@@ -439,18 +543,17 @@ export function NoticeBoardSection() {
                         <Eye className="w-4 h-4 mr-1" />
                         View
                       </Button>
-                      {canDelete && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteNotice(notice.id)}
-                          disabled={isDeleting}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          {isDeleting ? "Deleting..." : "Delete"}
-                        </Button>
-                      )}
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteNotice(notice.id)}
+                        disabled={isDeleting}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        {isDeleting ? "Deleting..." : "Delete"}
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -458,6 +561,98 @@ export function NoticeBoardSection() {
             )}
           </TableBody>
         </Table>
+
+        {/* Pagination Footer */}
+        {!isLoading && !error && paginatedNotices.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t">
+            <div className="text-sm text-gray-600 mb-4 sm:mb-0">
+              Showing <span className="font-medium">{finalStartItem}</span> to{" "}
+              <span className="font-medium">{finalEndItem}</span> of{" "}
+              <span className="font-medium">{finalTotalItems}</span> results
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {/* Page Size Selector */}
+              <div className="flex items-center space-x-2 mr-4">
+                <span className="text-sm text-gray-600">Show:</span>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={(value) => handlePageSizeChange(Number(value))}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Pagination Controls */}
+              <div className="flex items-center space-x-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                {/* Page Numbers */}
+                {generatePageNumbers().map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handlePageChange(page)}
+                    className="h-8 w-8 p-0"
+                  >
+                    {page}
+                  </Button>
+                ))}
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === finalTotalPages}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(finalTotalPages)}
+                  disabled={currentPage === finalTotalPages}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Page Info */}
+              <div className="text-sm text-gray-600 ml-4">
+                Page <span className="font-medium">{currentPage}</span> of{" "}
+                <span className="font-medium">{finalTotalPages}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Create Notice Modal */}

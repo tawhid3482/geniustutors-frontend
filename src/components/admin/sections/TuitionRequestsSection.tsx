@@ -13,7 +13,7 @@ import {
   useUpdateTutorRequestsMutation,
   useUpdateTutorRequestsStatusMutation,
 } from "@/redux/features/tutorRequest/tutorRequestApi";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import {
   Eye,
@@ -38,6 +38,10 @@ import {
   ChevronDown,
   X,
   Tag,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 
@@ -1326,11 +1330,153 @@ function InfoField({
   );
 }
 
+// Pagination Component
+function Pagination({
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+}) {
+  // Calculate start and end items
+  const startItem = (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+
+  // Generate page numbers
+  const generatePageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      let start = Math.max(1, currentPage - 2);
+      let end = Math.min(totalPages, start + maxVisiblePages - 1);
+      
+      if (end - start + 1 < maxVisiblePages) {
+        start = end - maxVisiblePages + 1;
+      }
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+    
+    return pages;
+  };
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-white border-t border-gray-200">
+      {/* Items info */}
+      <div className="text-sm text-gray-700 mb-4 sm:mb-0">
+        Showing <span className="font-medium">{startItem}</span> to{" "}
+        <span className="font-medium">{endItem}</span> of{" "}
+        <span className="font-medium">{totalItems}</span> results
+      </div>
+
+      {/* Page controls */}
+      <div className="flex items-center space-x-4">
+        {/* Page size selector */}
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-700">Show:</span>
+          <select
+            value={pageSize}
+            onChange={(e) => onPageSizeChange(Number(e.target.value))}
+            className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+
+        {/* Pagination buttons */}
+        <nav className="flex items-center space-x-1">
+          {/* First page */}
+          <button
+            onClick={() => onPageChange(1)}
+            disabled={currentPage === 1}
+            className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronsLeft className="w-5 h-5 text-gray-600" />
+          </button>
+
+          {/* Previous page */}
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
+          </button>
+
+          {/* Page numbers */}
+          {generatePageNumbers().map((page) => (
+            <button
+              key={page}
+              onClick={() => onPageChange(page)}
+              className={`w-8 h-8 rounded-md text-sm font-medium ${
+                currentPage === page
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+
+          {/* Next page */}
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-600" />
+          </button>
+
+          {/* Last page */}
+          <button
+            onClick={() => onPageChange(totalPages)}
+            disabled={currentPage === totalPages}
+            className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronsRight className="w-5 h-5 text-gray-600" />
+          </button>
+        </nav>
+
+        {/* Page info */}
+        <div className="text-sm text-gray-700">
+          Page <span className="font-medium">{currentPage}</span> of{" "}
+          <span className="font-medium">{totalPages}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Main Component
 const TuitionRequestsSection = () => {
   const { data: districtData } = useGetAllDistrictsQuery(undefined);
   const { data: categoryData } = useGetAllCategoryQuery(undefined);
-  const { data: jobsData, refetch } = useGetAllTutorRequestsQuery(undefined);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  // Fetch all data (without pagination from API)
+  const { data: jobsData, refetch, isLoading } = useGetAllTutorRequestsQuery(undefined);
 
   const [updateTuitionRequestStatus] = useUpdateTutorRequestsStatusMutation();
   const [assignTutor] = useCreateassignTutorMutation();
@@ -1341,12 +1487,45 @@ const TuitionRequestsSection = () => {
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<TutorRequest | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
   const [currentTime, setCurrentTime] = useState("");
 
   const districts: District[] = districtData?.data || [];
   const categories: Category[] = categoryData?.data || [];
-  const jobs: TutorRequest[] = jobsData?.data || [];
+  const allJobs: TutorRequest[] = jobsData?.data || [];
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Filter jobs based on search term
+  const filteredJobs = useMemo(() => {
+    if (!allJobs.length) return [];
+
+    return allJobs.filter(
+      (job) =>
+        job.tutorRequestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.district.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.phoneNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [allJobs, searchTerm]);
+
+  // Apply client-side pagination
+  const paginatedJobs = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredJobs.slice(startIndex, endIndex);
+  }, [filteredJobs, currentPage, pageSize]);
+
+  // Calculate pagination info
+  const totalItems = filteredJobs.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
   // Mock tutors data - you should replace this with actual API call
   const tutors = [
@@ -1452,14 +1631,19 @@ const TuitionRequestsSection = () => {
     });
   };
 
-  // Filter jobs based on search term
-  const filteredJobs = jobs.filter(
-    (job) =>
-      job.tutorRequestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.district.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.subject.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Handle page size change
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
 
   return (
     <div className="min-h-screen bg-white p-6">
@@ -1588,183 +1772,201 @@ const TuitionRequestsSection = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredJobs.map((job) => (
-                <tr key={job.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="font-medium text-gray-900">
-                      {job.tutorRequestId}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <User className="w-4 h-4 text-gray-400 mr-2" />
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {job.user.fullName}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {job.studentGender}
-                        </p>
-                      </div>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-8 text-center">
+                    <div className="flex justify-center">
+                      <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-blue-600"></div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <MapPin className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
-                      <div>
-                        <p className="text-gray-900">{job.district}</p>
-                        <p className="text-gray-900">{job.thana}</p>
-                        <p className="text-sm text-gray-500">{job.area}</p>
-                        <p className="text-xs text-gray-400">
-                          {job.detailedLocation}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <BookOpen className="w-4 h-4 text-gray-400 mr-2" />
-                      <span className="text-gray-900">{job.subject}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {job.tutoringType}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        job.status === "Active"
-                          ? "bg-green-100 text-green-800"
-                          : job.status === "Completed"
-                          ? "bg-blue-100 text-blue-800"
-                          : job.status === "Cancelled"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {job.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(job.createdAt)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="relative">
-                      <button
-                        onClick={() =>
-                          setActiveDropdown(
-                            activeDropdown === job.id ? null : job.id
-                          )
-                        }
-                        className="p-2 hover:bg-gray-100 rounded-lg"
-                      >
-                        <MoreVertical className="w-5 h-5 text-gray-600" />
-                      </button>
-
-                      {activeDropdown === job.id && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-10"
-                            onClick={() => setActiveDropdown(null)}
-                          />
-                          <div className="absolute right-14 -mt-8 min-w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
-                            <div className="py-1">
-                              <button
-                                onClick={() => {
-                                  setSelectedJob(job);
-                                  setViewDetailsOpen(true);
-                                  setActiveDropdown(null);
-                                }}
-                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              >
-                                <Eye className="w-4 h-4 mr-2" />
-                                View Details
-                              </button>
-
-                              <button
-                                onClick={() => {
-                                  setSelectedJob(job);
-                                  setUpdateModalOpen(true);
-                                  setActiveDropdown(null);
-                                }}
-                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              >
-                                <Edit2 className="w-4 h-4 mr-2" />
-                                Edit Request
-                              </button>
-
-                              <button
-                                onClick={() => {
-                                  setSelectedJob(job);
-                                  setAssignModalOpen(true);
-                                  setActiveDropdown(null);
-                                }}
-                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              >
-                                <UserPlus className="w-4 h-4 mr-2" />
-                                Assign Tutor
-                              </button>
-
-                              <div className="border-t border-gray-100 my-1"></div>
-
-                              <button
-                                onClick={() =>
-                                  handleStatusUpdate(job.id, "Active")
-                                }
-                                className="flex items-center w-full px-4 py-2 text-sm text-green-600 hover:bg-green-50"
-                              >
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Mark as Active
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  handleStatusUpdate(job.id, "Inactive")
-                                }
-                                className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
-                              >
-                                <Clock className="w-4 h-4 mr-2" />
-                                Mark as Inactive
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  handleStatusUpdate(job.id, "Completed")
-                                }
-                                className="flex items-center w-full px-4 py-2 text-sm text-blue-600 hover:bg-blue-50"
-                              >
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Mark as Completed
-                              </button>
-                            </div>
-                          </div>
-                        </>
-                      )}
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      Loading tuition requests...
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : paginatedJobs.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-8 text-center">
+                    <div className="text-muted-foreground">
+                      {searchTerm
+                        ? "No tuition requests match your search."
+                        : "No tuition requests found."}
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                paginatedJobs.map((job) => (
+                  <tr key={job.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="font-medium text-gray-900">
+                        {job.tutorRequestId}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <User className="w-4 h-4 text-gray-400 mr-2" />
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {job.user.fullName}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {job.studentGender}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <MapPin className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
+                        <div>
+                          <p className="text-gray-900">{job.district}</p>
+                          <p className="text-gray-900">{job.thana}</p>
+                          <p className="text-sm text-gray-500">{job.area}</p>
+                          <p className="text-xs text-gray-400">
+                            {job.detailedLocation}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <BookOpen className="w-4 h-4 text-gray-400 mr-2" />
+                        <span className="text-gray-900">{job.subject}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {job.tutoringType}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          job.status === "Active"
+                            ? "bg-green-100 text-green-800"
+                            : job.status === "Completed"
+                            ? "bg-blue-100 text-blue-800"
+                            : job.status === "Cancelled"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {job.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(job.createdAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="relative">
+                        <button
+                          onClick={() =>
+                            setActiveDropdown(
+                              activeDropdown === job.id ? null : job.id
+                            )
+                          }
+                          className="p-2 hover:bg-gray-100 rounded-lg"
+                        >
+                          <MoreVertical className="w-5 h-5 text-gray-600" />
+                        </button>
+
+                        {activeDropdown === job.id && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-10"
+                              onClick={() => setActiveDropdown(null)}
+                            />
+                            <div className="absolute right-14 -mt-8 min-w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                              <div className="py-1">
+                                <button
+                                  onClick={() => {
+                                    setSelectedJob(job);
+                                    setViewDetailsOpen(true);
+                                    setActiveDropdown(null);
+                                  }}
+                                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View Details
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    setSelectedJob(job);
+                                    setUpdateModalOpen(true);
+                                    setActiveDropdown(null);
+                                  }}
+                                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                >
+                                  <Edit2 className="w-4 h-4 mr-2" />
+                                  Edit Request
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    setSelectedJob(job);
+                                    setAssignModalOpen(true);
+                                    setActiveDropdown(null);
+                                  }}
+                                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                >
+                                  <UserPlus className="w-4 h-4 mr-2" />
+                                  Assign Tutor
+                                </button>
+
+                                <div className="border-t border-gray-100 my-1"></div>
+
+                                <button
+                                  onClick={() =>
+                                    handleStatusUpdate(job.id, "Active")
+                                  }
+                                  className="flex items-center w-full px-4 py-2 text-sm text-green-600 hover:bg-green-50"
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  Mark as Active
+                                </button>
+
+                                <button
+                                  onClick={() =>
+                                    handleStatusUpdate(job.id, "Inactive")
+                                  }
+                                  className="flex items-center w-full px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                                >
+                                  <Clock className="w-4 h-4 mr-2" />
+                                  Mark as Inactive
+                                </button>
+
+                                <button
+                                  onClick={() =>
+                                    handleStatusUpdate(job.id, "Completed")
+                                  }
+                                  className="flex items-center w-full px-4 py-2 text-sm text-blue-600 hover:bg-blue-50"
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  Mark as Completed
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
-        {/* Empty State */}
-        {filteredJobs.length === 0 && (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <BookOpen className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No tuition requests found
-            </h3>
-            <p className="text-gray-600">
-              {searchTerm
-                ? "No requests match your search."
-                : "When tuition requests are created, they will appear here."}
-            </p>
-          </div>
+        {/* Pagination */}
+        {!isLoading && paginatedJobs.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
         )}
       </div>
 

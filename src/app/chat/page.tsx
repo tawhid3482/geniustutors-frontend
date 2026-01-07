@@ -3,52 +3,17 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "@/contexts/AuthContext.next";
+import { Conversation, Message, User } from "@/types/common";
 
-interface Message {
-  id: string;
-  text: string;
-  senderId: string;
-  conversationId: string;
-  createdAt: string;
-  sender?: {
-    id: string;
-    fullName: string;
-    avatar: string;
-    role: string;
-  };
-}
-
-interface Conversation {
-  id: string;
-  members: string[];
-  messages: Message[];
-  users: Array<{
-    id: string;
-    fullName: string;
-    avatar: string;
-    role: string;
-    phone: string;
-  }>;
-  updatedAt: string;
-  lastMessage?: Message | null;
-  unreadCount?: number;
-}
-
-interface User {
-  id: string;
-  fullName: string;
-  avatar?: string;
-  role: string;
-  phone: string;
-}
 
 const ChatPage: React.FC = () => {
   const { user } = useAuth();
   const [token, setToken] = useState<string | null>(null);
-  
+
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const storedToken = localStorage.getItem("token") || localStorage.getItem("authToken");
+      const storedToken =
+        localStorage.getItem("token") || localStorage.getItem("authToken");
       setToken(storedToken);
       console.log("Token found:", storedToken ? "Yes" : "No");
     }
@@ -56,7 +21,8 @@ const ChatPage: React.FC = () => {
 
   const [socket, setSocket] = useState<Socket | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [selectedConversation, setSelectedConversation] =
+    useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -72,12 +38,15 @@ const ChatPage: React.FC = () => {
     if (!token || !user) return;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/users`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -133,43 +102,44 @@ const ChatPage: React.FC = () => {
   }, [user, token]);
 
   // মেসেজ ফেচ
-  const fetchMessages = useCallback(async (conversationId: string) => {
-    if (!token) return;
+  const fetchMessages = useCallback(
+    async (conversationId: string) => {
+      if (!token) return;
 
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/chat/messages/${conversationId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        console.log("Fetched messages:", data.data.length);
-        setMessages(data.data);
-        scrollToBottom();
-        
-        // আনরিড কাউন্ট রিসেট
-        setConversations(prev => 
-          prev.map(conv => 
-            conv.id === conversationId 
-              ? { ...conv, unreadCount: 0 }
-              : conv
-          )
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/chat/messages/${conversationId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
         );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          console.log("Fetched messages:", data.data.length);
+          setMessages(data.data);
+          scrollToBottom();
+
+          // আনরিড কাউন্ট রিসেট
+          setConversations((prev) =>
+            prev.map((conv) =>
+              conv.id === conversationId ? { ...conv, unreadCount: 0 } : conv
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching messages:", error);
       }
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-    }
-  }, [token]);
+    },
+    [token]
+  );
 
   // নতুন চ্যাট শুরু করুন
   const handleStartNewChat = async (targetUser: User) => {
@@ -208,7 +178,7 @@ const ChatPage: React.FC = () => {
 
         // লিস্ট রিফ্রেশ
         await fetchConversations();
-        
+
         scrollToBottom();
       }
     } catch (error: any) {
@@ -231,8 +201,8 @@ const ChatPage: React.FC = () => {
     console.log(`Joined conversation: ${conversation.id}`);
 
     setSelectedConversation(conversation);
-    
-    const otherUser = conversation.users.find(u => u.id !== user?.id);
+
+    const otherUser = conversation.users.find((u) => u.id !== user?.id);
     setSelectedUser(otherUser || null);
 
     // নতুন মেসেজ ফেচ করার আগে রিসেট করুন
@@ -244,7 +214,13 @@ const ChatPage: React.FC = () => {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newMessage.trim() || !selectedConversation || !user || !socket || isSending) {
+    if (
+      !newMessage.trim() ||
+      !selectedConversation ||
+      !user ||
+      !socket ||
+      isSending
+    ) {
       return;
     }
 
@@ -267,7 +243,7 @@ const ChatPage: React.FC = () => {
     };
 
     // টেম্প মেসেজ UI-তে যোগ করুন
-    setMessages(prev => [...prev, tempMessage]);
+    setMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
     setIsSending(true);
     scrollToBottom();
@@ -277,7 +253,7 @@ const ChatPage: React.FC = () => {
       conversationId: selectedConversation.id,
       senderId: user.id,
       text: messageText,
-      tempId: tempId
+      tempId: tempId,
     });
 
     console.log("Message sent via socket with tempId:", tempId);
@@ -341,19 +317,19 @@ const ChatPage: React.FC = () => {
       transports: ["websocket", "polling"],
       query: {
         userId: user.id,
-        token: token
-      }
+        token: token,
+      },
     });
 
     // বেসিক ইভেন্ট হ্যান্ডলার
     socketInstance.on("connect", () => {
       console.log("✅ Socket connected:", socketInstance.id);
       setSocketConnected(true);
-      
+
       // ইউজার রুমে যোগ দিন
       socketInstance.emit("joinUser", user.id);
       console.log(`👤 User ${user.id} joined their room`);
-      
+
       // ইতিমধ্যে সিলেক্ট করা কনভারসেশন থাকলে তার রুমেও যোগ দিন
       if (selectedConversation) {
         socketInstance.emit("joinConversation", selectedConversation.id);
@@ -376,41 +352,45 @@ const ChatPage: React.FC = () => {
         id: message.id,
         text: message.text,
         senderId: message.senderId,
-        conversationId: message.conversationId
+        conversationId: message.conversationId,
       });
 
       // চেক করুন আমরা এই কনভারসেশন ভিউ করছি কিনা
-      const isViewingThisConversation = selectedConversation?.id === message.conversationId;
+      const isViewingThisConversation =
+        selectedConversation?.id === message.conversationId;
       const isMyMessage = message.senderId === user.id;
-      
+
       // মেসেজ কারেন্ট কনভারসেশনের জন্য হলে যোগ করুন
       if (isViewingThisConversation) {
         console.log("Adding message to current chat");
-        setMessages(prev => {
-          const exists = prev.some(m => m.id === message.id);
+        setMessages((prev) => {
+          const exists = prev.some((m) => m.id === message.id);
           return !exists ? [...prev, message] : prev;
         });
         scrollToBottom();
       }
-      
+
       // সবসময় কনভারসেশন লিস্ট আপডেট করুন
-      setConversations(prev => {
-        const conversationExists = prev.some(conv => conv.id === message.conversationId);
-        
+      setConversations((prev) => {
+        const conversationExists = prev.some(
+          (conv) => conv.id === message.conversationId
+        );
+
         if (conversationExists) {
           // কনভারসেশন আপডেট করুন
-          return prev.map(conv => {
+          return prev.map((conv) => {
             if (conv.id === message.conversationId) {
               // আপনার নিজের মেসেজের জন্য আনরিড কাউন্ট না বাড়ানো
-              const shouldIncrementUnread = !isViewingThisConversation && !isMyMessage;
-              
+              const shouldIncrementUnread =
+                !isViewingThisConversation && !isMyMessage;
+
               return {
                 ...conv,
                 lastMessage: message,
                 updatedAt: new Date().toISOString(),
-                unreadCount: shouldIncrementUnread 
-                  ? (conv.unreadCount || 0) + 1 
-                  : (conv.unreadCount || 0)
+                unreadCount: shouldIncrementUnread
+                  ? (conv.unreadCount || 0) + 1
+                  : conv.unreadCount || 0,
               };
             }
             return conv;
@@ -425,62 +405,66 @@ const ChatPage: React.FC = () => {
     });
 
     // মেসেজ সেন্ট কনফার্মেশন
-    socketInstance.on("messageSent", ({ tempId, realMessage }: { tempId: string; realMessage: Message }) => {
-      console.log("✅ Message confirmed:", tempId, "->", realMessage.id);
-      setIsSending(false);
-      
-      // টেম্প মেসেজ রিয়েল মেসেজ দিয়ে রিপ্লেস করুন
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === tempId ? realMessage : msg
-        )
-      );
-      
-      // কনভারসেশন লিস্টে লাস্ট মেসেজ আপডেট করুন
-      setConversations(prev => 
-        prev.map(conv => {
-          if (conv.id === realMessage.conversationId) {
-            return {
-              ...conv,
-              lastMessage: realMessage,
-              updatedAt: new Date().toISOString()
-            };
-          }
-          return conv;
-        })
-      );
-    });
+    socketInstance.on(
+      "messageSent",
+      ({ tempId, realMessage }: { tempId: string; realMessage: Message }) => {
+        console.log("✅ Message confirmed:", tempId, "->", realMessage.id);
+        setIsSending(false);
+
+        // টেম্প মেসেজ রিয়েল মেসেজ দিয়ে রিপ্লেস করুন
+        setMessages((prev) =>
+          prev.map((msg) => (msg.id === tempId ? realMessage : msg))
+        );
+
+        // কনভারসেশন লিস্টে লাস্ট মেসেজ আপডেট করুন
+        setConversations((prev) =>
+          prev.map((conv) => {
+            if (conv.id === realMessage.conversationId) {
+              return {
+                ...conv,
+                lastMessage: realMessage,
+                updatedAt: new Date().toISOString(),
+              };
+            }
+            return conv;
+          })
+        );
+      }
+    );
 
     // মেসেজ এরর
-    socketInstance.on("messageError", ({ error, tempId }: { error: string; tempId: string }) => {
-      console.error("Message error:", error);
-      setIsSending(false);
-      
-      // টেম্প মেসেজ রিমুভ করুন
-      setMessages(prev => prev.filter(msg => msg.id !== tempId));
-      alert(`Failed to send: ${error}`);
-    });
+    socketInstance.on(
+      "messageError",
+      ({ error, tempId }: { error: string; tempId: string }) => {
+        console.error("Message error:", error);
+        setIsSending(false);
+
+        // টেম্প মেসেজ রিমুভ করুন
+        setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+        alert(`Failed to send: ${error}`);
+      }
+    );
 
     // নোটিফিকেশন (যখন অন্য কনভারসেশনে মেসেজ আসে) - FIXED
     socketInstance.on("newMessageNotification", (data) => {
       console.log("🔔 New message notification:", data);
-      
+
       // নোটিফিকেশন ডেটা থেকে মেসেজ এক্সট্রাক্ট করুন
       const message = data.message;
-      
+
       // যদি আপনি এই কনভারসেশন ভিউ না করছেন
       if (selectedConversation?.id !== data.conversationId) {
         console.log("You have a new message in another conversation");
-        
+
         // কনভারসেশন লিস্টে আনরিড কাউন্ট আপডেট করুন
-        setConversations(prev => 
-          prev.map(conv => {
+        setConversations((prev) =>
+          prev.map((conv) => {
             if (conv.id === data.conversationId) {
               return {
                 ...conv,
                 lastMessage: message,
                 updatedAt: new Date().toISOString(),
-                unreadCount: (conv.unreadCount || 0) + 1
+                unreadCount: (conv.unreadCount || 0) + 1,
               };
             }
             return conv;
@@ -488,9 +472,12 @@ const ChatPage: React.FC = () => {
         );
       } else {
         // যদি আপনি এই কনভারসেশন ভিউ করছেন, তাহলে মেসেজ যোগ করুন
-        console.log("Adding message from notification to current chat:", message);
-        setMessages(prev => {
-          const exists = prev.some(m => m.id === message.id);
+        console.log(
+          "Adding message from notification to current chat:",
+          message
+        );
+        setMessages((prev) => {
+          const exists = prev.some((m) => m.id === message.id);
           return !exists ? [...prev, message] : prev;
         });
         scrollToBottom();
@@ -524,7 +511,10 @@ const ChatPage: React.FC = () => {
 
   // ডিবাগিং: সকেট স্ট্যাটাস লগ করুন
   useEffect(() => {
-    console.log("Socket connection status:", socketConnected ? "Connected" : "Disconnected");
+    console.log(
+      "Socket connection status:",
+      socketConnected ? "Connected" : "Disconnected"
+    );
     console.log("Selected conversation:", selectedConversation?.id);
     console.log("Messages count:", messages.length);
     console.log("Conversations count:", conversations.length);
@@ -550,7 +540,11 @@ const ChatPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold">Messages</h2>
             <div className="flex items-center space-x-2">
-              <div className={`w-3 h-3 rounded-full ${socketConnected ? "bg-green-500" : "bg-red-500"}`}></div>
+              <div
+                className={`w-3 h-3 rounded-full ${
+                  socketConnected ? "bg-green-500" : "bg-red-500"
+                }`}
+              ></div>
               <span className="text-xs text-gray-500">
                 {socketConnected ? "Live" : "Offline"}
               </span>
@@ -558,7 +552,9 @@ const ChatPage: React.FC = () => {
           </div>
 
           <div className="mt-4">
-            <h3 className="text-sm font-semibold text-gray-500 mb-2">Start New Chat</h3>
+            <h3 className="text-sm font-semibold text-gray-500 mb-2">
+              Start New Chat
+            </h3>
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {users.map((userItem) => (
                 <button
@@ -580,8 +576,12 @@ const ChatPage: React.FC = () => {
                     )}
                   </div>
                   <div className="flex-1 text-left">
-                    <p className="font-semibold truncate">{userItem.fullName}</p>
-                    <p className="text-sm text-gray-500 truncate">{userItem.role}</p>
+                    <p className="font-semibold truncate">
+                      {userItem.fullName}
+                    </p>
+                    <p className="text-sm text-gray-500 truncate">
+                      {userItem.role}
+                    </p>
                   </div>
                 </button>
               ))}
@@ -591,7 +591,9 @@ const ChatPage: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto">
           <div className="p-2">
-            <h3 className="text-sm font-semibold text-gray-500 mb-2 px-2">Recent Chats</h3>
+            <h3 className="text-sm font-semibold text-gray-500 mb-2 px-2">
+              Recent Chats
+            </h3>
             {loading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
@@ -603,14 +605,19 @@ const ChatPage: React.FC = () => {
               </div>
             ) : (
               conversations.map((conversation) => {
-                const otherUser = conversation.users.find(u => u.id !== user.id);
-                const showUnread = conversation.unreadCount && conversation.unreadCount > 0;
-                
+                const otherUser = conversation.users.find(
+                  (u) => u.id !== user.id
+                );
+                const showUnread =
+                  conversation.unreadCount && conversation.unreadCount > 0;
+
                 return (
                   <div
                     key={conversation.id}
                     className={`p-3 rounded-lg cursor-pointer mb-2 hover:bg-gray-50 ${
-                      selectedConversation?.id === conversation.id ? "bg-blue-50" : ""
+                      selectedConversation?.id === conversation.id
+                        ? "bg-blue-50"
+                        : ""
                     }`}
                     onClick={() => handleSelectConversation(conversation)}
                   >
@@ -636,7 +643,9 @@ const ChatPage: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start">
                           <div className="flex items-center">
-                            <p className="font-semibold truncate">{otherUser?.fullName}</p>
+                            <p className="font-semibold truncate">
+                              {otherUser?.fullName}
+                            </p>
                             {showUnread && (
                               <span className="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
                                 {conversation.unreadCount} new
@@ -654,7 +663,8 @@ const ChatPage: React.FC = () => {
                         </p>
                         {showUnread && conversation.unreadCount && (
                           <p className="text-xs text-blue-500 mt-1">
-                            Tap to view {conversation.unreadCount} new message{conversation.unreadCount > 1 ? 's' : ''}
+                            Tap to view {conversation.unreadCount} new message
+                            {conversation.unreadCount > 1 ? "s" : ""}
                           </p>
                         )}
                       </div>
@@ -689,11 +699,17 @@ const ChatPage: React.FC = () => {
                   <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">{selectedUser.fullName}</h3>
+                  <h3 className="font-semibold text-lg">
+                    {selectedUser.fullName}
+                  </h3>
                   <p className="text-sm text-gray-500">{selectedUser.role}</p>
                 </div>
                 <div className="ml-auto flex items-center space-x-2">
-                  <div className={`w-3 h-3 rounded-full ${socketConnected ? "bg-green-500" : "bg-red-500"}`}></div>
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      socketConnected ? "bg-green-500" : "bg-red-500"
+                    }`}
+                  ></div>
                   <span className="text-xs text-gray-500">
                     {socketConnected ? "Live" : "Offline"}
                   </span>
@@ -705,33 +721,56 @@ const ChatPage: React.FC = () => {
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full">
                   <div className="text-6xl mb-4">💬</div>
-                  <h3 className="text-xl font-semibold mb-2">Start a conversation</h3>
-                  <p className="text-gray-500">Send your first message to {selectedUser.fullName}</p>
+                  <h3 className="text-xl font-semibold mb-2">
+                    Start a conversation
+                  </h3>
+                  <p className="text-gray-500">
+                    Send your first message to {selectedUser.fullName}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {messages.map((message) => (
                     <div
                       key={message.id}
-                      className={`flex ${message.senderId === user.id ? "justify-end" : "justify-start"}`}
+                      className={`flex ${
+                        message.senderId === user.id
+                          ? "justify-end"
+                          : "justify-start"
+                      }`}
                     >
                       <div
                         className={`max-w-xs lg:max-w-md rounded-2xl p-4 ${
                           message.senderId === user.id
                             ? "bg-blue-500 text-white rounded-br-none"
                             : "bg-white text-gray-800 shadow rounded-bl-none"
-                        } ${message.id.startsWith("temp-") ? "opacity-80 animate-pulse" : ""}`}
+                        } ${
+                          message.id.startsWith("temp-")
+                            ? "opacity-80 animate-pulse"
+                            : ""
+                        }`}
                       >
                         <p className="mb-1 break-words">{message.text}</p>
                         <div className="flex justify-between items-center mt-2">
-                          <p className={`text-xs ${message.senderId === user.id ? "text-blue-200" : "text-gray-500"}`}>
+                          <p
+                            className={`text-xs ${
+                              message.senderId === user.id
+                                ? "text-blue-200"
+                                : "text-gray-500"
+                            }`}
+                          >
                             {formatTime(message.createdAt)}
-                            {message.senderId !== user.id && message.sender?.fullName && (
-                              <span className="ml-1">• {message.sender.fullName}</span>
-                            )}
+                            {message.senderId !== user.id &&
+                              message.sender?.fullName && (
+                                <span className="ml-1">
+                                  • {message.sender.fullName}
+                                </span>
+                              )}
                           </p>
                           {message.id.startsWith("temp-") && (
-                            <span className="text-xs text-yellow-300 ml-2">⏳ Sending...</span>
+                            <span className="text-xs text-yellow-300 ml-2">
+                              ⏳ Sending...
+                            </span>
                           )}
                         </div>
                       </div>
@@ -742,7 +781,10 @@ const ChatPage: React.FC = () => {
               )}
             </div>
 
-            <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
+            <form
+              onSubmit={handleSendMessage}
+              className="p-4 border-t bg-white"
+            >
               <div className="flex space-x-2">
                 <input
                   type="text"
@@ -759,22 +801,40 @@ const ChatPage: React.FC = () => {
                 >
                   {isSending ? (
                     <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
                       </svg>
                       Sending...
                     </>
-                  ) : "Send"}
+                  ) : (
+                    "Send"
+                  )}
                 </button>
               </div>
               <div className="text-xs text-gray-500 mt-2 text-center flex justify-between">
                 <span>
-                  {socketConnected ? "Connected to chat server" : "Disconnected - reconnecting..."}
+                  {socketConnected
+                    ? "Connected to chat server"
+                    : "Disconnected - reconnecting..."}
                 </span>
-                <span>
-                  Messages: {messages.length}
-                </span>
+                <span>Messages: {messages.length}</span>
               </div>
             </form>
           </>
@@ -788,7 +848,11 @@ const ChatPage: React.FC = () => {
                   ? "Select a conversation or start a new chat"
                   : "Connecting to chat server..."}
               </p>
-              <div className={`w-4 h-4 rounded-full mx-auto mb-4 ${socketConnected ? "bg-green-500" : "bg-red-500 animate-pulse"}`}></div>
+              <div
+                className={`w-4 h-4 rounded-full mx-auto mb-4 ${
+                  socketConnected ? "bg-green-500" : "bg-red-500 animate-pulse"
+                }`}
+              ></div>
               <div className="text-sm text-gray-500">
                 Status: {socketConnected ? "Connected" : "Connecting..."}
               </div>

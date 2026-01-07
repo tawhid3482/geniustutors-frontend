@@ -21,6 +21,13 @@ const assignTutorApi = baseApi.injectEndpoints({
       }),
       providesTags: [tagTypes.assignTutor],
     }),
+    getAllTutorDue: builder.query({
+      query: (id:string) => ({
+        url: `/assignTutor/${id}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.assignTutor],
+    }),
 
     GetAllAssignTutorByRole: builder.query({
       query: (id:string) => ({
@@ -78,6 +85,7 @@ export const {
     useGetAllAssignTutorByRoleQuery,
     useGetAllassignTutorQuery,
     useUpdateAssignTutorMutation,
-    useUpdateAssignTutorPlatformFeeMutation
+    useUpdateAssignTutorPlatformFeeMutation,
+    useGetAllTutorDueQuery
 
 } = assignTutorApi;

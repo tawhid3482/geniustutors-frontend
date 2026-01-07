@@ -18,6 +18,10 @@ import {
   Crown,
   Loader2,
   AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import {
   useGetAllTutorsQuery,
@@ -62,6 +66,141 @@ interface StatusConfigMap {
   approved: StatusConfig;
   rejected: StatusConfig;
 }
+
+// --- Pagination Component ---
+const Pagination = ({
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+}) => {
+  // Calculate start and end items
+  const startItem = (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+
+  // Generate page numbers
+  const generatePageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      let start = Math.max(1, currentPage - 2);
+      let end = Math.min(totalPages, start + maxVisiblePages - 1);
+      
+      if (end - start + 1 < maxVisiblePages) {
+        start = end - maxVisiblePages + 1;
+      }
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+    
+    return pages;
+  };
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-white border-t border-gray-200">
+      {/* Items info */}
+      <div className="text-sm text-gray-700 mb-4 sm:mb-0">
+        Showing <span className="font-medium">{startItem}</span> to{" "}
+        <span className="font-medium">{endItem}</span> of{" "}
+        <span className="font-medium">{totalItems}</span> results
+      </div>
+
+      {/* Page controls */}
+      <div className="flex items-center space-x-4">
+        {/* Page size selector */}
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-700">Show:</span>
+          <select
+            value={pageSize}
+            onChange={(e) => onPageSizeChange(Number(e.target.value))}
+            className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+
+        {/* Pagination buttons */}
+        <nav className="flex items-center space-x-1">
+          {/* First page */}
+          <button
+            onClick={() => onPageChange(1)}
+            disabled={currentPage === 1}
+            className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronsLeft className="w-5 h-5 text-gray-600" />
+          </button>
+
+          {/* Previous page */}
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
+          </button>
+
+          {/* Page numbers */}
+          {generatePageNumbers().map((page) => (
+            <button
+              key={page}
+              onClick={() => onPageChange(page)}
+              className={`w-8 h-8 rounded-md text-sm font-medium ${
+                currentPage === page
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+
+          {/* Next page */}
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-600" />
+          </button>
+
+          {/* Last page */}
+          <button
+            onClick={() => onPageChange(totalPages)}
+            disabled={currentPage === totalPages}
+            className="p-1 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronsRight className="w-5 h-5 text-gray-600" />
+          </button>
+        </nav>
+
+        {/* Page info */}
+        <div className="text-sm text-gray-700">
+          Page <span className="font-medium">{currentPage}</span> of{" "}
+          <span className="font-medium">{totalPages}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // --- Status Cards Component ---
 const StatusCard = ({ 
@@ -690,18 +829,29 @@ const TutorDetailsModal: React.FC<TutorDetailsModalProps> = ({
 interface ApplicationTableProps {
   tutors: Tutor[];
   searchTerm: string;
+  districtFilter: string;
   onViewDetails: (tutor: Tutor) => void;
   onSearchChange: (value: string) => void;
+  onDistrictFilterChange: (value: string) => void;
+  paginationProps: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    pageSize: number;
+    onPageChange: (page: number) => void;
+    onPageSizeChange: (size: number) => void;
+  };
 }
 
 const ApplicationTable: React.FC<ApplicationTableProps> = ({
   tutors,
   searchTerm,
+  districtFilter,
   onViewDetails,
   onSearchChange,
+  onDistrictFilterChange,
+  paginationProps,
 }) => {
-  const [districtFilter, setDistrictFilter] = useState("");
-
   const headers = [
     "Tutor Info",
     "Institute & Department",
@@ -717,7 +867,8 @@ const ApplicationTable: React.FC<ApplicationTableProps> = ({
       const matchesSearch =
         searchTerm === "" ||
         tutor.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tutor.email?.toLowerCase().includes(searchTerm.toLowerCase());
+        tutor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tutor.tutor_id?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesDistrict =
         districtFilter === "" ||
@@ -728,9 +879,14 @@ const ApplicationTable: React.FC<ApplicationTableProps> = ({
     }) || [];
   }, [tutors, searchTerm, districtFilter]);
 
-  const handleDistrictFilterChange = useCallback((value: string) => {
-    setDistrictFilter(value);
-  }, []);
+  // Apply pagination to filtered data
+  const startIndex = (paginationProps.currentPage - 1) * paginationProps.pageSize;
+  const endIndex = startIndex + paginationProps.pageSize;
+  const paginatedTutors = filteredTutors.slice(startIndex, endIndex);
+
+  // Update total items based on filtered data
+  const actualTotalItems = filteredTutors.length;
+  const actualTotalPages = Math.max(1, Math.ceil(actualTotalItems / paginationProps.pageSize));
 
   return (
     <div className="space-y-6">
@@ -741,7 +897,7 @@ const ApplicationTable: React.FC<ApplicationTableProps> = ({
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-green-400" />
             <input
               type="text"
-              placeholder="Search by name or email..."
+              placeholder="Search by name, email, or ID..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border-2 border-green-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
@@ -754,7 +910,7 @@ const ApplicationTable: React.FC<ApplicationTableProps> = ({
               type="text"
               placeholder="Filter by district..."
               value={districtFilter}
-              onChange={(e) => handleDistrictFilterChange(e.target.value)}
+              onChange={(e) => onDistrictFilterChange(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border-2 border-green-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
               aria-label="Filter by district"
             />
@@ -784,7 +940,7 @@ const ApplicationTable: React.FC<ApplicationTableProps> = ({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {filteredTutors.map((tutor) => (
+              {paginatedTutors.map((tutor) => (
                 <tr
                   key={tutor.id}
                   className="hover:bg-gray-50 transition-colors duration-150"
@@ -794,6 +950,9 @@ const ApplicationTable: React.FC<ApplicationTableProps> = ({
                     <div>
                       <p className="font-semibold text-gray-900 text-sm">
                         {tutor.fullName}
+                      </p>
+                      <p className="text-gray-500 text-xs mt-1">
+                        ID: {tutor.tutor_id}
                       </p>
                       <p className="text-gray-600 text-xs mt-1 flex items-center">
                         <Mail className="w-3 h-3 mr-1" />
@@ -881,7 +1040,7 @@ const ApplicationTable: React.FC<ApplicationTableProps> = ({
           </table>
         </div>
 
-        {filteredTutors.length === 0 && (
+        {paginatedTutors.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-400 mb-4">
               <Users className="w-16 h-16 mx-auto" />
@@ -892,6 +1051,15 @@ const ApplicationTable: React.FC<ApplicationTableProps> = ({
             </p>
           </div>
         )}
+
+        {/* Pagination */}
+        {filteredTutors.length > 0 && (
+          <Pagination 
+            {...paginationProps} 
+            totalItems={actualTotalItems}
+            totalPages={actualTotalPages}
+          />
+        )}
       </div>
     </div>
   );
@@ -899,11 +1067,33 @@ const ApplicationTable: React.FC<ApplicationTableProps> = ({
 
 // --- Main Dashboard Component ---
 const TutorApplicationDashboard = () => {
+  // State management
   const [searchTerm, setSearchTerm] = useState("");
+  const [districtFilter, setDistrictFilter] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1); // Reset to first page when search changes
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset to first page when district filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [districtFilter]);
+
+  // Fetch all data (without pagination from API)
   const {
     data: allTutorsData,
     isLoading,
@@ -911,19 +1101,10 @@ const TutorApplicationDashboard = () => {
     refetch,
   } = useGetAllTutorsQuery(undefined, {
     refetchOnMountOrArgChange: true,
-    pollingInterval: 30000, // Auto-refresh every 30 seconds
+    pollingInterval: 30000,
   });
 
   const [updateTutorStatus, { isLoading: isUpdating }] = useUpdateTutorStatusMutation();
-
-  // Debounce search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
 
   const tutors = useMemo(() => allTutorsData?.data || [], [allTutorsData]);
 
@@ -941,16 +1122,29 @@ const TutorApplicationDashboard = () => {
     console.log("Updating tutor ID:", tutorId, "with data:", statusData);
     try {
       await updateTutorStatus({ id: tutorId, data: statusData }).unwrap();
-      // Refetch data to get the latest updates
       refetch();
     } catch (error) {
       console.error("Failed to update tutor status:", error);
-      // You might want to show a toast notification here
     }
   };
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
+  };
+
+  const handleDistrictFilterChange = (value: string) => {
+    setDistrictFilter(value);
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= Math.ceil(tutors.length / pageSize)) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
   };
 
   if (isLoading) {
@@ -989,6 +1183,16 @@ const TutorApplicationDashboard = () => {
     );
   }
 
+  // Prepare pagination props
+  const paginationProps = {
+    currentPage,
+    totalPages: Math.max(1, Math.ceil(tutors.length / pageSize)),
+    totalItems: tutors.length,
+    pageSize,
+    onPageChange: handlePageChange,
+    onPageSizeChange: handlePageSizeChange,
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen font-sans">
       {/* Dashboard Header */}
@@ -1006,6 +1210,8 @@ const TutorApplicationDashboard = () => {
               <Loader2 className={`w-3 h-3 mr-1 ${isUpdating ? 'animate-spin' : ''}`} />
               {isUpdating ? 'Updating...' : 'Ready'}
             </span>
+            <span className="text-gray-400">•</span>
+            <span>Total: {tutors.length} tutors</span>
           </div>
         </div>
       </header>
@@ -1015,12 +1221,15 @@ const TutorApplicationDashboard = () => {
         <StatusCards tutors={tutors} />
       </div>
 
-      {/* Application Table */}
+      {/* Application Table with Pagination */}
       <ApplicationTable
         tutors={tutors}
         searchTerm={debouncedSearchTerm}
+        districtFilter={districtFilter}
         onViewDetails={handleViewDetails}
         onSearchChange={handleSearchChange}
+        onDistrictFilterChange={handleDistrictFilterChange}
+        paginationProps={paginationProps}
       />
 
       {/* Tutor Details Modal */}

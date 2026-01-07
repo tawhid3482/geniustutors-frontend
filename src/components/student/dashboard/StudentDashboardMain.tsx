@@ -113,6 +113,7 @@ import { useGetAllTutorsQuery } from "@/redux/features/tutorHub/tutorHubApi";
 import StudentReviews from "./StudentReviews";
 import StudentSettings from "./StudentSettings";
 import ApprovalLetterSection from "../ApprovalLetterSection";
+import { FloatingTutorChat } from "@/components/tutor/components/FloatingTutorChat";
 
 export function StudentDashboardMain() {
   const { user, signOut, updateUserProfile } = useAuth();
@@ -236,8 +237,10 @@ export function StudentDashboardMain() {
   const [filterRating, setFilterRating] = useState(0);
 
   // RTK Query hooks
-  const { data: AllJobs, isLoading: jobsLoading } = useGetAllTutorRequestsQuery(undefined);
-  const { data: allTutor, isLoading: tutorsLoading } = useGetAllTutorsQuery(undefined);
+  const { data: AllJobs, isLoading: jobsLoading } =
+    useGetAllTutorRequestsQuery(undefined);
+  const { data: allTutor, isLoading: tutorsLoading } =
+    useGetAllTutorsQuery(undefined);
 
   // console.log('All Jobs:', AllJobs);
   // console.log('All Tutors:', allTutor);
@@ -245,7 +248,7 @@ export function StudentDashboardMain() {
   // Transform AllJobs data for recentPlatformJobs
   const recentPlatformJobs = useMemo(() => {
     if (!AllJobs?.success || !AllJobs?.data) return [];
-    
+
     return AllJobs.data
       .map((job: any) => ({
         id: job.id,
@@ -260,11 +263,13 @@ export function StudentDashboardMain() {
         selectedSubjects: job.selectedSubjects,
         selectedClasses: job.selectedClasses,
         tutorGenderPreference: job.tutorGenderPreference,
-        salary: job.salaryRange ? `${job.salaryRange.min} - ${job.salaryRange.max}` : '',
+        salary: job.salaryRange
+          ? `${job.salaryRange.min} - ${job.salaryRange.max}`
+          : "",
         isSalaryNegotiable: job.isSalaryNegotiable,
         salaryRange: job.salaryRange || { min: 0, max: 0 },
         extraInformation: job.extraInformation,
-        subject: job.subject || job.selectedSubjects?.[0] || 'General',
+        subject: job.subject || job.selectedSubjects?.[0] || "General",
         studentClass: job.studentClass,
         medium: job.medium,
         numberOfStudents: job.numberOfStudents,
@@ -272,19 +277,22 @@ export function StudentDashboardMain() {
         tutoringTime: job.tutoringTime,
         tutoringDuration: job.tutoringDuration,
         tutoringType: job.tutoringType,
-        status: job.status || 'Active',
+        status: job.status || "Active",
         createdAt: job.createdAt,
         updatedAt: job.updatedAt,
         matchedTutors: job.matchedTutors || [],
       }))
-      .sort((a:any, b:any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
       .slice(0, 5);
   }, [AllJobs]);
 
   // Transform allTutor data for topRatedTutors
   const topRatedTutors = useMemo(() => {
     if (!allTutor?.success || !allTutor?.data) return [];
-    
+
     return allTutor.data
       .filter((tutor: any) => tutor.rating >= 4.0)
       .sort((a: any, b: any) => (b.rating || 0) - (a.rating || 0))
@@ -302,7 +310,7 @@ export function StudentDashboardMain() {
         experience: tutor.experience || 0,
         avatar: tutor.avatar,
         gender: tutor.gender,
-        tutor_id:tutor.tutor_id,
+        tutor_id: tutor.tutor_id,
         hourly_rate: tutor.hourly_rate,
         verified: tutor.verified,
         premium: tutor.premium,
@@ -951,47 +959,43 @@ export function StudentDashboardMain() {
             )}
             {activeTab === "search" && (
               <StudentSearch
-                // searchQuery={searchQuery}
-                // setSearchQuery={setSearchQuery}
-                // filterSubject={selectedSubject}
-                // setFilterSubject={setSelectedSubject}
-                // filterArea={selectedDistrict}
-                // setFilterArea={setSelectedDistrict}
-                // filterGender={selectedGender as FilterGender}
-                // setFilterGender={setSelectedGender}
-                // filterRating={ratingFilter}
-                // setFilterRating={setRatingFilter}
-                // viewMode={viewMode}
-                // setViewMode={(mode: string) =>
-                //   setViewMode(mode as "grid" | "list")
-                // }
-                // filteredTutors={tutors}
-                // inviteDemo={() => {}}
+              // searchQuery={searchQuery}
+              // setSearchQuery={setSearchQuery}
+              // filterSubject={selectedSubject}
+              // setFilterSubject={setSelectedSubject}
+              // filterArea={selectedDistrict}
+              // setFilterArea={setSelectedDistrict}
+              // filterGender={selectedGender as FilterGender}
+              // setFilterGender={setSelectedGender}
+              // filterRating={ratingFilter}
+              // setFilterRating={setRatingFilter}
+              // viewMode={viewMode}
+              // setViewMode={(mode: string) =>
+              //   setViewMode(mode as "grid" | "list")
+              // }
+              // filteredTutors={tutors}
+              // inviteDemo={() => {}}
               />
             )}
             {activeTab === "profile" && (
               <StudentProfile
-                // paymentMethods={[]}
-                // isLoadingPaymentMethods={false}
-                // handleProfileUpdate={handleProfileUpdate}
-                // handlePasswordChange={handlePasswordChange}
-                // handleAddPaymentMethod={async () => false}
-                // handleUpdatePaymentMethod={async () => false}
-                // handleDeletePaymentMethod={async () => false}
-                // handleSetDefaultPaymentMethod={async () => false}
+              // paymentMethods={[]}
+              // isLoadingPaymentMethods={false}
+              // handleProfileUpdate={handleProfileUpdate}
+              // handlePasswordChange={handlePasswordChange}
+              // handleAddPaymentMethod={async () => false}
+              // handleUpdatePaymentMethod={async () => false}
+              // handleDeletePaymentMethod={async () => false}
+              // handleSetDefaultPaymentMethod={async () => false}
               />
             )}
-            {activeTab === "courses" && (
-              <StudentCourses
-               
-              />
-            )}
+            {activeTab === "courses" && <StudentCourses />}
             {activeTab === "join-community" && <JoinCommunity />}
             {activeTab === "demo-classes" && user?.id && (
               <DemoClassesSection studentId={user.id} />
             )}
             {activeTab === "approval-letter" && user?.id && (
-              <ApprovalLetterSection  />
+              <ApprovalLetterSection />
             )}
             {activeTab === "reviews" && <StudentReviews />}
             {activeTab === "settings" && <StudentSettings />}
@@ -1038,16 +1042,8 @@ export function StudentDashboardMain() {
         </div>
       )}
 
-      {/* Floating Support Chat Widget */}
-      {/* <FloatingStudentChat
-        chatContacts={chatContacts}
-        chatMessages={chatMessages}
-        selectedChat={selectedChat}
-        setSelectedChat={setSelectedChat}
-        newMessage={newMessage}
-        setNewMessage={setNewMessage}
-        handleSendMessage={sendMessage}
-      /> */}
+      {/* Floating  Chat Widget */}
+      <FloatingTutorChat />
     </div>
   );
 }
