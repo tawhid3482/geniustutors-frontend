@@ -213,8 +213,7 @@ export default function UserRoleSection() {
         endpoint = `${API_BASE_URL}/auth/admin/register`;
       }
       
-      console.log('Creating user with data:', newUser);
-      console.log('Using endpoint:', endpoint);
+      
       
       const response = await axios.post(endpoint, newUser, {
         headers: {

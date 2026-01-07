@@ -40,15 +40,12 @@ export const StudentSignupForm: React.FC<StudentSignupFormProps> = ({
   const handleCheckPhoneExists = async (phone: string) => {
     try {
       const result = await checkPhoneNumber({ phone }).unwrap()
-      console.log('📞 Phone check response:', result)
       
       // Check if phone exists based on API response
       if (result.success && result.data && result.data.exists === true) {
-        console.log('❌ Phone number already exists')
         return true
       }
       
-      console.log('✅ Phone number is available')
       return false
     } catch (error: any) {
       console.error('Error checking phone:', error)
@@ -95,7 +92,6 @@ export const StudentSignupForm: React.FC<StudentSignupFormProps> = ({
     
     try {
       // Check if phone number already exists using RTK Query
-      console.log('🔍 Checking if phone number exists...')
       const phoneExists = await handleCheckPhoneExists(signupForm.phone)
       
       
@@ -113,10 +109,8 @@ export const StudentSignupForm: React.FC<StudentSignupFormProps> = ({
         gender: signupForm.gender
       }
 
-      console.log('📋 StudentSignupForm - Form data prepared:', formData)
       
       // Send OTP for phone verification ONLY if phone doesn't exist
-      console.log('📱 Sending OTP for phone verification...')
         await sendOTP({ 
         phone: signupForm.phone, 
         name: signupForm.fullName 

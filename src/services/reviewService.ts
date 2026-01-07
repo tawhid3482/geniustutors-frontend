@@ -67,10 +67,7 @@ export const getReviews = async (filters?: ReviewFilters): Promise<{ data: Revie
     if (filters?.rating) params.append('rating', filters.rating);
 
     const response = await api.get(`/reviews?${params.toString()}`);
-    console.log('=== REVIEW SERVICE DEBUG: Raw API Response ===');
-    console.log('Full response:', response);
-    console.log('Response data:', response.data);
-    console.log('Response pagination:', response.pagination);
+   
     
     return {
       data: response.data || [],
@@ -96,9 +93,7 @@ export const getReviewById = async (id: string): Promise<Review> => {
 // Update review status
 export const updateReviewStatus = async (id: string, status: 'pending' | 'approved' | 'rejected'): Promise<{ message: string; data: { id: string; status: string } }> => {
   try {
-    console.log('Updating review status:', { id, status });
     const response = await api.patch(`/reviews/${id}/status`, { status });
-    console.log('Review status update response:', response);
     return response.data;
   } catch (error) {
     console.error('Error updating review status:', error);
@@ -109,9 +104,7 @@ export const updateReviewStatus = async (id: string, status: 'pending' | 'approv
 // Update review details
 export const updateReviewDetails = async (id: string, details: { rating?: number; comment?: string; subject?: string; status?: string }): Promise<{ message: string; data: { id: string } }> => {
   try {
-    console.log('Updating review details:', { id, details });
     const response = await api.patch(`/reviews/${id}/details`, details);
-    console.log('Review details update response:', response);
     return response.data;
   } catch (error) {
     console.error('Error updating review details:', error);
@@ -122,9 +115,7 @@ export const updateReviewDetails = async (id: string, details: { rating?: number
 // Add response to review
 export const addReviewResponse = async (id: string, response: string): Promise<{ message: string; data: { id: string; response: string } }> => {
   try {
-    console.log('Adding response to review:', { id, response });
     const response_data = await api.patch(`/reviews/${id}/response`, { response });
-    console.log('Response API result:', response_data);
     return response_data.data;
   } catch (error) {
     console.error('Error adding review response:', error);
@@ -184,23 +175,11 @@ export const submitReview = async (tutorId: string, rating: number, comment: str
 export const getReviewsByTutorId = async (tutorId: string): Promise<TutorReview[]> => {
   try {
     const response = await api.get(`/tutors/${tutorId}/reviews`);
-    
-    console.log('=== REVIEW SERVICE DEBUG: getReviewsByTutorId ===');
-    console.log('Full response:', response);
-    console.log('Response data:', response.data);
-    console.log('Response success:', response.success);
-    
-    // The API client returns the parsed JSON response directly
-    // So if backend returns { success: true, data: reviews, pagination: {...} }
-    // Then response is that object, and we need response.data
+
     const reviews = response.data || [];
     
-    console.log('Extracted reviews:', reviews);
-    console.log('Reviews type:', typeof reviews);
-    console.log('Is array:', Array.isArray(reviews));
-    
+   
     if (Array.isArray(reviews)) {
-      console.log('First review structure:', reviews[0]);
     }
     
     return reviews;
@@ -215,10 +194,7 @@ export const getReviewStatsByTutorId = async (tutorId: string): Promise<ReviewSt
   try {
     const response = await api.get(`/tutors/${tutorId}/review-stats`);
     
-    console.log('=== REVIEW SERVICE DEBUG: getReviewStatsByTutorId ===');
-    console.log('Full response:', response);
-    console.log('Response data:', response.data);
-    
+   
     // The API client returns the parsed JSON response directly
     // So if backend returns { success: true, data: stats }
     // Then response is that object, and we need response.data

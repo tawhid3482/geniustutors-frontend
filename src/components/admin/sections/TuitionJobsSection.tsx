@@ -161,34 +161,20 @@ export function TuitionJobsSection() {
     currentPage * itemsPerPage
   );
 
-  // Get unique subjects and locations for filters
   const subjects = Array.from(new Set(mockJobs.map(job => job.subject)));
   const locations = Array.from(new Set(mockJobs.map(job => job.district)));
 
-  // Handle job actions
   const handleViewJob = (jobId: string) => {
-    console.log(`View job ${jobId}`);
-    // Implement view job details functionality
+  
   };
 
-  const handleApproveJob = (jobId: string) => {
-    console.log(`Approve job ${jobId}`);
-    // Implement approve job functionality
-  };
 
-  const handleRejectJob = (jobId: string) => {
-    console.log(`Reject job ${jobId}`);
-    // Implement reject job functionality
-  };
+  
 
   const handleFeatureJob = (jobId: string) => {
-    console.log(`Feature job ${jobId}`);
-    // Implement feature job functionality
   };
 
   const handleDeleteJob = (jobId: string) => {
-    console.log(`Delete job ${jobId}`);
-    // Implement delete job functionality
   };
 
   return (

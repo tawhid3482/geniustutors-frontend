@@ -160,7 +160,6 @@ export function AdminProfile({ user: propUser }: { user?: any }) {
         return;
       }
       
-      console.log(updateData, user.id)
 
       const result = await updateAdminProfile({
         id: user.id,

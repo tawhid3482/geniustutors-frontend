@@ -78,7 +78,6 @@ export function ColorThemeProvider({ children }: { children: React.ReactNode }) 
       root.style.setProperty('--accent', `${accentHsl.h} ${accentHsl.s}% ${accentHsl.l}%`);
       root.style.setProperty('--accent-glow', `${accentHsl.h} ${accentHsl.s}% ${Math.min(accentHsl.l + 20, 100)}%`);
       
-      console.log('Custom theme applied successfully');
     } catch (error) {
       console.error('Error applying custom theme:', error);
     }
@@ -99,7 +98,6 @@ export function ColorThemeProvider({ children }: { children: React.ReactNode }) 
       root.style.setProperty('--accent', '210 40% 96.1%');
       root.style.setProperty('--accent-glow', '210 40% 96.1%');
       
-      console.log('Default theme applied successfully');
     } catch (error) {
       console.error('Error applying default theme:', error);
     }
@@ -122,7 +120,6 @@ export function ColorThemeProvider({ children }: { children: React.ReactNode }) 
           resetToDefaultTheme();
         }
         
-        console.log('Color theme fetched and applied:', theme);
       }
     } catch (error) {
       console.error('Error fetching color theme:', error);

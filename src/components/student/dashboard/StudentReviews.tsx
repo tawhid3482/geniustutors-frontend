@@ -62,9 +62,7 @@ const StudentReviews = () => {
   // Get tutors from the response data structure
   const tutors = tutorData?.data || [];
   
-  console.log("Tutors data:", tutors);
-  console.log("Loading:", isLoading);
-  console.log("Error:", error);
+ 
 
   useEffect(() => {
     setMounted(true);

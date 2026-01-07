@@ -76,7 +76,6 @@ export const Navbar = ({
   };
 
 
-  // console.log(user)
 
   return (
     <nav className="bg-background border-b border-border sticky top-0 z-50 backdrop-blur-sm">

@@ -39,7 +39,6 @@ interface PasswordFormData {
 
 export function StudentProfile() {
   const { user, signOut } = useAuth();
-  console.log(user)
   const router = useRouter();
 
   const [profileForm, setProfileForm] = useState<ProfileFormData>({

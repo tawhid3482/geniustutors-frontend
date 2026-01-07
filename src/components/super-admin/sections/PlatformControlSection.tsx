@@ -178,7 +178,6 @@ export default function PlatformControlSection() {
         maintenance_mode: websiteSettings.maintenance_mode
       };
       
-      console.log('Saving website settings (excluding footer credit):', updateData);
       
       const response = await axios.put(`${API_BASE_URL}/website-management/settings`, updateData, {
         headers: { Authorization: `Bearer ${token}` }
@@ -229,7 +228,6 @@ export default function PlatformControlSection() {
         footer_credit: websiteSettings.footer_credit.trim()
       };
       
-      console.log('Saving footer credit only:', updateData);
       
       const response = await axios.put(`${API_BASE_URL}/website-management/settings`, updateData, {
         headers: { Authorization: `Bearer ${token}` }

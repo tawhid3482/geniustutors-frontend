@@ -459,10 +459,7 @@ export default function AdminCreateTuitionRequest() {
     try {
       setIsSubmitting(true);
 
-      // Debug logging
-      console.log("Form data before submission:", formData);
-      console.log("Selected thana:", selectedThana);
-      console.log("FormData.thana:", formData.thana);
+   
 
       // Check if user is logged in
       if (!user) {
@@ -705,11 +702,9 @@ export default function AdminCreateTuitionRequest() {
       };
 
       // Log the data for debugging
-      console.log("Submitting data:", JSON.stringify(submitData, null, 2));
 
       // Use Redux mutation to create tutor request
       const result = await createTutorRequest(submitData);
-      console.log("Response:", result);
 
       if ("data" in result && result.data) {
         setShowSuccess(true);

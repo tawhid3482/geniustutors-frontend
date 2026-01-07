@@ -99,29 +99,18 @@ export function useStudentDashboard() {
   }, [user]);
 
   const loadPostedRequests = async () => {
-    console.log('=== USE STUDENT DASHBOARD HOOK DEBUG ===');
-    console.log('Function: loadPostedRequests');
-    console.log('Hook: useStudentDashboard');
-    console.log('Timestamp:', new Date().toISOString());
+ 
     
     setIsLoadingRequests(true);
     try {
-      console.log('Calling tutorRequestService.getStudentTutorRequests()...');
       const response = await tutorRequestService.getStudentTutorRequests();
       
-      console.log('Response received:', {
-        success: response?.success,
-        hasData: !!response?.data,
-        dataLength: Array.isArray(response?.data) ? response.data.length : 'N/A',
-        fullResponse: response
-      });
+     
       
       if (response.success) {
-        console.log('Setting posted requests:', response.data);
         setPostedRequests(response.data);
         // Update the requests count based on actual data
         const count = response.data.length;
-        console.log('Setting requests posted count:', count);
         setRequestsPostedCount(count);
       } else {
         console.warn('Response not successful:', response);
@@ -139,7 +128,6 @@ export function useStudentDashboard() {
         variant: 'destructive' 
       });
     } finally {
-      console.log('Setting loading to false');
       setIsLoadingRequests(false);
     }
   };
@@ -152,7 +140,6 @@ export function useStudentDashboard() {
       const enrollmentsData = await getMyEnrollments();
       // getMyEnrollments now returns {enrollments: CourseEnrollment[]}
       const safeEnrollments = enrollmentsData?.enrollments || [];
-      console.log('Setting enrollments in hook:', safeEnrollments);
       setEnrollments(safeEnrollments);
     } catch (error) {
       console.error('Error loading course enrollments:', error);

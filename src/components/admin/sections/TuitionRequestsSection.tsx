@@ -1592,7 +1592,6 @@ const TuitionRequestsSection = () => {
         salary: data.salary,
       }).unwrap();
 
-      console.log(result);
       await updateTuitionRequestStatus({
         id: data.tutorRequestId,
         data: { status: "Completed" },

@@ -42,7 +42,6 @@ export default function ManagerDashboardPage() {
     );
   }
 
-  // console.log(user)
 
   // User not authenticated or doesn't have access
   if (!user || user.role !== 'MANAGER') {

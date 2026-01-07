@@ -88,7 +88,6 @@ export default function AllTutors() {
   const { data: districtData } = useGetAllDistrictsQuery(undefined);
   const { data: areaData } = useGetAllAreaQuery(undefined);
 
-  console.log('Tutors Data from RTK Query:', tutorsData);
 
   // Handle URL parameters for pre-filtering
   useEffect(() => {
@@ -101,7 +100,6 @@ export default function AllTutors() {
   // Process district data from RTK Query
   useEffect(() => {
     if (districtData && districtData.success) {
-      console.log('District Data:', districtData);
       if (districtData.data && districtData.data.length > 0) {
         // District names array থেকে সব names নেওয়া
         const allDistrictNames = districtData.data[0].name || [];
@@ -113,7 +111,6 @@ export default function AllTutors() {
   // Process area data from RTK Query
   useEffect(() => {
     if (areaData && areaData.success) {
-      console.log('Area Data:', areaData);
       if (areaData.data && areaData.data.length > 0) {
         // Area names array থেকে সব names নেওয়া
         const allAreaNames = areaData.data[0].name || [];
@@ -141,7 +138,6 @@ export default function AllTutors() {
   // RTK Query data process করা
   useEffect(() => {
     if (tutorsData) {
-      console.log('RTK Query Tutors Data:', tutorsData);
       if (tutorsData.success) {
         setTutors(tutorsData.data || []);
         setTotalCount(tutorsData.data?.length || 0);

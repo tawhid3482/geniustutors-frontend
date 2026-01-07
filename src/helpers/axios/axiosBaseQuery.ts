@@ -29,7 +29,6 @@ export const axiosBaseQuery =
         },
       };
 
-      // console.log("🔍 Making API Request:", requestConfig);
 
       const response = await axiosInstance(requestConfig);
 
@@ -39,11 +38,7 @@ export const axiosBaseQuery =
     } catch (error) {
       const axiosError = error as AxiosError;
       
-      console.log("❌ API Call Failed:", {
-        status: axiosError.response?.status,
-        data: axiosError.response?.data,
-        message: axiosError.message,
-      });
+ 
 
       // Handle different error formats from your backend
       const backendError = axiosError.response?.data as any;

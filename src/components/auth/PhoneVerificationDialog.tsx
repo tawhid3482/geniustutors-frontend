@@ -81,13 +81,7 @@ export const PhoneVerificationDialog: React.FC<
   // Reset timer when dialog opens
   useEffect(() => {
     if (open) {
-      console.log("📋 PhoneVerificationDialog - Props received:", {
-        open,
-        phoneNumber,
-        fullName,
-        formData,
-        role: formData?.role,
-      });
+     
       setTimeLeft(300);
       setOtpCode("");
       setIsVerified(false);

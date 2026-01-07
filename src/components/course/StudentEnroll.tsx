@@ -168,7 +168,6 @@ const StudentEnroll: React.FC<StudentEnrollProps> = ({
           status: "active", // Will be updated when payment is verified
         };
 
-        console.log("Creating enrollment:", enrollmentData);
 
         const enrollmentResult = await createEnrollment(
           enrollmentData

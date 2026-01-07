@@ -1119,7 +1119,6 @@ const TutorApplicationDashboard = () => {
   };
 
   const handleStatusUpdate = async (tutorId: string, statusData: any) => {
-    console.log("Updating tutor ID:", tutorId, "with data:", statusData);
     try {
       await updateTutorStatus({ id: tutorId, data: statusData }).unwrap();
       refetch();

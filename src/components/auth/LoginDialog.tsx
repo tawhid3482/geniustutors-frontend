@@ -94,7 +94,6 @@ export const LoginDialog: React.FC<LoginDialogProps> = ({
     fullName: string,
     userData?: any
   ) => {
-    console.log('📱 Phone verification requested:', { phoneNumber, fullName, userData });
 
     setPendingVerificationPhone(phoneNumber);
     setPendingVerificationName(fullName);

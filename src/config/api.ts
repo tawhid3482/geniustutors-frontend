@@ -67,11 +67,7 @@ const api = {
   get: async (endpoint: string, config?: any) => {
     try {
       const fullUrl = `${API_BASE_URL}${endpoint}`;
-      console.log('=== API CLIENT DEBUG: GET Request ===');
-      console.log('Full URL:', fullUrl);
-      console.log('Endpoint:', endpoint);
-      console.log('API Base URL:', API_BASE_URL);
-      console.log('Headers:', getAuthHeaders());
+     
       
       const response = await fetch(fullUrl, {
         method: 'GET',
@@ -82,25 +78,19 @@ const api = {
         ...config,
       });
       
-      console.log('=== API CLIENT DEBUG: GET Response ===');
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+ 
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.log('=== API CLIENT DEBUG: GET Error ===');
-        console.log('Error data:', errorData);
+     
         throw handleApiError(response, errorData);
       }
       
       const responseData = await response.json();
-      console.log('=== API CLIENT DEBUG: GET Success ===');
-      console.log('Response data:', responseData);
+    
       return responseData;
     } catch (error: any) {
-      console.log('=== API CLIENT DEBUG: GET Catch Error ===');
-      console.log('Error:', error);
+
       if (error.isNetworkError) {
         throw error;
       }
@@ -111,12 +101,7 @@ const api = {
   post: async (endpoint: string, data?: any, config?: any) => {
     try {
       const fullUrl = `${API_BASE_URL}${endpoint}`;
-      console.log('=== API CLIENT DEBUG: POST Request ===');
-      console.log('Full URL:', fullUrl);
-      console.log('Endpoint:', endpoint);
-      console.log('API Base URL:', API_BASE_URL);
-      console.log('Request data:', data);
-      console.log('Headers:', getAuthHeaders());
+ 
       
       const response = await fetch(fullUrl, {
         method: 'POST',
@@ -128,25 +113,19 @@ const api = {
         ...config,
       });
       
-      console.log('=== API CLIENT DEBUG: POST Response ===');
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.log('=== API CLIENT DEBUG: POST Error ===');
-        console.log('Error data:', errorData);
+
         throw handleApiError(response, errorData);
       }
       
       const responseData = await response.json();
-      console.log('=== API CLIENT DEBUG: POST Success ===');
-      console.log('Response data:', responseData);
+
       return responseData;
     } catch (error: any) {
-      console.log('=== API CLIENT DEBUG: POST Catch Error ===');
-      console.log('Error:', error);
+
       if (error.isNetworkError) {
         throw error;
       }
@@ -235,12 +214,7 @@ const api = {
   upload: async (endpoint: string, formData: FormData, config?: any) => {
     try {
       const fullUrl = `${API_BASE_URL}${endpoint}`;
-      console.log('=== API CLIENT DEBUG: UPLOAD Request ===');
-      console.log('Full URL:', fullUrl);
-      console.log('Endpoint:', endpoint);
-      console.log('API Base URL:', API_BASE_URL);
-      console.log('FormData:', formData);
-      console.log('Headers:', getAuthHeaders(false));
+    
       
       const response = await fetch(fullUrl, {
         method: 'POST',

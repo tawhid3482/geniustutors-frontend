@@ -15,13 +15,8 @@ instance.defaults.baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://loca
 instance.interceptors.request.use(
   function (config) {
     const accessToken =  localStorage.getItem("token") || localStorage.getItem("authToken");
-    // console.log("🚀 API Request:", {
-    //   url: config.url,
-    //   method: config.method,
-    //   data: config.data,
-    // });
+ 
 
-    // console.log("Access Token:", accessToken);
 
     if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
@@ -36,31 +31,24 @@ instance.interceptors.request.use(
 
 instance.interceptors.response.use(
   function (response) {
-    // console.log("✅ API Response Success:", {
-    //   status: response.status,
-    //   data: response.data,
-    // });
+  
     
     // Return the full response, not just data
     return response;
   },
   async function (error) {
-    // console.error("❌ API Response Error:", {
-    //   status: error.response?.status,
-    //   data: error.response?.data,
-    //   message: error.message,
-    // });
+
 
     const config = error.config;
     
-    // if (error?.response?.status === 401) {
-    //   if (typeof window !== "undefined") {
-    //     toast.error("Please login to continue");
-    //     setTimeout(() => {
-    //       window.location.href = "/signin";
-    //     }, 1000);
-    //   }
-    // }
+    if (error?.response?.status === 401) {
+      if (typeof window !== "undefined") {
+        toast.error("Please login to continue");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1000);
+      }
+    }
 
     // Return the error properly for RTK Query to handle
     return Promise.reject(error);

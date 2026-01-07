@@ -54,7 +54,6 @@ export default function FeaturedMediaManagement() {
     try {
       setLoading(true);
       const outlets = await getAdminFeaturedMediaOutlets();
-      console.log('Fetched media outlets:', outlets); // Debug log
       setMediaOutlets(outlets);
     } catch (error: any) {
       console.error('Error fetching media outlets:', error);
@@ -140,9 +139,7 @@ export default function FeaturedMediaManagement() {
       }
 
       setSaving(true);
-      console.log('Creating media outlet with data:', formData);
       const result = await createFeaturedMediaOutlet(formData);
-      console.log('Create result:', result);
       
       toast({
         title: 'Success',
@@ -199,9 +196,7 @@ export default function FeaturedMediaManagement() {
       }
 
       setSaving(true);
-      console.log('Updating media outlet with data:', formData);
       await updateFeaturedMediaOutlet(editingOutlet.id, formData);
-      console.log('Update completed successfully');
       
       toast({
         title: 'Success',
@@ -238,9 +233,7 @@ export default function FeaturedMediaManagement() {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
 
     try {
-      console.log('Deleting media outlet with ID:', id);
       await deleteFeaturedMediaOutlet(id);
-      console.log('Delete completed successfully');
       
       toast({
         title: 'Success',

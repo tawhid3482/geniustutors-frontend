@@ -40,15 +40,9 @@ export function StudentPostedJobs({
     try {
       const response = await tutorRequestService.getStudentTutorRequests();
       
-      console.log('Response received:', {
-        success: response?.success,
-        hasData: !!response?.data,
-        dataLength: Array.isArray(response?.data) ? response.data.length : 'N/A',
-        fullResponse: response
-      });
+  
       
       if (response.success) {
-        console.log('Setting posted requests:', response.data);
         setPostedRequests(response.data);
       } else {
         console.warn('Response not successful:', response);
@@ -63,7 +57,6 @@ export function StudentPostedJobs({
         variant: 'destructive'
       });
     } finally {
-      console.log('Setting loading to false');
       setIsLoadingRequests(false);
     }
   };

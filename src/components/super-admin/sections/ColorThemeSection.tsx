@@ -106,7 +106,6 @@ export default function ColorThemeSection() {
       root.style.setProperty('--accent', `${accentHsl.h} ${accentHsl.s}% ${accentHsl.l}%`);
       root.style.setProperty('--accent-glow', `${accentHsl.h} ${accentHsl.s}% ${Math.min(accentHsl.l + 20, 100)}%`);
       
-      console.log('Preview theme applied successfully');
     } catch (error) {
       console.error('Error applying preview theme:', error);
       toast({
@@ -132,7 +131,6 @@ export default function ColorThemeSection() {
       root.style.setProperty('--accent', '210 40% 96.1%');
       root.style.setProperty('--accent-glow', '210 40% 96.1%');
       
-      console.log('Preview default theme applied successfully');
     } catch (error) {
       console.error('Error applying preview default theme:', error);
     }

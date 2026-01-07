@@ -44,9 +44,7 @@ export default function RefundPoliciesPage() {
   const fetchRefundPolicies = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('Fetching refund policies...');
       const response = await refundPolicyService.getRefundPolicies();
-      console.log('Refund policies response:', response);
       setRefundPolicies(response.data || []);
     } catch (error) {
       console.error('Error fetching refund policies:', error);
@@ -177,7 +175,6 @@ export default function RefundPoliciesPage() {
   }
 
   // Debug information
-  console.log('Refund policies state:', { refundPolicies, loading });
 
   return (
     <div className="space-y-6">

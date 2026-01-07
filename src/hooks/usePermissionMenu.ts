@@ -36,19 +36,7 @@ export function usePermissionMenu() {
         const roleBasedPermissions = getDefaultPermissions(user.role);
         setUserPermissions(roleBasedPermissions);
         
-        // If you want to fetch from API later, use this:
-        // const response = await fetch(`http://localhost:5000/api/auth/me/${user.id}`);
-        // const data = await response.json();
-        // console.log('User data:', data);
-        // 
-        // // If the API returns permissions in the future
-        // if (data.data?.permissions) {
-        //   setUserPermissions(data.data.permissions.map((p: Permission) => p.name));
-        // } else {
-        //   // Fallback to role-based permissions
-        //   const roleBasedPermissions = getDefaultPermissions(user.role);
-        //   setUserPermissions(roleBasedPermissions);
-        // }
+   
       } catch (error: any) {
         console.error('Error fetching permissions:', error);
         // Fallback to role-based permissions

@@ -179,29 +179,21 @@ export default function PremiumTutors() {
       params.page = currentPage;
       params.limit = 6;
       
-      console.log('Fetching tutors with params:', params);
-      console.log('Genius Tutor Only:', geniusTutorOnly);
-      console.log('Verified Tutor Only:', verifiedTutorOnly);
-      console.log('API URL:', `${API_BASE_URL}/tutors?${new URLSearchParams(params as any).toString()}`);
+     
       const response = await tutorService.getAllTutors(params);
       
-      console.log('Full API response:', response);
-      console.log('Response keys:', Object.keys(response));
+
       
       if (response.success) {
-        console.log(`Received ${response.data.length} tutors from API`);
-        console.log('Tutors data:', response.data);
-        console.log('Pagination data:', response.pagination);
+       
         setTutors(response.data);
         
         // Update pagination info
         if (response.pagination) {
           setTotalPages(response.pagination.pages);
           setTotalCount(response.pagination.total);
-          console.log(`Total pages: ${response.pagination.pages}, Total count: ${response.pagination.total}`);
         } else {
           console.warn('No pagination data received from API');
-          console.log('Available response properties:', Object.keys(response));
           // Fallback: calculate pagination based on expected total count
           // Since we know there are 30 active tutors, calculate pagination
           const expectedTotal = 30; // We know this from database query
@@ -209,7 +201,6 @@ export default function PremiumTutors() {
           const calculatedPages = Math.ceil(expectedTotal / limit);
           setTotalPages(calculatedPages);
           setTotalCount(expectedTotal);
-          console.log(`Using fallback pagination: ${calculatedPages} pages, ${expectedTotal} total`);
         }
       } else {
         console.error('API returned error:', response);
@@ -740,7 +731,6 @@ export default function PremiumTutors() {
                       : [];
                     
                     // Debug log for verified status
-                    console.log(`Tutor ${tutor.full_name} verified status:`, tutor.verified, typeof tutor.verified);
                     
                     return (
                       <Card key={tutor.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">

@@ -65,12 +65,7 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuItems }: DashboardSidebarProps) {
  
-  console.log('🔍 DashboardSidebar Debug:', {
-    role,
-    hasMenuItems: !!menuItems,
-    menuItemsCount: menuItems?.length || 0,
-    menuItems: menuItems // Show actual menu items
-  });
+
  
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const { user, profile } = useAuth();
@@ -265,7 +260,6 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
           ],
         };
       case 'MANAGER':
-        console.log('✅ Loading MANAGER menu');
         return {
           main: [
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
@@ -298,14 +292,7 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
 
   const resolvedMenuItems = getMenuItems();
 
-  // console.log('🎯 Final resolved menu items for', role, ':', {
-  //   main: resolvedMenuItems.main.length,
-  //   quick: resolvedMenuItems.quick.length,
-  //   account: resolvedMenuItems.account.length,
-  //   allMainItems: resolvedMenuItems.main.map(item => ({ id: item.id, label: item.label })),
-  //   allQuickItems: resolvedMenuItems.quick.map(item => ({ id: item.id, label: item.label })),
-  //   allAccountItems: resolvedMenuItems.account.map(item => ({ id: item.id, label: item.label }))
-  // });
+
 
   const renderMenuItem = (item: any) => {
     if (!item || !item.id) {
@@ -319,7 +306,6 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
     // Get icon component - handle both string and component icons
     const IconComponent = typeof item.icon === 'string' ? iconMap[item.icon] : item.icon;
 
-    console.log('🖼️ Rendering menu item:', item.id, item.label, 'hasSubMenus:', hasSubMenus);
 
     return (
       <div key={item.id} className="space-y-1">
@@ -328,7 +314,6 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
             if (hasSubMenus) {
               toggleMenu(item.id);
             } else {
-              console.log('📱 Changing tab to:', item.id);
               onTabChange(item.id);
             }
           }}
@@ -364,7 +349,6 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
                 <button
                   key={subItem.id}
                   onClick={() => {
-                    console.log('📱 Changing tab to submenu:', subItem.id);
                     onTabChange(subItem.id);
                   }}
                   className={`w-full flex items-center px-2 sm:px-3 lg:px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:bg-green-50 hover:text-green-700 ${

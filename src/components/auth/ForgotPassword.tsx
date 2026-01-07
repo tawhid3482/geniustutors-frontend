@@ -38,7 +38,6 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({ children }) => {
       setCurrentStep('verification');
       // For development, show the reset token in console
       if (data && 'resetToken' in data) {
-        console.log('Development reset token:', data.resetToken);
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to send reset code');

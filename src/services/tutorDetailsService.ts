@@ -165,7 +165,6 @@ class TutorDetailsService {
     options: RequestInit = {}
   ): Promise<T> {
     const token = getAuthToken();
-    console.log('TutorDetailsService - Token:', token ? 'Token found' : 'No token found');
     
     if (!token) {
       throw new Error('No authentication token found. Please log in again.');
@@ -181,12 +180,7 @@ class TutorDetailsService {
       ...options,
     };
 
-    console.log('TutorDetailsService - Making request to:', `${this.baseUrl}${endpoint}`);
-    console.log('TutorDetailsService - Request config:', {
-      method: config.method || 'GET',
-      headers: config.headers,
-      body: config.body ? 'Body present' : 'No body'
-    });
+ 
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, config);
 
@@ -212,13 +206,11 @@ class TutorDetailsService {
 
   // Submit tutor details
   async submitTutorDetails(tutorData: TutorData): Promise<{ success: boolean; message: string }> {
-    console.log('Submitting tutor details:', JSON.stringify(tutorData));
     try {
       const result = await this.request<{ success: boolean; message: string }>('/register', {
         method: 'POST',
         body: JSON.stringify(tutorData),
       });
-      console.log('Tutor details submission result:', result);
       return result;
     } catch (error) {
       console.error('Error submitting tutor details:', error);
@@ -228,14 +220,12 @@ class TutorDetailsService {
 
   // Update tutor details using the alternative route
   async updateTutorDetails(tutorData: Partial<TutorData>): Promise<{ success: boolean; message: string }> {
-    console.log('Updating tutor details:', JSON.stringify(tutorData));
     try {
       const payload = this.toSnakeCasePayload(tutorData);
       const result = await this.request<{ success: boolean; message: string }>('/update', {
         method: 'PUT',
         body: JSON.stringify(payload),
       });
-      console.log('Tutor details update result:', result);
       return result;
     } catch (error) {
       console.error('Error updating tutor details:', error);
@@ -245,15 +235,12 @@ class TutorDetailsService {
 
   // Update basic tutor details (without problematic fields)
   async updateBasicTutorDetails(tutorData: Partial<TutorData> & { [key: string]: any }): Promise<{ success: boolean; message: string }> {
-    console.log('Updating basic tutor details:', JSON.stringify(tutorData));
     try {
       const payload = this.toSnakeCasePayload(tutorData);
-      console.log('Converted payload:', JSON.stringify(payload));
       const result = await this.request<{ success: boolean; message: string }>('/update-basic', {
         method: 'PUT',
         body: JSON.stringify(payload),
       });
-      console.log('Basic tutor details update result:', result);
       return result;
     } catch (error) {
       console.error('Error updating basic tutor details:', error);

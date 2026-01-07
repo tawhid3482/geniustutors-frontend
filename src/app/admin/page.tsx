@@ -66,7 +66,6 @@ export default function AdminLoginPage() {
         password: loginForm.password,
       }).unwrap();
 
-      console.log("Login Response:", response);
 
       if (response.success) {
         toast.success("Welcome to Admin Panel!");
@@ -84,7 +83,6 @@ export default function AdminLoginPage() {
           
           // FIXED: Get user role from the stored user object
           const userRole = user.role;
-          console.log("User Role:", userRole);
           
           // **AUTO RELOAD AFTER LOGIN**
           // First show success message
@@ -119,7 +117,6 @@ export default function AdminLoginPage() {
     if (token && userString) {
       try {
         const user = JSON.parse(userString);
-        console.log("Auto-redirecting user:", user);
         
         // Redirect based on role after reload
         if (user.role === "SUPER_ADMIN") {

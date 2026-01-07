@@ -41,7 +41,6 @@ export const heroDataService = {
       }
 
       const data = await response.json();
-      // console.log('Backend response:', data); // Debug log
       
       if (!data.success) {
         throw new Error(data.message || 'Failed to fetch hero data');
@@ -70,7 +69,6 @@ export const heroDataService = {
         })) || []
       };
 
-      // console.log('Transformed data for exact design:', transformedData);
       return transformedData;
 
     } catch (error) {

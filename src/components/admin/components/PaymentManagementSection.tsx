@@ -242,24 +242,19 @@ export function PaymentManagementSection() {
   // Process transaction data from RTK Query
   useEffect(() => {
     if (transactionResponse?.data) {
-      console.log('Raw API Data:', transactionResponse.data);
       
       const transformedTransactions = transactionResponse.data.map(transformTransactionData);
-      console.log('Transformed Transactions:', transformedTransactions);
       
       setTransactions(transformedTransactions);
       
       // Calculate analytics
       const analyticsData = calculateAnalytics(transformedTransactions);
-      console.log('Calculated Analytics:', analyticsData);
       setAnalytics(analyticsData);
       
       // Prepare chart data
       const charts = prepareChartData(transformedTransactions);
-      console.log('Chart Data:', charts);
       setChartData(charts);
     } else {
-      console.log('No transaction data received');
     }
   }, [transactionResponse]);
 

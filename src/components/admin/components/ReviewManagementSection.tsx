@@ -184,8 +184,7 @@ export function ReviewManagementSection() {
 
   // DEBUG: Log reviews and API status
   useEffect(() => {
-    console.log("All Reviews:", allReviews);
-    console.log("Selected Review:", selectedReview);
+   
   }, [allReviews, selectedReview]);
 
   // Handle toggle review status - IMPROVED
@@ -196,10 +195,7 @@ export function ReviewManagementSection() {
       const newStatus = !review.isActive;
       const updateData = { isActive: newStatus };
 
-      console.log(
-        `Toggling ${review.type} review ${review.id} to ${newStatus}`,
-        updateData
-      );
+     
 
       // Optimistically update state
       setAllReviews((prevReviews) =>
@@ -214,13 +210,11 @@ export function ReviewManagementSection() {
           id: review.id,
           data: updateData,
         }).unwrap();
-        console.log("Text review update result:", result);
       } else {
         result = await updateVideoReview({
           id: review.id,
           data: updateData,
         }).unwrap();
-        console.log("Video review update result:", result);
       }
 
       toast({
@@ -275,7 +269,6 @@ export function ReviewManagementSection() {
   // Handle review deletion - IMPROVED
   const handleDeleteReview = async (review: Testimonial | VideoTestimonial) => {
     try {
-      console.log(`Deleting ${review.type} review ${review.id}`);
 
       // Optimistically remove from state
       setAllReviews((prevReviews) =>
@@ -285,10 +278,8 @@ export function ReviewManagementSection() {
       let result;
       if (review.type === "text") {
         result = await deleteReview(review.id).unwrap();
-        console.log("Text review delete result:", result);
       } else {
         result = await deleteVideoReview(review.id).unwrap();
-        console.log("Video review delete result:", result);
       }
 
       toast({
@@ -346,10 +337,7 @@ export function ReviewManagementSection() {
       }
 
       const updateData = { testimonial: newText };
-      console.log(
-        `Updating ${review.type} review ${review.id} text:`,
-        updateData
-      );
+   
 
       // Optimistically update state
       setAllReviews((prevReviews) =>
@@ -364,7 +352,6 @@ export function ReviewManagementSection() {
           id: review.id,
           data: updateData,
         }).unwrap();
-        console.log("Text review text update result:", result);
       } else {
         // For video reviews, we need to ensure we're updating the testimonial field
         // Some backends might expect different field names
@@ -378,7 +365,6 @@ export function ReviewManagementSection() {
           id: review.id,
           data: videoUpdateData,
         }).unwrap();
-        console.log("Video review text update result:", result);
       }
 
       toast({

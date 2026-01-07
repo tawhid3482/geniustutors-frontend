@@ -43,13 +43,11 @@ export default async function TuitionJobPage({ params }: TuitionJobPageProps) {
     const objectIdRegex = /^[0-9a-fA-F]{24}$/;
     
     if (!id || id.trim().length === 0) {
-      console.log("Empty or invalid ID");
       notFound();
     }
 
    
     if (!objectIdRegex.test(id)) {
-      console.log("ID is not in standard ObjectId format, but passing to client component:", id);
     }
 
     return (

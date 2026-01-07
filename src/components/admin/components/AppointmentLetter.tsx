@@ -679,9 +679,7 @@ const AppointmentLetter = () => {
       );
 
       // Step 3: Upload PDF to image upload endpoint and get URL
-      console.log("Uploading PDF to image server...");
       const pdfUrl = await uploadImage(pdfFile);
-      console.log("PDF uploaded successfully:", pdfUrl);
 
       // Step 4: Prepare data for backend
       const appointmentData = {
@@ -689,12 +687,10 @@ const AppointmentLetter = () => {
         pdf: pdfUrl, // The URL returned from image upload
       };
 
-      console.log("Sending to backend:", appointmentData);
 
       // Step 5: Send data to backend (without file, just URL)
       const response = await sendAppointmentToStudent(appointmentData).unwrap();
 
-      console.log("Backend response:", response);
 
       setSendSuccess(true);
       setTimeout(() => {

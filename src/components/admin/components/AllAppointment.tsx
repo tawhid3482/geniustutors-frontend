@@ -22,7 +22,6 @@ const AllAppointment = () => {
   const [deleteAppointment, { isLoading: isDeleting }] =
     useDeleteAppointmentLetterMutation();
 
-  console.log(AllAppointment);
 
   // Handle PDF download
   const handleDownload = (pdfUrl: string, fileName: string) => {

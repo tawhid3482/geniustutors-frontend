@@ -127,7 +127,6 @@ export default function ProfileSection() {
     refetch: refetchUser,
   } = useGetMYInfoQuery(userId);
 
-  console.log("User Data from API:", userData);
 
   const {
     data: documentData,
@@ -258,11 +257,7 @@ export default function ProfileSection() {
   useEffect(() => {
     if (userData?.data) {
       const data = userData.data;
-      console.log("Loading API data into form:", {
-        thana: data.thana,
-        district: data.district,
-        preferred_areas: data.preferred_areas,
-      });
+  
 
       setProfile((prev) => ({
         ...prev,
@@ -439,7 +434,6 @@ export default function ProfileSection() {
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    console.log(`Select change: ${name} = ${value}`);
     setProfile((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -644,7 +638,6 @@ export default function ProfileSection() {
   };
 
   const handlePreferredAreasChange = (areas: string[]) => {
-    console.log("Preferred areas changed:", areas);
     setProfile((prev) => ({ ...prev, preferred_areas: areas }));
   };
 
@@ -799,7 +792,6 @@ export default function ProfileSection() {
     }
 
     try {
-      console.log("Saving profile with data:", profile);
 
       // Prepare user profile data according to backend schema
       const userProfileData: any = {
@@ -859,12 +851,7 @@ export default function ProfileSection() {
         );
       }
 
-      // Log the data being sent
-      console.log("Data being sent to API:", {
-        thana: userProfileData.thana,
-        district: userProfileData.district,
-        preferred_areas: userProfileData.preferred_areas,
-      });
+     
 
       const result = await updateUserProfile({
         id: userId,

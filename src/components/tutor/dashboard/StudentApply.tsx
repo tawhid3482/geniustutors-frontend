@@ -60,7 +60,6 @@ const TutorApplications = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<string>("");
 
-  console.log("Tutor Applications Data:", response);
 
   // Handle status update - FIXED: now sending data object
   const handleStatusUpdate = async (id: string) => {

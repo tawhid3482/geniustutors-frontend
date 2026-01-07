@@ -78,11 +78,7 @@ class TutorRequestService {
     options: RequestInit = {},
     requireAuth: boolean = true
   ): Promise<T> {
-    console.log('=== FRONTEND REQUEST DEBUG ===');
-    console.log('Endpoint:', endpoint);
-    console.log('Full URL:', `${this.baseUrl}${endpoint}`);
-    console.log('Require Auth:', requireAuth);
-    console.log('Options:', options);
+ 
     
     let config: RequestInit = {
       headers: {
@@ -95,7 +91,6 @@ class TutorRequestService {
     // Only add authentication if required
     if (requireAuth) {
       const token = getAuthToken();
-      console.log('Auth token:', token ? 'Present' : 'Missing');
       
       if (!token) {
         console.error('No authentication token found');
@@ -108,21 +103,11 @@ class TutorRequestService {
       };
     }
 
-    console.log('Request config:', {
-      method: config.method || 'GET',
-      headers: config.headers,
-      body: config.body ? 'Present' : 'None'
-    });
 
-    console.log('Making fetch request...');
+
     const response = await fetch(`${this.baseUrl}${endpoint}`, config);
     
-    console.log('Response received:', {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok,
-      headers: Object.fromEntries(response.headers.entries())
-    });
+  
 
     if (!response.ok) {
       console.error('Response not OK, parsing error data...');
@@ -146,15 +131,9 @@ class TutorRequestService {
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
 
-    console.log('Response OK, parsing JSON...');
     const data = await response.json();
     
-    // Log successful responses for debugging
-    console.log('API Success:', {
-      endpoint,
-      data: data
-    });
-    console.log('===============================');
+ 
     
     return data;
   }
@@ -185,15 +164,10 @@ class TutorRequestService {
 
   // Get all tutor requests for the current student
   async getStudentTutorRequests(): Promise<{ success: boolean; data: TutorRequest[] }> {
-    console.log('=== FRONTEND SERVICE DEBUG ===');
-    console.log('Function: getStudentTutorRequests');
-    console.log('Endpoint: /student');
-    console.log('Full URL:', `${this.baseUrl}/student`);
-    console.log('Timestamp:', new Date().toISOString());
+ 
     
     try {
       const result = await this.request('/student') as { success: boolean; data: TutorRequest[] };
-      console.log('Service request successful:', result);
       return result;
     } catch (error) {
       console.error('Service request failed:', error);
@@ -249,9 +223,7 @@ class TutorRequestService {
     id: string,
     data: Partial<TutorRequestFormData> & { adminNote?: string; updateNotice?: string; updateNoticeBy?: string; updateNoticeByName?: string }
   ): Promise<{ success: boolean; message: string; data: any }> {
-    console.log('Service: updateTutorRequest called with:', { id, data });
-    console.log('Service: updateNotice in data:', data.updateNotice, 'Type:', typeof data.updateNotice);
-    console.log('Service: adminNote in data:', data.adminNote, 'Type:', typeof data.adminNote);
+
     
     return this.request(`/${id}`, {
       method: 'PUT',
@@ -307,16 +279,7 @@ class TutorRequestService {
       sendSMSNotification: notificationOptions?.sendSMSNotification !== undefined ? notificationOptions.sendSMSNotification : true
     };
     
-    console.log('=== FRONTEND SERVICE DEBUG: assignTutor ===');
-    console.log('Request ID:', requestId);
-    console.log('Tutor ID:', tutorId);
-    console.log('Notes:', notes);
-    console.log('Demo Class:', demoClass);
-    console.log('Notification Options received:', notificationOptions);
-    console.log('sendEmailNotification:', notificationOptions?.sendEmailNotification, '(type:', typeof notificationOptions?.sendEmailNotification, ')');
-    console.log('sendSMSNotification:', notificationOptions?.sendSMSNotification, '(type:', typeof notificationOptions?.sendSMSNotification, ')');
-    console.log('Final request body:', JSON.stringify(requestBody, null, 2));
-    console.log('==========================================');
+ 
     
     return this.request(`/${requestId}/assign`, {
       method: 'POST',

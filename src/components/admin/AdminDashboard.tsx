@@ -33,7 +33,7 @@ import AdminNotesSection from "./AdminNotesSection";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePermissionMenu } from "@/hooks/usePermissionMenu";
 import { adminMenuItems, managerMenuItems } from "@/config/adminMenu";
-import PermissionAssignment from "./PermissionAssignment";
+// import PermissionAssignment from "./PermissionAssignment";
 import Category from "./components/Category";
 import TuitionRequestsSection from "./sections/TuitionRequestsSection";
 import TutorConnectSection from "./sections/TutorConnectSection";
@@ -251,7 +251,6 @@ function SimpleMobileSidebar({ activeTab, onTabChange, onLogout, menuItems }: {
 }
 
 export function AdminDashboard({ user: pageUser }: { user: any }) {
-    // console.log(pageUser)
 
   // Use the user from props or from the hook
   const {
@@ -474,11 +473,11 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
   };
 
   // Render permission assignment section
-  const renderPermissionAssignment = () => {
-    return (
-      <PermissionAssignment />
-    );
-  };
+  // const renderPermissionAssignment = () => {
+  //   return (
+  //     <PermissionAssignment />
+  //   );
+  // };
 
   // Render demo classes section
   const renderDemoClasses = () => {
@@ -606,7 +605,7 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
             {activeTab === "testimonials" && <TestimonialsManagement />}
             {activeTab === "video-testimonials" && <VideoTestimonialsManagement />}
             {activeTab === "featured-media" && <FeaturedMediaManagement />}
-            {activeTab === "permission-assignment" && renderPermissionAssignment()}
+            {/* {activeTab === "permission-assignment" && renderPermissionAssignment()} */}
             {activeTab === "demo-classes" && renderDemoClasses()}
             {activeTab === "seo-analytics" && renderPlatformControl()}
             {activeTab === "taxonomy" && renderTaxonomyManagement()}

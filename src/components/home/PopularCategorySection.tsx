@@ -33,7 +33,6 @@ export function PopularCategorySection() {
     }
   }, [categoryData]);
 
-  // console.log('Categories:', categories);
 
   const handleCategoryClick = (categoryName: string) => {
     // Navigate to tuition-jobs page with category filter applied

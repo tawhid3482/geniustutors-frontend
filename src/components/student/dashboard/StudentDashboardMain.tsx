@@ -242,8 +242,7 @@ export function StudentDashboardMain() {
   const { data: allTutor, isLoading: tutorsLoading } =
     useGetAllTutorsQuery(undefined);
 
-  // console.log('All Jobs:', AllJobs);
-  // console.log('All Tutors:', allTutor);
+
 
   // Transform AllJobs data for recentPlatformJobs
   const recentPlatformJobs = useMemo(() => {

@@ -94,7 +94,6 @@ export default function TuitionJobDetailsClient({
 
   // Use the RTK Query hook with the jobId
 
-  console.log(jobId)
 
   const {
     data: singleJobResponse,
@@ -326,7 +325,6 @@ const [applyForTutorRequest, { isLoading: applyingForJob }] =useApplyForTutorReq
       jobId, 
       userId: user.id 
     }).unwrap();
-    console.log("Apply for job result:", result);
     if (result) {
       toast({
         title: "Application Submitted",

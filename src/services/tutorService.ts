@@ -76,7 +76,6 @@ class TutorService {
       ...options,
     };
 
-    console.log('Making request to:', `${this.baseUrl}${endpoint}`);
     const response = await fetch(`${this.baseUrl}${endpoint}`, config);
 
     if (!response.ok) {
@@ -85,7 +84,6 @@ class TutorService {
     }
 
     const data = await response.json();
-    console.log('Raw response from API:', data);
     return data;
   }
 

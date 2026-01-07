@@ -100,12 +100,10 @@ export function CourseDetailView({ courseSlug, onBack }: CourseDetailViewProps) 
               const progressData = await getCourseProgress(courseData.id);
               setProgress(progressData);
             } catch (error) {
-              console.log('Error loading progress:', error);
             }
           }
         } catch (error) {
           // User might not be enrolled, which is fine
-          console.log('User not enrolled in this course');
         }
       }
     } catch (error) {

@@ -68,7 +68,6 @@ export const HeroSection = () => {
   // Process area tutors data from API
   useEffect(() => {
     if (areaTutorsData?.data && Array.isArray(areaTutorsData?.data)) {
-      // console.log("Processing area tutors data:", areaTutorsData);
       
       const processedTutors: any[] = areaTutorsData?.data?.map((area: any) => ({
         id: area.name, // Use name as ID since no ID field
@@ -79,14 +78,12 @@ export const HeroSection = () => {
       }));
       
       setTutorDivisions(processedTutors);
-      // console.log("Processed Tutors:", processedTutors);
     }
   }, [areaTutorsData]);
 
   // Process district jobs data from API
   useEffect(() => {
     if (districtJobsData?.data && Array.isArray(districtJobsData?.data)) {
-      // console.log("Processing district jobs data:", districtJobsData);
       
       const processedDivisions: Division[] = districtJobsData?.data?.map((district: any) => ({
         id: district.id,
@@ -97,7 +94,6 @@ export const HeroSection = () => {
       }));
       
       setDivisions(processedDivisions);
-      // console.log("Processed Divisions:", processedDivisions);
     }
   }, [districtJobsData]);
 

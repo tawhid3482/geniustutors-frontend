@@ -106,7 +106,6 @@ class HttpClient {
     // Handle network errors with retry logic
     if (this.retryCount < this.maxRetries && this.shouldRetry(error)) {
       this.retryCount++;
-      console.log(`Retrying request (${this.retryCount}/${this.maxRetries})...`);
       
       // Wait before retrying
       await this.delay(1000 * this.retryCount); // Default retry delay

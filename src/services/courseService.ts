@@ -187,7 +187,6 @@ export const getCourses = async (params?: {
     }
     
     const response = await api.get(`/courses?${searchParams.toString()}`);
-    console.log('Courses API response:', response); // Debug log
     return response;
   } catch (error) {
     console.error('Error fetching courses:', error);
@@ -213,7 +212,6 @@ export const getAdminCourses = async (params?: {
     }
     
     const response = await api.get(`/courses/admin/all?${searchParams.toString()}`);
-    console.log('Admin courses API response:', response); // Debug log
     return response;
   } catch (error) {
     console.error('Error fetching admin courses:', error);

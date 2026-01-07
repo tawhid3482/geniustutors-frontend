@@ -14,7 +14,6 @@ export default function DashboardPage() {
   const { user, signOut, loading } = useAuth();
   const router = useRouter();
 
-  console.log(user);
 
   useEffect(() => {
     if (!loading && !user) {

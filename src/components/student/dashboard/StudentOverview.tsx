@@ -61,7 +61,6 @@ export function StudentOverview({
   const { data: statsResponse, isLoading: loadingStats } =
     useGetStudentStatsQuery(userId);
 
-  console.log("Stats Data:", statsResponse);
 
   const notices = noticeResponse?.data || [];
   const statsData = statsResponse?.data || {};

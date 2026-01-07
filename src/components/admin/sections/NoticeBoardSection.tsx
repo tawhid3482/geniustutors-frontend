@@ -99,7 +99,6 @@ export function NoticeBoardSection() {
   };
 
   // Debug: log query parameters
-  console.log("API Query Params:", queryParams);
 
   const {
     data: noticesResponse,
@@ -109,7 +108,6 @@ export function NoticeBoardSection() {
   } = useGetAllNoticeQuery(queryParams);
 
   // Debug: log API response
-  console.log("API Response:", noticesResponse);
 
   const [createNotice, { isLoading: isCreating }] = useCreateNoticeMutation();
   const [updateNotice, { isLoading: isUpdating }] = useUpdateNoticeMutation();
@@ -123,10 +121,6 @@ export function NoticeBoardSection() {
     totalPages: Math.ceil(notices.length / pageSize),
   };
 
-  // Debug: log pagination data
-  console.log("Pagination data:", pagination);
-  console.log("Total notices:", pagination.total);
-  console.log("Total pages:", pagination.totalPages);
 
   // Manual filtering as fallback (if API doesn't support filtering)
   const filteredNotices = useMemo(() => {
@@ -162,9 +156,6 @@ export function NoticeBoardSection() {
   const startItem = (currentPage - 1) * pagination.limit + 1;
   const endItem = Math.min(currentPage * pagination.limit, pagination.total);
 
-  // Debug: log pagination calculations
-  console.log("Calculated totalPages:", totalPages);
-  console.log("Start item:", startItem, "End item:", endItem);
 
   // Pagination handlers
   const handlePageChange = (page: number) => {

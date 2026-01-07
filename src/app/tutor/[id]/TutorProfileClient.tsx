@@ -108,7 +108,6 @@ export default function TutorProfileClient({
   } = useGetSingleTutorHubQuery(tutorId);
 
 
-  console.log(tutorResponse)
 
 
   const {
