@@ -24,6 +24,18 @@ const phoneVerifyApi = baseApi.injectEndpoints({
       },
       invalidatesTags: [tagTypes.phoneVerify],
     }),
+
+    verifyOtpForForgetPassword: builder.mutation({
+      query: (formData) => {
+        return {
+          url: "/phone-verification/verify-otp-forget",
+          method: "POST",
+          data: formData,
+        };
+      },
+      invalidatesTags: [tagTypes.phoneVerify],
+    }),
+
     resendOtp: builder.mutation({
       query: (formData) => {
         return {
@@ -44,4 +56,5 @@ export const {
 useSendOtpMutation,
 useResendOtpMutation,
 useVerifyOtpMutation,
+useVerifyOtpForForgetPasswordMutation
 } = phoneVerifyApi;

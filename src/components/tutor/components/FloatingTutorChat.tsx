@@ -301,7 +301,6 @@ export function FloatingTutorChat() {
     });
 
     socketInstance.on("connect_error", (error) => {
-      console.log(error);
       setSocketConnected(false);
       toast({
         title: "Connection Error",

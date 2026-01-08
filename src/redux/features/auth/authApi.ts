@@ -124,6 +124,16 @@ const authApi = baseApi.injectEndpoints({
       },
       invalidatesTags: [tagTypes.auth],
     }),
+    forgetPassword: builder.mutation({
+      query: ({ data }) => {
+        return {
+          url: `/auth/forget-password`,
+          method: "PATCH",
+          data: data,
+        };
+      },
+      invalidatesTags: [tagTypes.auth],
+    }),
 
     updateAdminProfile: builder.mutation({
       query: ({ id, data }) => {
@@ -164,4 +174,5 @@ export const {
   useGetStudentStatsQuery,
   useGetTutorStatsQuery,
   useGetMYInfoQuery,
+  useForgetPasswordMutation,
 } = authApi;

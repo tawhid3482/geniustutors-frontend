@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { useAuth } from '@/contexts/AuthContext.next'
 import { toast } from 'sonner'
 import { Eye, EyeOff, Phone, Lock } from 'lucide-react'
-import { ForgotPassword } from './ForgotPassword'
+import Link from "next/link";
 
 interface LoginFormProps {
   onSuccess?: () => void
@@ -86,11 +86,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
       </div>
 
       <div className="flex justify-end mb-2">
-        <ForgotPassword>
+        <Link href='/forget-password'>
           <Button variant="link" className="p-0 h-auto text-sm text-green-600 hover:text-green-700 font-medium">
             Forgot password?
           </Button>
-        </ForgotPassword>
+        </Link>
       </div>
       
       <Button 
