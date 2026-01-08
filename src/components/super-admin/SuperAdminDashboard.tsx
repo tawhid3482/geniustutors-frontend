@@ -8,6 +8,33 @@ import DashboardOverview from './sections/DashboardOverview';
 import ProfileSection from './sections/ProfileSection';
 import { useSuperAdminDashboard } from '@/hooks/useSuperAdminDashboard';
 import { Button } from '@/components/ui/button';
+import { AdminProfile } from '../admin/components/AdminProfile';
+import TuitionRequestsSection from '../admin/sections/TuitionRequestsSection';
+import TutorConnectSection from '../admin/sections/TutorConnectSection';
+import { UserManagementSection } from '../admin/components/UserManagementSection';
+import { TutorManagementSection } from '../admin/components/TutorManagementSection';
+import UpgradePackagesManagement from '../admin/components/UpgradePackagesManagement';
+import ManageDistrict from '../admin/components/ManageDistrict';
+import { ReviewManagementSection } from '../admin/components/ReviewManagementSection';
+import { PaymentManagementSection } from '../admin/components/PaymentManagementSection';
+import CourseManagement from '../admin/CourseManagement';
+import { DemoClassesSection } from '../tutor/DemoClassesSection';
+import Category from '../admin/components/Category';
+import { TutoringHistorySection } from '../tutor/TutoringHistorySection';
+import { NoticeBoardSection } from '../admin/sections/NoticeBoardSection';
+import ApprovalLettersManagement from '../admin/sections/ApprovalLettersManagement';
+import ConfirmationLettersManagement from '../tutor/dashboard/ConfirmationLetterSection';
+import AdminNotesSection from '../admin/AdminNotesSection';
+import PaymentAccount from '../admin/components/PaymentAccount';
+import AppointmentLetter from '../admin/components/AppointmentLetter';
+import TutorDocument from '../admin/sections/TutorDocument';
+import { TestimonialsManagement } from '../admin/TestimonialsManagement';
+import { VideoTestimonialsManagement } from '../admin/VideoTestimonialsManagement';
+import FeaturedMediaManagement from '../admin/FeaturedMediaManagement';
+import { TuitionJobsSection } from '../admin/sections/TuitionJobsSection';
+import AllAppointment from '../admin/components/AllAppointment';
+import AdminCreateTuitionRequest from '../admin/components/AdminCreateTuitionRequest';
+import TutorDue from '../admin/components/TutorDue';
 
 export function SuperAdminDashboard({ user }: { user: any }) {
   // Add CSS for hidden scrollbar
@@ -59,6 +86,144 @@ export function SuperAdminDashboard({ user }: { user: any }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMobileSidebar]);
 
+
+    // Render profile section
+  const renderProfile = () => {
+    return (
+      <AdminProfile user={user} />
+    );
+  };
+
+  // Render tuition requests section
+  const renderTuitionRequests = () => {
+    return (
+      <TuitionRequestsSection />
+    );
+  };
+  const renderTuitionConnection = () => {
+    return (
+      <TutorConnectSection />
+    );
+  };
+
+  // Render user management section
+  const renderUserManagement = () => {
+    return (
+      <UserManagementSection />
+    );
+  };
+
+  // Render tutor management section
+  const renderTutorManagement = () => {
+    return (
+      <TutorManagementSection />
+    );
+  };
+
+  // Render upgrade applications management section
+  // const renderUpgradeApplicationsManagement = () => {
+  //   return (
+  //     <UpgradeApplicationsManagement />
+  //   );
+  // };
+
+  // Render upgrade packages management section
+  const renderUpgradePackagesManagement = () => {
+    return (
+      <UpgradePackagesManagement />
+    );
+  };
+
+  // Render district management section
+  const renderDistrictManagement = () => {
+    return (
+      <ManageDistrict />
+    );
+  };
+  // Render review management section
+  const renderReviewManagement = () => {
+    return (
+      <ReviewManagementSection />
+    );
+  };
+
+  // Render payment management section
+  const renderPaymentManagement = () => {
+    return (
+      <PaymentManagementSection />
+    );
+  };
+
+  // Render course management section
+  const renderCourseManagement = () => {
+    return (
+      <CourseManagement />
+    );
+  };
+
+  // Render permission assignment section
+  // const renderPermissionAssignment = () => {
+  //   return (
+  //     <PermissionAssignment />
+  //   );
+  // };
+
+  // Render demo classes section
+
+
+  // Render platform control section
+  const renderPlatformControl = () => {
+    return (
+      <PlatformControlSection />
+    );
+  };
+
+  // Render taxonomy management section
+  const renderTaxonomyManagement = () => {
+    return (
+      <Category />
+    );
+  };
+
+  // Render history section
+  const renderHistory = () => {
+    return (
+      <TutoringHistorySection />
+    );
+  };
+
+  // Render notice board section
+  const renderNoticeBoard = () => {
+    return <NoticeBoardSection />;
+  };
+
+  // Render approval letters management section
+  const renderApprovalLetters = () => {
+    return <ApprovalLettersManagement />;
+  };
+
+  // Render confirmation letters management section
+  const renderConfirmationLetters = () => {
+    return <ConfirmationLettersManagement />;
+  };
+
+  // Render admin notes section
+  const renderNotes = () => {
+    return <AdminNotesSection />;
+  };
+  const renderPaymentAccount = () => {
+    return <PaymentAccount />;
+  };
+
+  const renderAppointmentLetter = () => {
+    return <AppointmentLetter />;
+  };
+  const renderTutorDocument = () => {
+    return <TutorDocument />;
+  };
+
+  
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 w-full super-admin-dashboard">
       {/* Sticky Sidebar */}
@@ -73,6 +238,8 @@ export function SuperAdminDashboard({ user }: { user: any }) {
               <span className="text-lg font-bold text-gray-900">Super Admin</span>
             </div>
           </div>
+
+          
           
           {/* Sidebar Content */}
           <div className="flex-1 overflow-y-auto">
@@ -101,13 +268,41 @@ export function SuperAdminDashboard({ user }: { user: any }) {
           showMobileSidebar={showMobileSidebar}
         />
         
-        {/* Main Content */}
+       {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 w-full main-content">
           <div className="w-full max-w-none content-container">
-            {activeTab === "dashboard" && <DashboardOverview onTabChange={setActiveTab} />}
-            {activeTab === "users" && <UserRoleSection />}
-            {activeTab === "platform" && <PlatformControlSection />}
-            {activeTab === "profile" && <ProfileSection />}
+           
+            {activeTab === "profile" && renderProfile()}
+            {activeTab === "tution-request" && renderTuitionRequests()}
+            {activeTab === "tutor-connect" && renderTuitionConnection()}
+            {activeTab === "users" && renderUserManagement()}
+            {activeTab === "tutors" && renderTutorManagement()}
+            {/* {activeTab === "tutor-applications" && <ContactRequests />}
+            {activeTab === "upgrade-applications" && renderUpgradeApplicationsManagement()} */}
+            {activeTab === "upgrade-packages" && renderUpgradePackagesManagement()}
+            {activeTab === "district" && renderDistrictManagement()}
+            {activeTab === "reviews" && renderReviewManagement()}
+            {activeTab === "payment" && renderPaymentManagement()}
+            {/* {activeTab === "refund-policies" && <RefundPoliciesPage />} */}
+            {activeTab === "courses" && renderCourseManagement()}
+            {activeTab === "testimonials" && <TestimonialsManagement />}
+            {activeTab === "video-testimonials" && <VideoTestimonialsManagement />}
+            {activeTab === "featured-media" && <FeaturedMediaManagement />}
+            {/* {activeTab === "permission-assignment" && renderPermissionAssignment()} */}
+            {activeTab === "seo-analytics" && renderPlatformControl()}
+            {activeTab === "taxonomy" && renderTaxonomyManagement()}
+            {activeTab === "history" && renderHistory()}
+            {activeTab === "notice-board" && renderNoticeBoard()}
+            {activeTab === "approval-letter" && renderApprovalLetters()}
+            {activeTab === "confirmation-letter" && renderConfirmationLetters()}
+            {activeTab === "notes" && renderNotes()}
+            {activeTab === "appointment-letter" && renderAppointmentLetter()}
+            {activeTab === "payment-account" && renderPaymentAccount()}
+            {activeTab === "tuition-jobs" && <TuitionJobsSection />}
+            {activeTab === "appointment" && <AllAppointment />}
+            {activeTab === "document" && renderTutorDocument()}
+            {activeTab === "admin-tuition-request" && <AdminCreateTuitionRequest />}
+            {activeTab === "due" && <TutorDue />}
           </div>
         </main>
       </div>

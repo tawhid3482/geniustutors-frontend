@@ -182,36 +182,39 @@ export function DashboardSidebar({ activeTab, onTabChange, onLogout, role, menuI
           ],
         };
       case 'SUPER_ADMIN':
-        return {
+       return {
           main: [
-            { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-            { id: 'users', label: 'User & Role Management', icon: Users },
-             { id: 'tution-request', label: 'Tuition Requests', icon: Briefcase },
+            { id: 'tution-request', label: 'Tuition Requests', icon: Briefcase },
             { id: 'admin-tuition-request', label: 'Create Tuition Requests', icon:PlusCircle },
             { id: 'tutor-connect', label: 'Tutor Connect', icon: BookCheck },
             { id: 'users', label: 'User Management', icon: Users },
-            // { id: 'role-management', label: 'Role Management', icon: Key },
-            { id: 'upgrade-applications', label: 'Upgrade Applications', icon: Shield },
             { id: 'upgrade-packages', label: 'Package Management', icon: Settings },
-            { id: 'tutor-applications', label: 'Tutor Applications', icon: UserCheck },
-            // { id: 'demo-classes', label: 'Demo Classes', icon: BookOpen },
-            // { id: 'courses', label: 'Course Management', icon: BookCheck },
             { id: 'reviews', label: 'Reviews', icon: Star },
             { id: 'district', label: 'District', icon: LandPlot },
-            // { id: 'history', label: 'History', icon: History },
             { id: 'appointment-letter', label: 'Appointment Letter', icon: Mail },
             { id: 'notice-board', label: 'Notice Board', icon: Megaphone },
             { id: 'payment-account', label: 'Payment Account', icon: Navigation },
-            { id: 'refound', label: 'Refound Policy', icon: Ticket },
             { id: 'appointment', label: 'All Appointment', icon: MailCheck },
             { id: 'courses', label: 'Courses', icon: BookOpen },
-            { id: 'document', label: 'Document', icon:ListChecks  },
+            
           ],
           quick: [
-            { id: 'platform', label: 'Platform Control', icon: Settings },
+            { 
+              id: 'platform', 
+              label: 'Platform Control', 
+              icon: Settings,
+              subMenus: [
+                // { id: 'seo-analytics', label: 'SEO & Analytics', icon: Tag },
+                { id: 'taxonomy', label: 'Category', icon: Code },
+                // { id: 'featured-media', label: 'Featured Media', icon: Globe },
+                { id: 'video-testimonials', label: 'Video Testimonials', icon: Video },
+                { id: 'testimonials', label: 'Testimonials', icon: Quote },
+              ]
+            },
+            { id: 'payment', label: 'Payment Management', icon: DollarSign },
           ],
           account: [
-            { id: 'profile', label: 'Profile', icon: User },
+            { id: 'profile', label: 'Profile Settings', icon: User },
           ],
         };
       case 'ADMIN':
