@@ -180,7 +180,6 @@ export function FloatingTutorChat() {
             phone: u.phone || "",
           }));
 
-
         // Role-based filtering
         let filteredUsersList: User[] = [];
 
@@ -216,7 +215,6 @@ export function FloatingTutorChat() {
           );
 
           filteredUsersList = uniqueUsers;
-        
         }
 
         return filteredUsersList;
@@ -269,7 +267,6 @@ export function FloatingTutorChat() {
   useEffect(() => {
     if (!user || !token || !isChatOpen) return;
 
-
     const socketInstance = io(`${process.env.NEXT_PUBLIC_SOCKET_URL}`, {
       withCredentials: true,
       transports: ["websocket", "polling"],
@@ -304,6 +301,7 @@ export function FloatingTutorChat() {
     });
 
     socketInstance.on("connect_error", (error) => {
+      console.log(error);
       setSocketConnected(false);
       toast({
         title: "Connection Error",
@@ -376,8 +374,6 @@ export function FloatingTutorChat() {
 
     // Handle incoming messages from OTHER users only
     socketInstance.on("receiveMessage", (message: Message) => {
-    
-
       // Skip if this is my own message
       if (message.senderId === user.id) {
         return;
@@ -407,7 +403,6 @@ export function FloatingTutorChat() {
     socketInstance.on(
       "messageSent",
       ({ tempId, realMessage }: { tempId: string; realMessage: Message }) => {
-    
         setIsSending(false);
 
         // Mark this message as sent
@@ -420,7 +415,6 @@ export function FloatingTutorChat() {
         setMessages((prev) => {
           const newMessages = prev.map((msg) => {
             if (msg.id === tempId) {
-            
               return realMessage;
             }
             return msg;
@@ -428,7 +422,6 @@ export function FloatingTutorChat() {
 
           // If temp message not found (edge case), add the real message
           if (!prev.some((msg) => msg.id === tempId)) {
-           
             return [...prev, realMessage];
           }
 
@@ -511,7 +504,6 @@ export function FloatingTutorChat() {
     }, 30000);
 
     return () => {
-
       // Clear heartbeat interval
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
@@ -558,8 +550,6 @@ export function FloatingTutorChat() {
   // Load messages when conversation is selected
   useEffect(() => {
     if (selectedConversation && messagesData?.data) {
-     
-
       // Filter out any temp messages for this conversation
       const filteredMessages = messagesData.data.filter(
         (msg: any) =>
@@ -613,7 +603,6 @@ export function FloatingTutorChat() {
       });
       return;
     }
-
 
     try {
       // Use get-or-create endpoint
@@ -678,7 +667,6 @@ export function FloatingTutorChat() {
 
   // Select conversation
   const handleSelectConversation = async (conversation: Conversation) => {
-
     if (!socket) {
       toast({
         title: "Warning",
@@ -721,8 +709,6 @@ export function FloatingTutorChat() {
 
     const messageText = newMessage.trim();
     const tempId = `temp-${Date.now()}`;
-
- 
 
     try {
       // Create temp message
@@ -808,7 +794,6 @@ export function FloatingTutorChat() {
   const handleUpdateMessage = async (messageId: string) => {
     if (!editingText.trim() || !selectedConversation || !user) return;
 
-
     try {
       const result = await updateMessage({
         id: messageId,
@@ -850,7 +835,6 @@ export function FloatingTutorChat() {
 
   // Delete message
   const handleDeleteMessage = async (messageId: string) => {
-
     try {
       const result = await deleteMessage({
         id: messageId,
@@ -919,8 +903,7 @@ export function FloatingTutorChat() {
             id: messageId,
             data: { senderId: user.id },
           }).unwrap();
-        } catch (error) {
-        }
+        } catch (error) {}
       }
 
       // Clear local state
@@ -1405,7 +1388,6 @@ export function FloatingTutorChat() {
                                         Cancel
                                       </Button>
                                       <button
-                                       
                                         onClick={() =>
                                           handleUpdateMessage(message.id)
                                         }
