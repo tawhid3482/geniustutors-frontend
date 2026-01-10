@@ -267,7 +267,7 @@ export const API_ENDPOINTS = {
     CREATE: '/tutor-requests',
     GET_STUDENT_REQUESTS: '/tutor-requests/student',
     GET_ALL: '/tutor-requests',
-    GET_BY_ID: (id: string) => `/tutor-requests/${id}`,
+    // GET_BY_ID: (id: string) => `/tutor-requests/${id}`,
     UPDATE_STATUS: (id: string) => `/tutor-requests/${id}/status`,
     DELETE: (id: string) => `/tutor-requests/${id}`,
   },
