@@ -6,7 +6,6 @@ import { useAuth } from "@/contexts/AuthContext.next";
 import { TutorDashboard } from "@/components/tutor/TutorDashboard";
 import { SuperAdminDashboard } from "@/components/super-admin/SuperAdminDashboard";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
-import { ManagerDashboard } from "@/components/manager/ManagerDashboard";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -64,7 +63,6 @@ export default function DashboardPage() {
     <div className="w-full h-screen overflow-hidden">
       {role === "SUPER_ADMIN" && <SuperAdminDashboard user={user} />}
       {role === "ADMIN" && <AdminDashboard user={user} />}
-      {role === "MANAGER" && <ManagerDashboard user={user} />}
       {role === "TUTOR" && <TutorDashboard />}
       {/* Students are redirected to /student, so this should not render */}
       {(!role || role === "STUDENT_GUARDIAN") && (

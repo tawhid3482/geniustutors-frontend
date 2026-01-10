@@ -37,7 +37,7 @@ export const Navbar = ({
   onRegister,
   onLogout,
   LoginComponent,
-  RegisterComponent
+  RegisterComponent,
 }: NavbarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [websiteInfo, setWebsiteInfo] = useState({
@@ -74,8 +74,6 @@ export const Navbar = ({
   const handleDashboard = async () => {
     router.push("/dashboard");
   };
-
-
 
   return (
     <nav className="bg-background border-b border-border sticky top-0 z-50 backdrop-blur-sm">
@@ -147,20 +145,21 @@ export const Navbar = ({
                 {/* User Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="relative h-7 w-7 sm:h-8 sm:w-8 rounded-full"
-                    >
-                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8 border">
-                        <AvatarImage
-                          src={user?.avatar || undefined}
-                          alt={user?.fullName || "User"}
-                        />
-                        <AvatarFallback>
-                          {user?.fullName ? user.fullName.charAt(0) : "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
+                    <button className="relative h-7 w-7 sm:h-8 sm:w-8 rounded-full">
+                      <div className="h-7 w-7 sm:h-8 sm:w-8 border rounded-full">
+                        {user?.avatar ? (
+                          <img
+                            src={user?.avatar || undefined}
+                            // alt={user?.fullName || "User"}
+                            className="w-full h-full rounded-full"
+                          />
+                        ) : (
+                          <div>
+                            {user?.fullName ? user.fullName.charAt(0) : "U"}
+                          </div>
+                        )}
+                      </div>
+                    </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end" forceMount>
                     <DropdownMenuItem className="flex flex-col items-start">
@@ -203,7 +202,7 @@ export const Navbar = ({
                 {RegisterComponent ? (
                   <RegisterComponent>
                     <Button
-                    // onClick={handleRegistration}
+                      // onClick={handleRegistration}
                       variant="hero"
                       className="text-xs sm:text-sm px-2 sm:px-3 h-8 sm:h-9 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-semibold shadow-lg hover:shadow-green-500/25 transform hover:scale-105 hover:-translate-y-0.5 transition-all duration-300 ease-out border-0 hover:border-green-400"
                       data-auth-type="register"

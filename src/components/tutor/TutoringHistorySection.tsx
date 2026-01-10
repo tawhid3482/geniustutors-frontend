@@ -1,13 +1,11 @@
 "use client";
 
-import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext.next";
 import { useGetAllTutorsApplicationQuery } from "@/redux/features/application/applicationApi";
 import { useGetMYInfoQuery } from "@/redux/features/auth/authApi";
 import {
   History,
-  Search,
-  Filter,
+ 
   Calendar,
   Clock,
   User,
@@ -396,9 +394,9 @@ export function TutoringHistorySection() {
                     </p>
                   </div>
                   <Badge
-                    variant={userData.data.premium ? "default" : "outline"}
+                    variant={userData.data.genius ? "default" : "outline"}
                   >
-                    {userData.data.premium ? "Premium Tutor" : "Standard Tutor"}
+                    {userData.data.genius ? "Genius Tutor" : "Standard Tutor"}
                   </Badge>
                 </div>
                 <div className="flex flex-wrap gap-4 mt-3 text-sm">

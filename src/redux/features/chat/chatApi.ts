@@ -84,6 +84,26 @@ const ChatApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [tagTypes.Chat],
     }),
+
+     getUnseenMessageCount: builder.query({
+      query: (userId) => ({
+        url: `/chat/unseen-count/${userId}`,
+        method: "GET",
+      }),
+      providesTags: [tagTypes.Chat],
+    }),
+    
+    markConversationAsSeen: builder.mutation({
+      query: ({ conversationId, userId }) => ({
+        url: "/chat/mark-as-seen",
+        method: "POST",
+        body: { conversationId, userId },
+      }),
+      invalidatesTags: [tagTypes.Chat],
+    }),
+
+
+
   }),
 });
 
@@ -97,5 +117,7 @@ export const {
   useGetOrCreateConversationQuery,
   useGetUserConversationsQuery,
   useUpdateMessageMutation,
+  useGetUnseenMessageCountQuery,
+  useMarkConversationAsSeenMutation
   
 } = ChatApi;

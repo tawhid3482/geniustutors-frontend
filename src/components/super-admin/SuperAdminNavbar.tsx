@@ -12,7 +12,6 @@ import { Bell, Menu, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { NotificationDropdown } from "@/components/ui/NotificationDropdown";
 import { useState, useEffect } from "react";
 import { getWebsiteInfo } from "@/services/websiteService";
 
@@ -77,7 +76,6 @@ export const SuperAdminNavbar = ({ user, onLogout, onToggleSidebar, showMobileSi
             {user ? (
               <>
                 {/* Notification Dropdown */}
-                <NotificationDropdown userId={user.id} />
                 
                 {/* User Dropdown */}
                 <DropdownMenu>

@@ -75,17 +75,10 @@ import { StudentSearch } from "./StudentSearch";
 import { StudentProfile } from "./StudentProfile";
 import { StudentCourses } from "./StudentCourses";
 import { JoinCommunity } from "./JoinCommunity";
-import { DemoClassesSection } from "../DemoClassesSection";
 import GuardianNotesSection from "../GuardianNotesSection";
 
 // Import services
-import { taxonomyService } from "@/services/taxonomyService";
-import {
-  getLearningDashboard,
-  getMyEnrollments,
-  type LearningDashboard,
-  type CourseEnrollment,
-} from "@/services/courseService";
+
 import {
   tutorRequestService,
   type TutorRequest,
@@ -106,7 +99,6 @@ import { Label } from "@/components/ui/label";
 import { BANGLADESH_DISTRICTS_WITH_POST_OFFICES } from "@/data/bangladeshDistricts";
 
 // Import chat components
-import { FloatingStudentChat } from "../components/FloatingStudentChat";
 import { useStudentChat } from "@/hooks/useStudentChat";
 import { useGetAllTutorRequestsQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
 import { useGetAllTutorsQuery } from "@/redux/features/tutorHub/tutorHubApi";
@@ -133,7 +125,7 @@ export function StudentDashboardMain() {
   } = useStudentChat();
 
   // Dashboard state
-  const [dashboard, setDashboard] = useState<LearningDashboard | null>(null);
+  const [dashboard, setDashboard] = useState<any | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
 
   // Posted Jobs State
@@ -224,11 +216,6 @@ export function StudentDashboardMain() {
     },
   });
 
-  // Courses state
-  const [enrolledCourses, setEnrolledCourses] = useState<CourseEnrollment[]>(
-    []
-  );
-  const [isLoadingCourses, setIsLoadingCourses] = useState(false);
 
   // Search state
   const [filterSubject, setFilterSubject] = useState("");
@@ -417,152 +404,7 @@ export function StudentDashboardMain() {
     }
   }, []);
 
-  // Fetch tutors
-  const fetchTutors = useCallback(async () => {
-    setTutorLoading(true);
-    setTutorError(null);
-    try {
-      const params: any = {};
 
-      if (selectedSubject !== "all") {
-        params.subject = selectedSubject;
-      }
-
-      if (selectedDistrict !== "all") {
-        params.district = selectedDistrict;
-      }
-
-      if (selectedArea !== "all") {
-        params.area = selectedArea;
-      }
-
-      if (selectedPostOffice !== "all") {
-        params.postOffice = selectedPostOffice;
-      }
-
-      if (ratingFilter > 0) {
-        params.minRating = ratingFilter;
-      }
-
-      if (minExperience > 0) {
-        params.minExperience = minExperience;
-      }
-
-      if (selectedGender !== "all") {
-        params.gender = selectedGender;
-      }
-
-      if (selectedEducation !== "all") {
-        params.education = selectedEducation;
-      }
-
-      if (selectedAvailability !== "all") {
-        params.availability = selectedAvailability;
-      }
-
-      if (maxPrice) {
-        params.maxPrice = maxPrice;
-      }
-
-      if (geniusTutorOnly) {
-        params.premium = "yes";
-      }
-
-      if (verifiedTutorOnly) {
-        params.verified = 1;
-      }
-
-      if (sortBy) {
-        params.sortBy = sortBy;
-        params.sortOrder = sortOrder;
-      }
-
-      params.page = tutorCurrentPage;
-      params.limit = 6;
-
-      const response = await tutorService.getAllTutors(params);
-
-      if (response.success) {
-        setTutors(response.data);
-
-        if (response.pagination) {
-          setTutorTotalPages(response.pagination.pages);
-          setTutorTotalCount(response.pagination.total);
-        } else {
-          const expectedTotal = 30;
-          const limit = 6;
-          const calculatedPages = Math.ceil(expectedTotal / limit);
-          setTutorTotalPages(calculatedPages);
-          setTutorTotalCount(expectedTotal);
-        }
-      } else {
-        setTutorError("Failed to fetch tutors");
-        setTutors([]);
-      }
-    } catch (error) {
-      console.error("Error fetching tutors:", error);
-      setTutorError("Failed to fetch tutors. Please try again later.");
-      setTutors([]);
-    } finally {
-      setTutorLoading(false);
-    }
-  }, [
-    selectedSubject,
-    selectedDistrict,
-    selectedArea,
-    selectedPostOffice,
-    ratingFilter,
-    minExperience,
-    selectedGender,
-    selectedEducation,
-    selectedAvailability,
-    maxPrice,
-    sortBy,
-    sortOrder,
-    geniusTutorOnly,
-    verifiedTutorOnly,
-    tutorCurrentPage,
-  ]);
-
-  const loadTaxonomyData = async () => {
-    try {
-      const taxonomyData = await taxonomyService.getTaxonomyData();
-      // setCategories(taxonomyData.categories);
-
-      // // Extract all subjects and locations from categories
-      // const allSubjects = taxonomyData.categories.flatMap(cat => cat.subjects);
-      // const allLocations = taxonomyData.categories.flatMap(cat => cat.classLevels);
-
-      // setSubjects(allSubjects);
-      // setLocations(allLocations);
-    } catch (error) {
-      console.error("Error loading taxonomy data:", error);
-    }
-  };
-
-  const loadBookings = async () => {
-    // Mock data - replace with actual API call
-    setBookings([
-      {
-        id: "1",
-        tutorName: "Ahmed Khan",
-        subject: "Mathematics",
-        date: "2024-01-20",
-        time: "14:00",
-        status: "Confirmed",
-        amount: 25,
-      },
-      {
-        id: "2",
-        tutorName: "Fatima Rahman",
-        subject: "English",
-        date: "2024-01-22",
-        time: "16:00",
-        status: "Pending",
-        amount: 20,
-      },
-    ]);
-  };
 
   const loadProfileData = async () => {
     if (!user) return;
@@ -722,32 +564,13 @@ export function StudentDashboardMain() {
     }
   };
 
-  // const loadEnrolledCourses = async () => {
-  //   if (!user?.id) return;
 
-  //   try {
-  //     setIsLoadingCourses(true);
-  //     const response = await getMyEnrollments();
-  //     setEnrolledCourses(response.enrollments || []);
-  //   } catch (error) {
-  //     // console.error("Error loading enrolled courses:", error);
-  //     toast({
-  //       title: "Error",
-  //       description: "Failed to load your courses. Please try again.",
-  //       variant: "destructive",
-  //     });
-  //   } finally {
-  //     setIsLoadingCourses(false);
-  //   }
-  // };
 
   // Load initial data
   useEffect(() => {
     if (user) {
       // fetchDashboard();
-      loadTaxonomyData();
-      // fetchPostedJobs();
-      loadBookings();
+      fetchPostedJobs();
       loadProfileData();
       // loadEnrolledCourses();
     }
@@ -990,9 +813,7 @@ export function StudentDashboardMain() {
             )}
             {activeTab === "courses" && <StudentCourses />}
             {activeTab === "join-community" && <JoinCommunity />}
-            {activeTab === "demo-classes" && user?.id && (
-              <DemoClassesSection studentId={user.id} />
-            )}
+          
             {activeTab === "approval-letter" && user?.id && (
               <ApprovalLetterSection />
             )}

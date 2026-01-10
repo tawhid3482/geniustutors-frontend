@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext.next";
 import { tutorDashboardService } from "@/services/tutorDashboardService";
-import { noticeBoardService } from "@/services/noticeBoardService";
 import { useGetAllNoticeByRoleQuery } from "@/redux/features/notice/noticeApi";
 import {
   useGetMYInfoQuery,

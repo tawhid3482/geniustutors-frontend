@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Quote, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { getTestimonials, Testimonial } from "@/services/testimonialService";
 import { useGetAllTestimonialQuery } from "@/redux/features/testimonials/testimonialApi";
 
 export const TestimonialsSection = () => {

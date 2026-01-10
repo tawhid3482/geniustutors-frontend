@@ -55,40 +55,34 @@ export interface ICourseApiResponse {
   success?: boolean;
 }
 
+// types/common.ts
+export interface Conversation {
+  id: string;
+  members: string[];
+  messages: Message[];
+  users: User[];
+  updatedAt: string;
+  createdAt: string;
+  lastMessage?: Message;
+  unreadCount?: number;
+  unseenCount?: number;
+}
+
 export interface Message {
   id: string;
   text: string;
   senderId: string;
   conversationId: string;
+  isSeen: boolean;
+  seenAt?: string | null;
   createdAt: string;
-  sender?: {
-    id: string;
-    fullName: string;
-    avatar: string;
-    role: string;
-  };
-}
-
-export interface Conversation {
-  id: string;
-  members: string[];
-  messages: Message[];
-  users: Array<{
-    id: string;
-    fullName: string;
-    avatar: string;
-    role: string;
-    phone: string;
-  }>;
-  updatedAt: string;
-  lastMessage?: Message | null;
-  unreadCount?: number;
+  sender: User;
 }
 
 export interface User {
   id: string;
-  fullName: string;
+  fullName?: string;
   avatar?: string;
   role: string;
-  phone: string;
+  phone?: string;
 }

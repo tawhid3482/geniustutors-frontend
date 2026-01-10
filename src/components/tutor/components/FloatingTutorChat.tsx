@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -17,21 +18,13 @@ import {
   Maximize2,
   Minimize2,
   Search,
-  MoreVertical,
-  Paperclip,
-  Smile,
-  Image as ImageIcon,
+  UserPlus,
   Clock,
   CheckCheck,
-  UserPlus,
   Trash2,
   Edit,
-  Check,
-  X as XIcon,
-  AlertCircle,
   ChevronLeft,
-  Phone,
-  Video,
+  AlertCircle,
 } from "lucide-react";
 import { io, Socket } from "socket.io-client";
 import { formatDistanceToNow } from "date-fns";
@@ -45,7 +38,6 @@ import {
   useUpdateMessageMutation,
   useDeleteMessageMutation,
 } from "@/redux/features/chat/chatApi";
-import { User, Conversation, Message } from "@/types/common";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +46,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Conversation, Message, User } from "@/types/common";
 
 export function FloatingTutorChat() {
   const { user } = useAuth();
@@ -75,7 +68,7 @@ export function FloatingTutorChat() {
     refetch: refetchConversations,
   } = useGetUserConversationsQuery(userId!, {
     skip: !userId,
-    pollingInterval: 30000,
+    pollingInterval: 10000, // 10 seconds for real-time updates
   });
 
   const conversations: Conversation[] = conversationsData?.data || [];
@@ -105,7 +98,7 @@ export function FloatingTutorChat() {
     new Map()
   );
 
-  // Track sent message IDs to prevent duplicates
+  // Track sent message IDs
   const sentMessageIds = useRef<Set<string>>(new Set());
   const pendingMessages = useRef<
     Map<string, { tempId: string; timestamp: number }>
@@ -180,20 +173,16 @@ export function FloatingTutorChat() {
             phone: u.phone || "",
           }));
 
-        // Role-based filtering
         let filteredUsersList: User[] = [];
 
         if (user?.role === "ADMIN") {
-          // ADMIN can see all users
           filteredUsersList = allUsers;
         } else if (
           user?.role === "TUTOR" ||
           user?.role === "STUDENT_GUARDIAN"
         ) {
-          // TUTOR and STUDENT_GUARDIAN can only see ADMIN users
           const adminUsers = allUsers.filter((u: User) => u.role === "ADMIN");
 
-          // Get conversation users from existing conversations
           const conversationUserIds = new Set<string>();
           conversations.forEach((conv) => {
             conv.users.forEach((convUser) => {
@@ -203,12 +192,10 @@ export function FloatingTutorChat() {
             });
           });
 
-          // Get users from conversations
           const existingChatUsers = allUsers.filter((u: User) =>
             conversationUserIds.has(u.id)
           );
 
-          // Combine both and remove duplicates
           const combinedUsers = [...adminUsers, ...existingChatUsers];
           const uniqueUsers = Array.from(
             new Map(combinedUsers.map((user) => [user.id, user])).values()
@@ -229,7 +216,7 @@ export function FloatingTutorChat() {
     return [];
   }, [token, user, conversations, toast]);
 
-  // Load users on component mount and when conversations change
+  // Load users
   useEffect(() => {
     const loadUsers = async () => {
       if (user && token) {
@@ -263,7 +250,13 @@ export function FloatingTutorChat() {
     return fullNameMatch || roleMatch;
   });
 
-  // Socket connection with improved online/offline tracking
+  // Calculate total unseen messages
+  const totalUnseenMessages = conversations.reduce((total, conv) => {
+    const count = conv.unreadCount || conv.unseenCount || 0;
+    return total + count;
+  }, 0);
+
+  // Socket connection
   useEffect(() => {
     if (!user || !token || !isChatOpen) return;
 
@@ -283,13 +276,9 @@ export function FloatingTutorChat() {
     socketInstance.on("connect", () => {
       setSocketConnected(true);
 
-      // Join user room and register as online
       socketInstance.emit("joinUser", user.id);
-
-      // Request initial online users list
       socketInstance.emit("requestOnlineUsers");
 
-      // If there's a selected conversation, join it
       if (selectedConversation) {
         socketInstance.emit("joinConversation", selectedConversation.id);
       }
@@ -297,7 +286,7 @@ export function FloatingTutorChat() {
 
     socketInstance.on("disconnect", (reason) => {
       setSocketConnected(false);
-      setOnlineUsers(new Set()); // Clear online users on disconnect
+      setOnlineUsers(new Set());
     });
 
     socketInstance.on("connect_error", (error) => {
@@ -311,8 +300,6 @@ export function FloatingTutorChat() {
 
     socketInstance.on("reconnect", (attemptNumber) => {
       setSocketConnected(true);
-
-      // Rejoin rooms after reconnection
       socketInstance.emit("joinUser", user.id);
       socketInstance.emit("requestOnlineUsers");
 
@@ -321,36 +308,27 @@ export function FloatingTutorChat() {
       }
     });
 
-    // Receive initial online users list from server
     socketInstance.on("onlineUsersList", (userIds: string[]) => {
-      setOnlineUsers(new Set(userIds.filter((id) => id !== user.id))); // Exclude self
+      setOnlineUsers(new Set(userIds.filter((id) => id !== user.id)));
     });
 
-    // Another user came online
     socketInstance.on(
       "userOnline",
       (data: { userId: string; userInfo?: any }) => {
-        if (data.userId === user.id) return; // Skip self
+        if (data.userId === user.id) return;
 
         setOnlineUsers((prev) => new Set([...Array.from(prev), data.userId]));
 
-        // Update last seen time to now (since they're online)
         setLastSeenTimes((prev) => {
           const newMap = new Map(prev);
           newMap.set(data.userId, new Date().toISOString());
           return newMap;
         });
-
-        // Show notification if it's the user we're chatting with
-        if (selectedConversation) {
-          const otherUser = getOtherUser(selectedConversation);
-        }
       }
     );
 
-    // Another user went offline
     socketInstance.on("userOffline", (userId: string) => {
-      if (userId === user.id) return; // Skip self
+      if (userId === user.id) return;
 
       setOnlineUsers((prev) => {
         const newSet = new Set(prev);
@@ -358,22 +336,14 @@ export function FloatingTutorChat() {
         return newSet;
       });
 
-      // Record the time they went offline
       setLastSeenTimes((prev) => {
         const newMap = new Map(prev);
         newMap.set(userId, new Date().toISOString());
         return newMap;
       });
-
-      // Show notification if it's the user we're chatting with
-      if (selectedConversation) {
-        const otherUser = getOtherUser(selectedConversation);
-      }
     });
 
-    // Handle incoming messages from OTHER users only
     socketInstance.on("receiveMessage", (message: Message) => {
-      // Skip if this is my own message
       if (message.senderId === user.id) {
         return;
       }
@@ -383,7 +353,6 @@ export function FloatingTutorChat() {
 
       if (isViewingThisConversation) {
         setMessages((prev) => {
-          // Check if message already exists
           const exists = prev.some((m) => m.id === message.id);
           if (exists) {
             return prev.map((m) => (m.id === message.id ? message : m));
@@ -394,23 +363,16 @@ export function FloatingTutorChat() {
         scrollToBottom();
       }
 
-      // Always update conversations list
       refetchConversations();
     });
 
-    // Handle confirmation of sent messages (MY messages)
     socketInstance.on(
       "messageSent",
       ({ tempId, realMessage }: { tempId: string; realMessage: Message }) => {
         setIsSending(false);
-
-        // Mark this message as sent
         sentMessageIds.current.add(realMessage.id);
-
-        // Remove from pending messages
         pendingMessages.current.delete(tempId);
 
-        // Replace temp message with real message
         setMessages((prev) => {
           const newMessages = prev.map((msg) => {
             if (msg.id === tempId) {
@@ -419,7 +381,6 @@ export function FloatingTutorChat() {
             return msg;
           });
 
-          // If temp message not found (edge case), add the real message
           if (!prev.some((msg) => msg.id === tempId)) {
             return [...prev, realMessage];
           }
@@ -427,7 +388,6 @@ export function FloatingTutorChat() {
           return newMessages;
         });
 
-        // Update conversations
         refetchConversations();
       }
     );
@@ -436,11 +396,7 @@ export function FloatingTutorChat() {
       "messageError",
       ({ error, tempId }: { error: string; tempId: string }) => {
         setIsSending(false);
-
-        // Remove from pending messages
         pendingMessages.current.delete(tempId);
-
-        // Remove temp message
         setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
         toast({
           title: "Error",
@@ -486,30 +442,70 @@ export function FloatingTutorChat() {
       }
     );
 
+    // New events for unseen count
+    socketInstance.on("messagesSeen", (data: {
+      conversationId: string,
+      messageIds: string[],
+      seenBy: string,
+      seenAt: string
+    }) => {
+      if (selectedConversation?.id === data.conversationId) {
+        setMessages(prev => prev.map(msg => {
+          if (data.messageIds.includes(msg.id)) {
+            return { ...msg, isSeen: true, seenAt: data.seenAt };
+          }
+          return msg;
+        }));
+      }
+      
+      refetchConversations();
+    });
+
+    socketInstance.on("newMessageNotification", (data: {
+      conversationId: string,
+      message: Message,
+      sender: any,
+      unseenCount: number
+    }) => {
+      refetchConversations();
+      
+      if (selectedConversation?.id !== data.conversationId) {
+        toast({
+          title: "New Message",
+          description: `New message from ${data.sender.fullName}`,
+        });
+      }
+    });
+
+    socketInstance.on("totalUnseenCount", (totalUnseen: number) => {
+      // You can use this to update UI
+      console.log('Total unseen messages:', totalUnseen);
+    });
+
+    socketInstance.on("conversationsUpdate", (conversations: Conversation[]) => {
+      // If you want to update conversations directly
+      // You might need to manage this in a different way
+    });
+
     setSocket(socketInstance);
 
-    // Set up heartbeat interval
     heartbeatIntervalRef.current = setInterval(() => {
       if (socketInstance.connected && user) {
-        // Send heartbeat to keep connection alive and show we're online
         socketInstance.emit("heartbeat", {
           userId: user.id,
           timestamp: Date.now(),
         });
 
-        // Request updated online users list every 30 seconds
         socketInstance.emit("requestOnlineUsers");
       }
     }, 30000);
 
     return () => {
-      // Clear heartbeat interval
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
       }
 
       if (socketInstance.connected) {
-        // Notify server that user is disconnecting
         socketInstance.emit("userDisconnecting", user.id);
         socketInstance.disconnect();
       }
@@ -533,7 +529,6 @@ export function FloatingTutorChat() {
         if (data.timestamp < thirtySecondsAgo) {
           pendingMessages.current.delete(tempId);
 
-          // Also remove from UI if still there
           setMessages((prev) =>
             prev.filter(
               (msg) => !msg.id.startsWith("temp-") || msg.id !== tempId
@@ -541,7 +536,7 @@ export function FloatingTutorChat() {
           );
         }
       });
-    }, 10000); // Check every 10 seconds
+    }, 10000);
 
     return () => clearInterval(interval);
   }, []);
@@ -549,7 +544,6 @@ export function FloatingTutorChat() {
   // Load messages when conversation is selected
   useEffect(() => {
     if (selectedConversation && messagesData?.data) {
-      // Filter out any temp messages for this conversation
       const filteredMessages = messagesData.data.filter(
         (msg: any) =>
           !msg.id.startsWith("temp-") ||
@@ -559,7 +553,6 @@ export function FloatingTutorChat() {
       setMessages(filteredMessages);
       scrollToBottom();
 
-      // On mobile, show chat window when conversation is selected
       if (isMobile) {
         setShowConversationList(false);
       }
@@ -570,19 +563,16 @@ export function FloatingTutorChat() {
   const handleTyping = useCallback(() => {
     if (!socket || !selectedConversation || !user) return;
 
-    // Emit typing event
     socket.emit("typing", {
       conversationId: selectedConversation.id,
       userId: user.id,
       isTyping: true,
     });
 
-    // Clear previous timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Set timeout to stop typing indicator after 2 seconds
     typingTimeoutRef.current = setTimeout(() => {
       socket.emit("typing", {
         conversationId: selectedConversation.id,
@@ -604,7 +594,6 @@ export function FloatingTutorChat() {
     }
 
     try {
-      // Use get-or-create endpoint
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/chat/get-or-create/${user.id}/${targetUser.id}`,
         {
@@ -624,22 +613,18 @@ export function FloatingTutorChat() {
       if (data.success) {
         const conversation = data.data;
 
-        // Leave previous conversation room if any
         if (socket && selectedConversation) {
           socket.emit("leaveConversation", selectedConversation.id);
         }
 
-        // Join new conversation room
         if (socket) {
           socket.emit("joinConversation", conversation.id);
         }
 
-        // Set conversation with messages
         setSelectedConversation(conversation);
         setMessages(conversation.messages || []);
         setShowUsersList(false);
 
-        // Add user to filteredUsers if not already there
         setFilteredUsers((prev) => {
           const exists = prev.some((u) => u.id === targetUser.id);
           return exists ? prev : [...prev, targetUser];
@@ -674,28 +659,35 @@ export function FloatingTutorChat() {
       });
     }
 
-    // Leave previous conversation room if any
+    // Leave previous conversation
     if (socket && selectedConversation) {
       socket.emit("leaveConversation", selectedConversation.id);
     }
 
-    // Join new conversation room
+    // Join new conversation
     if (socket) {
       socket.emit("joinConversation", conversation.id);
     }
 
-    // Set conversation
+    // Mark messages as seen if there are unseen messages
+    const unseenCount = conversation.unreadCount || conversation.unseenCount || 0;
+    if (unseenCount > 0 && socket) {
+      socket.emit("markMessagesAsSeen", {
+        conversationId: conversation.id,
+        userId: user?.id,
+      });
+    }
+
     setSelectedConversation(conversation);
     setShowUsersList(false);
     setEditingMessageId(null);
 
-    // On mobile, hide conversation list
     if (isMobile) {
       setShowConversationList(false);
     }
 
-    // Fetch messages for this conversation
     refetchMessages();
+    refetchConversations();
   };
 
   // Send message
@@ -710,8 +702,7 @@ export function FloatingTutorChat() {
     const tempId = `temp-${Date.now()}`;
 
     try {
-      // Create temp message
-      const tempMessage: Message = {
+      const tempMessage: any = {
         id: tempId,
         text: messageText,
         senderId: user.id,
@@ -725,12 +716,10 @@ export function FloatingTutorChat() {
         },
       };
 
-      // Add temp message to UI immediately
       setMessages((prev) => [...prev, tempMessage]);
       setNewMessage("");
       setIsSending(true);
 
-      // Track as pending message
       pendingMessages.current.set(tempId, {
         tempId,
         timestamp: Date.now(),
@@ -738,7 +727,6 @@ export function FloatingTutorChat() {
 
       scrollToBottom();
 
-      // Send typing stopped event
       if (socket) {
         socket.emit("typing", {
           conversationId: selectedConversation.id,
@@ -747,7 +735,6 @@ export function FloatingTutorChat() {
         });
       }
 
-      // Send via socket
       if (socket) {
         socket.emit("sendMessage", {
           conversationId: selectedConversation.id,
@@ -756,7 +743,6 @@ export function FloatingTutorChat() {
           tempId: tempId,
         });
       } else {
-        // Fallback: Send via RTK Query if socket not connected
         const result = await sendMessage({
           conversationId: selectedConversation.id,
           senderId: user.id,
@@ -764,19 +750,15 @@ export function FloatingTutorChat() {
         }).unwrap();
 
         if (result.success) {
-          // Replace temp message with real message
           setMessages((prev) =>
             prev.map((msg) => (msg.id === tempId ? result.data : msg))
           );
           sentMessageIds.current.add(result.data.id);
           pendingMessages.current.delete(tempId);
-
-          // Update conversations list
           refetchConversations();
         }
       }
     } catch (error: any) {
-      // Remove temp message on error
       setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
       pendingMessages.current.delete(tempId);
 
@@ -800,12 +782,10 @@ export function FloatingTutorChat() {
       }).unwrap();
 
       if (result.success) {
-        // Update local state
         setMessages((prev) =>
           prev.map((msg) => (msg.id === messageId ? result.data : msg))
         );
 
-        // Send via socket for real-time update
         if (socket) {
           socket.emit("updateMessage", {
             messageId,
@@ -841,10 +821,8 @@ export function FloatingTutorChat() {
       }).unwrap();
 
       if (result.success) {
-        // Update local state
         setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
 
-        // Send via socket for real-time update
         if (socket && selectedConversation) {
           socket.emit("deleteMessage", {
             messageId,
@@ -892,10 +870,8 @@ export function FloatingTutorChat() {
     if (!confirm) return;
 
     try {
-      // Get all message IDs
       const messageIds = messages.map((msg) => msg.id);
 
-      // Delete all messages one by one
       for (const messageId of messageIds) {
         try {
           await deleteMessage({
@@ -905,7 +881,6 @@ export function FloatingTutorChat() {
         } catch (error) {}
       }
 
-      // Clear local state
       setMessages([]);
       refetchConversations();
 
@@ -957,23 +932,21 @@ export function FloatingTutorChat() {
     return conversation.users.find((u) => u.id !== userId);
   };
 
-  // Check if user is online - FIXED VERSION
+  // Check if user is online
   const isUserOnline = (userId: string) => {
-    // Always return false for self
     if (userId === user?.id) return false;
-
     return onlineUsers.has(userId);
   };
 
   // Get user's last seen time
   const getUserLastSeen = (userId: string): string | null => {
     if (isUserOnline(userId)) {
-      return null; // User is online, no last seen needed
+      return null;
     }
     return lastSeenTimes.get(userId) || null;
   };
 
-  // Get online status component - IMPROVED
+  // Get online status component
   const getOnlineStatus = (otherUser?: User) => {
     if (!otherUser) return null;
 
@@ -1035,14 +1008,9 @@ export function FloatingTutorChat() {
           size="icon"
         >
           <MessageSquare className="h-6 w-6 text-white" />
-          {conversations.some(
-            (conv) => conv.unreadCount && conv.unreadCount > 0
-          ) && (
+          {totalUnseenMessages > 0 && (
             <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center p-0">
-              {conversations.reduce(
-                (total, conv) => total + (conv.unreadCount || 0),
-                0
-              )}
+              {totalUnseenMessages}
             </Badge>
           )}
         </Button>
@@ -1084,18 +1052,12 @@ export function FloatingTutorChat() {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                {conversations.some(
-                  (conv) => conv.unreadCount && conv.unreadCount > 0
-                ) && (
+                {totalUnseenMessages > 0 && (
                   <Badge
                     variant="secondary"
                     className="bg-white text-green-600"
                   >
-                    {conversations.reduce(
-                      (total, conv) => total + (conv.unreadCount || 0),
-                      0
-                    )}{" "}
-                    new
+                    {totalUnseenMessages} new
                   </Badge>
                 )}
                 {!isMobile && (
@@ -1187,15 +1149,18 @@ export function FloatingTutorChat() {
                         const lastSeen = otherUser
                           ? getUserLastSeen(otherUser.id)
                           : null;
-                        const unreadCount = conversation.unreadCount || 0;
-
+                        
+                        // unseenCount এবং unreadCount দুটোই চেক করুন
+                        const unseenCount = conversation.unreadCount || conversation.unseenCount || 0;
+                        const hasUnseenMessages = unseenCount > 0;
+                        
                         return (
                           <div
                             key={conversation.id}
-                            className="p-3 border-b hover:bg-gray-50 cursor-pointer transition-colors"
-                            onClick={() =>
-                              handleSelectConversation(conversation)
-                            }
+                            className={`p-3 border-b hover:bg-gray-50 cursor-pointer transition-colors ${
+                              hasUnseenMessages ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                            }`}
+                            onClick={() => handleSelectConversation(conversation)}
                           >
                             <div className="flex items-start space-x-3">
                               <div className="relative">
@@ -1214,12 +1179,14 @@ export function FloatingTutorChat() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex justify-between items-start">
                                   <div className="flex items-center">
-                                    <h4 className="font-semibold text-sm truncate">
+                                    <h4 className={`font-semibold text-sm truncate ${
+                                      hasUnseenMessages ? 'font-bold text-blue-700' : ''
+                                    }`}>
                                       {otherUser?.fullName || "Unknown User"}
                                     </h4>
-                                    {unreadCount > 0 && (
-                                      <Badge className="ml-2 bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center p-0">
-                                        {unreadCount}
+                                    {hasUnseenMessages && (
+                                      <Badge className="ml-2 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center p-0">
+                                        {unseenCount}
                                       </Badge>
                                     )}
                                   </div>
@@ -1231,7 +1198,9 @@ export function FloatingTutorChat() {
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-sm text-gray-500 truncate mt-1">
+                                <p className={`text-sm truncate mt-1 ${
+                                  hasUnseenMessages ? 'text-blue-600 font-medium' : 'text-gray-500'
+                                }`}>
                                   {conversation.lastMessage?.text ||
                                     "No messages yet"}
                                 </p>
@@ -1269,7 +1238,7 @@ export function FloatingTutorChat() {
               ) : (
                 /* Chat Window */
                 <div className="flex-1 flex flex-col w-full">
-                  {/* Chat Header - FIXED */}
+                  {/* Chat Header */}
                   <div className="p-3 border-b flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <Button
@@ -1386,14 +1355,14 @@ export function FloatingTutorChat() {
                                       >
                                         Cancel
                                       </Button>
-                                      <button
+                                      <Button
                                         onClick={() =>
                                           handleUpdateMessage(message.id)
                                         }
                                         className="h-6 px-2 text-xs bg-yellow-300  rounded text-black"
                                       >
                                         Update
-                                      </button>
+                                      </Button>
                                     </div>
                                   </div>
                                 ) : (
@@ -1573,7 +1542,6 @@ export function FloatingTutorChat() {
                         onChange={(e) => {
                           const value = e.target.value.toLowerCase();
                           setSearchQuery(e.target.value);
-                          // Filter users locally
                           getAllUsers().then((users) => {
                             const filtered = users.filter(
                               (user) =>

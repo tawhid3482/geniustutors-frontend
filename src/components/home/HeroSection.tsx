@@ -7,7 +7,6 @@ import { useState, useEffect, useRef, MouseEvent, TouchEvent } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeProvider";
-import { heroDataService, Division, TutorDivision } from "@/services/heroDataService";
 import { useGetAllAreaTutorsQuery } from "@/redux/features/area/areaApi";
 import { useGetAllDistrictsJobsQuery } from "@/redux/features/district/districtApi";
 
@@ -26,8 +25,8 @@ export const HeroSection = () => {
   const [currentTutor, setCurrentTutor] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isTutorPaused, setIsTutorPaused] = useState(false);
-  const [divisions, setDivisions] = useState<Division[]>([]);
-  const [tutorDivisions, setTutorDivisions] = useState<TutorDivision[]>([]);
+  const [divisions, setDivisions] = useState<any[]>([]);
+  const [tutorDivisions, setTutorDivisions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const slideInterval = useRef<NodeJS.Timeout | null>(null);
   const slidesPerView = { 
@@ -85,7 +84,7 @@ export const HeroSection = () => {
   useEffect(() => {
     if (districtJobsData?.data && Array.isArray(districtJobsData?.data)) {
       
-      const processedDivisions: Division[] = districtJobsData?.data?.map((district: any) => ({
+      const processedDivisions: any[] = districtJobsData?.data?.map((district: any) => ({
         id: district.id,
         name: district.name,
         count: district.count,

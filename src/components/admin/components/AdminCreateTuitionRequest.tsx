@@ -41,7 +41,6 @@ import {
   X,
   Plus,
 } from "lucide-react";
-import { taxonomyService, Category } from "@/services/taxonomyService";
 import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
 import { useCreateTutorRequestsMutation } from "@/redux/features/tutorRequest/tutorRequestApi";
 import { useGetAllDistrictsQuery } from "@/redux/features/district/districtApi";
@@ -123,7 +122,7 @@ export default function AdminCreateTuitionRequest() {
   });
 
   // Taxonomy data
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [isLoadingTaxonomy, setIsLoadingTaxonomy] = useState(false);

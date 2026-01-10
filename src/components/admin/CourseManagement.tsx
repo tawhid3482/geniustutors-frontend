@@ -154,7 +154,7 @@ export default function CourseManagement() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  
+
   // Tag input state
   const [tagInput, setTagInput] = useState("");
 
@@ -487,7 +487,6 @@ export default function CourseManagement() {
   };
 
   const handleDeleteCourse = async (course: Course) => {
-
     try {
       const result = await deleteCourseMutation(course.id).unwrap();
 
@@ -548,7 +547,6 @@ export default function CourseManagement() {
   };
 
   const handleDeleteEnrollment = async (enrollment: Enrollment) => {
-
     try {
       const result = await deleteEnrollmentMutation(enrollment.id).unwrap();
 
@@ -892,7 +890,11 @@ export default function CourseManagement() {
                 onChange={(e) => handleFileUpload(e, "thumbnail_url")}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
-              <Button type="button" variant="outline" className="whitespace-nowrap">
+              <Button
+                type="button"
+                variant="outline"
+                className="whitespace-nowrap"
+              >
                 <Upload className="h-4 w-4 mr-2" />
                 Upload
               </Button>
@@ -914,7 +916,9 @@ export default function CourseManagement() {
           <Input
             type="text"
             value={courseForm.video_intro_url}
-            onChange={(e) => handleInputChange("video_intro_url", e.target.value)}
+            onChange={(e) =>
+              handleInputChange("video_intro_url", e.target.value)
+            }
             placeholder="https://youtube.com/embed/..."
           />
         </div>
@@ -939,7 +943,9 @@ export default function CourseManagement() {
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             placeholder="Enter a tag and press Add"
-            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddTag())}
+            onKeyDown={(e) =>
+              e.key === "Enter" && (e.preventDefault(), handleAddTag())
+            }
           />
           <Button type="button" onClick={handleAddTag} variant="outline">
             <Tag className="h-4 w-4 mr-2" />
@@ -980,7 +986,9 @@ export default function CourseManagement() {
         <Textarea
           id="learning_outcomes"
           value={courseForm.learning_outcomes}
-          onChange={(e) => handleInputChange("learning_outcomes", e.target.value)}
+          onChange={(e) =>
+            handleInputChange("learning_outcomes", e.target.value)
+          }
           placeholder="What will students learn from this course..."
           rows={3}
         />
@@ -993,7 +1001,10 @@ export default function CourseManagement() {
           variant="outline"
           size="sm"
           onClick={() =>
-            handleInputChange("certificate_available", !courseForm.certificate_available)
+            handleInputChange(
+              "certificate_available",
+              !courseForm.certificate_available
+            )
           }
           className="flex items-center gap-2"
         >
@@ -1014,7 +1025,9 @@ export default function CourseManagement() {
       <div className="flex justify-end space-x-2 pt-4">
         <Button
           variant="outline"
-          onClick={() => isEdit ? setIsEditDialogOpen(false) : setIsCreateDialogOpen(false)}
+          onClick={() =>
+            isEdit ? setIsEditDialogOpen(false) : setIsCreateDialogOpen(false)
+          }
         >
           Cancel
         </Button>
@@ -1023,7 +1036,13 @@ export default function CourseManagement() {
           disabled={isEdit ? isUpdating : isCreating}
         >
           <Save className="h-4 w-4 mr-2" />
-          {isEdit ? (isUpdating ? "Updating..." : "Update Course") : (isCreating ? "Creating..." : "Create Course")}
+          {isEdit
+            ? isUpdating
+              ? "Updating..."
+              : "Update Course"
+            : isCreating
+            ? "Creating..."
+            : "Create Course"}
         </Button>
       </div>
     </div>
@@ -1042,31 +1061,13 @@ export default function CourseManagement() {
               Manage your courses and student enrollments
             </p>
           </div>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => {
-                refetchCourses();
-                refetchEnrollments();
-              }}
-              disabled={coursesLoading || enrollmentsLoading}
-            >
-              <RefreshCw
-                className={`h-4 w-4 mr-2 ${
-                  coursesLoading ? "animate-spin" : ""
-                }`}
-              />
-              Refresh
-            </Button>
+          <div className="flex justify-between items-center ">
             <Dialog
               open={isCreateDialogOpen}
               onOpenChange={setIsCreateDialogOpen}
             >
               <DialogTrigger asChild>
-                <Button onClick={resetForm}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Course
-                </Button>
+                <Button onClick={resetForm}>Create Course</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
@@ -1140,8 +1141,11 @@ export default function CourseManagement() {
               </div>
             </div>
             <div className="mt-2 text-xs text-gray-600">
-              Average: {stats.totalCourses > 0 ? (stats.totalHours / stats.totalCourses).toFixed(1) : 0}h per
-              course
+              Average:{" "}
+              {stats.totalCourses > 0
+                ? (stats.totalHours / stats.totalCourses).toFixed(1)
+                : 0}
+              h per course
             </div>
           </CardContent>
         </Card>

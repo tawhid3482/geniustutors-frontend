@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DashboardSidebar } from '@/components/layout/DashboardSidebar';
 import { DashboardNavbar } from '@/components/layout/DashboardNavbar';
 import { Menu, X, BarChart3, Users, Settings, User, LogOut } from 'lucide-react';
-import UserRoleSection from './sections/UserRoleSection';
-import PlatformControlSection from './sections/PlatformControlSection';
+
 import DashboardOverview from './sections/DashboardOverview';
 import ProfileSection from './sections/ProfileSection';
 import { useSuperAdminDashboard } from '@/hooks/useSuperAdminDashboard';
@@ -18,19 +17,16 @@ import ManageDistrict from '../admin/components/ManageDistrict';
 import { ReviewManagementSection } from '../admin/components/ReviewManagementSection';
 import { PaymentManagementSection } from '../admin/components/PaymentManagementSection';
 import CourseManagement from '../admin/CourseManagement';
-import { DemoClassesSection } from '../tutor/DemoClassesSection';
 import Category from '../admin/components/Category';
 import { TutoringHistorySection } from '../tutor/TutoringHistorySection';
 import { NoticeBoardSection } from '../admin/sections/NoticeBoardSection';
 import ApprovalLettersManagement from '../admin/sections/ApprovalLettersManagement';
 import ConfirmationLettersManagement from '../tutor/dashboard/ConfirmationLetterSection';
-import AdminNotesSection from '../admin/AdminNotesSection';
 import PaymentAccount from '../admin/components/PaymentAccount';
 import AppointmentLetter from '../admin/components/AppointmentLetter';
 import TutorDocument from '../admin/sections/TutorDocument';
 import { TestimonialsManagement } from '../admin/TestimonialsManagement';
 import { VideoTestimonialsManagement } from '../admin/VideoTestimonialsManagement';
-import FeaturedMediaManagement from '../admin/FeaturedMediaManagement';
 import { TuitionJobsSection } from '../admin/sections/TuitionJobsSection';
 import AllAppointment from '../admin/components/AllAppointment';
 import AdminCreateTuitionRequest from '../admin/components/AdminCreateTuitionRequest';
@@ -171,12 +167,7 @@ export function SuperAdminDashboard({ user }: { user: any }) {
   // Render demo classes section
 
 
-  // Render platform control section
-  const renderPlatformControl = () => {
-    return (
-      <PlatformControlSection />
-    );
-  };
+
 
   // Render taxonomy management section
   const renderTaxonomyManagement = () => {
@@ -207,10 +198,7 @@ export function SuperAdminDashboard({ user }: { user: any }) {
     return <ConfirmationLettersManagement />;
   };
 
-  // Render admin notes section
-  const renderNotes = () => {
-    return <AdminNotesSection />;
-  };
+
   const renderPaymentAccount = () => {
     return <PaymentAccount />;
   };
@@ -277,8 +265,7 @@ export function SuperAdminDashboard({ user }: { user: any }) {
             {activeTab === "tutor-connect" && renderTuitionConnection()}
             {activeTab === "users" && renderUserManagement()}
             {activeTab === "tutors" && renderTutorManagement()}
-            {/* {activeTab === "tutor-applications" && <ContactRequests />}
-            {activeTab === "upgrade-applications" && renderUpgradeApplicationsManagement()} */}
+            
             {activeTab === "upgrade-packages" && renderUpgradePackagesManagement()}
             {activeTab === "district" && renderDistrictManagement()}
             {activeTab === "reviews" && renderReviewManagement()}
@@ -287,15 +274,12 @@ export function SuperAdminDashboard({ user }: { user: any }) {
             {activeTab === "courses" && renderCourseManagement()}
             {activeTab === "testimonials" && <TestimonialsManagement />}
             {activeTab === "video-testimonials" && <VideoTestimonialsManagement />}
-            {activeTab === "featured-media" && <FeaturedMediaManagement />}
             {/* {activeTab === "permission-assignment" && renderPermissionAssignment()} */}
-            {activeTab === "seo-analytics" && renderPlatformControl()}
             {activeTab === "taxonomy" && renderTaxonomyManagement()}
             {activeTab === "history" && renderHistory()}
             {activeTab === "notice-board" && renderNoticeBoard()}
             {activeTab === "approval-letter" && renderApprovalLetters()}
             {activeTab === "confirmation-letter" && renderConfirmationLetters()}
-            {activeTab === "notes" && renderNotes()}
             {activeTab === "appointment-letter" && renderAppointmentLetter()}
             {activeTab === "payment-account" && renderPaymentAccount()}
             {activeTab === "tuition-jobs" && <TuitionJobsSection />}

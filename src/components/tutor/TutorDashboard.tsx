@@ -1,49 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { DashboardSidebar } from '@/components/layout/DashboardSidebar';
-import { DashboardNavbar } from '@/components/layout/DashboardNavbar';
-import { Menu, X } from 'lucide-react';
-import ProfileSection from './ProfileSection';
-import TutorAssignmentsSection from './TutorAssignmentsSection';
-import { DemoClassesSection } from './DemoClassesSection';
-import { FloatingTutorChat } from './components/FloatingTutorChat';
-import { ReviewsSection } from './ReviewsSection';
-import SubscriptionSection from './SubscriptionSection';
-import EnhancedUpgradeSection from './EnhancedUpgradeSection';
-import CourseManagementSection from './CourseManagementSection';
-import ApplicationSection from './ApplicationSection';
-import { JoinCommunity } from './JoinCommunity';
-import { useAuth } from '@/contexts/AuthContext.next';
-import { useToast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
-import { API_BASE_URL } from '@/config/api';
-import { tutorChatService } from '@/services/tutorChatService';
-import { ChatContact, ChatMessage } from '@/types/student';
-import { useTutorChat } from '@/hooks/useTutorChat';
+import React, { useState, useEffect, useRef } from "react";
+import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
+import { DashboardNavbar } from "@/components/layout/DashboardNavbar";
+import { Menu, X } from "lucide-react";
+import ProfileSection from "./ProfileSection";
+import { FloatingTutorChat } from "./components/FloatingTutorChat";
+import { ReviewsSection } from "./ReviewsSection";
+import EnhancedUpgradeSection from "./EnhancedUpgradeSection";
+import { JoinCommunity } from "./JoinCommunity";
+import { useAuth } from "@/contexts/AuthContext.next";
+import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
 
 // Import dashboard sections
 import {
   DashboardSection,
   JobsSection,
-  ChatSection,
   NotificationsSection,
   ConfirmationLetterSection,
   NoteSection,
-  SettingsSection
-} from './dashboard';
+  SettingsSection,
+} from "./dashboard";
 
 // Import new sections
-import { TutoringHistorySection } from './TutoringHistorySection';
-import { PaymentSection } from './PaymentSection';
-import StudentApply from './dashboard/StudentApply';
-import MyDocument from './dashboard/MyDocument';
-import MyStudents from './dashboard/MyStudents';
-
-
+import { TutoringHistorySection } from "./TutoringHistorySection";
+import { PaymentSection } from "./PaymentSection";
+import StudentApply from "./dashboard/StudentApply";
+import MyDocument from "./dashboard/MyDocument";
+import MyStudents from "./dashboard/MyStudents";
 
 export function TutorDashboard() {
   // Add CSS for enhanced scrolling
   React.useEffect(() => {
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       /* Hide scrollbar for Chrome, Safari and Opera */
       .hide-scrollbar::-webkit-scrollbar {
@@ -80,57 +68,49 @@ export function TutorDashboard() {
       }
     `;
     document.head.appendChild(style);
-    
+
     return () => {
       document.head.removeChild(style);
     };
   }, []);
 
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
   // Close mobile sidebar when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (showMobileSidebar && !target.closest('.mobile-sidebar')) {
+      if (showMobileSidebar && !target.closest(".mobile-sidebar")) {
         setShowMobileSidebar(false);
       }
     };
 
     if (showMobileSidebar) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showMobileSidebar]);
 
   const { signOut, user } = useAuth();
   const { toast } = useToast();
 
-
   // Initialize chat functionality
-  const {
-    chatContacts,
-    chatMessages,
-    selectedChat,
-    newMessage,
-    setSelectedChat,
-    setNewMessage,
-    sendMessage,
-  } = useTutorChat();
+
 
   const handleLogout = async () => {
     try {
       await signOut();
       toast({
-        title: 'Logged out',
-        description: 'You have been successfully logged out.',
+        title: "Logged out",
+        description: "You have been successfully logged out.",
       });
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to logout. Please try again.',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to logout. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -149,10 +129,10 @@ export function TutorDashboard() {
               <span className="text-lg font-bold text-gray-900">Tutor</span>
             </div>
           </div>
-          
+
           {/* Sidebar Content */}
           <div className="flex-1 overflow-y-auto">
-            <DashboardSidebar 
+            <DashboardSidebar
               activeTab={activeTab}
               onTabChange={setActiveTab}
               onLogout={handleLogout}
@@ -165,36 +145,33 @@ export function TutorDashboard() {
       {/* Main Content Area */}
       <div className="md:pl-64 lg:pl-80 flex flex-col flex-1 min-w-0 w-full">
         {/* Sticky Navbar */}
-        <DashboardNavbar 
+        <DashboardNavbar
           user={{
             id: user?.id,
-            fullName: user?.fullName || 'Tutor',
-            email: user?.email || '',
-            role: 'TUTOR',
-            avatar: user?.avatar
-          }} 
+            fullName: user?.fullName || "Tutor",
+            email: user?.email || "",
+            role: "TUTOR",
+            avatar: user?.avatar,
+          }}
           onLogout={handleLogout}
           onToggleSidebar={() => setShowMobileSidebar(!showMobileSidebar)}
           showMobileSidebar={showMobileSidebar}
         />
-        
+
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 w-full main-content">
           <div className="w-full max-w-none content-container">
             {activeTab === "profile" && <ProfileSection />}
             {activeTab === "dashboard" && <DashboardSection />}
-            {activeTab === "courses" && <CourseManagementSection />}
             {activeTab === "jobs" && <JobsSection />}
-            {activeTab === "applications" && <ApplicationSection />}
-            
-            {activeTab === "chat" && <ChatSection />}
+
             {activeTab === "reviews" && <ReviewsSection />}
             {activeTab === "studentApply" && <StudentApply />}
-            {activeTab === "assignments" && <TutorAssignmentsSection />}
-            {activeTab === "demo-classes" && <DemoClassesSection tutorId={user?.id || ''} />}
             {activeTab === "subscription" && <EnhancedUpgradeSection />}
             {activeTab === "notifications" && <NotificationsSection />}
-            {activeTab === "confirmation-letter" && <ConfirmationLetterSection />}
+            {activeTab === "confirmation-letter" && (
+              <ConfirmationLetterSection />
+            )}
             {activeTab === "tutoring-history" && <TutoringHistorySection />}
             {activeTab === "payment-section" && <PaymentSection />}
             {activeTab === "genius-verification" && <EnhancedUpgradeSection />}
@@ -203,20 +180,24 @@ export function TutorDashboard() {
             {activeTab === "settings" && <SettingsSection />}
             {activeTab === "document" && <MyDocument />}
             {activeTab === "my-student" && <MyStudents />}
-
           </div>
         </main>
       </div>
 
       {/* Mobile Sidebar Overlay */}
       {showMobileSidebar && (
-        <div className="fixed inset-0 bg-black/50 z-50 md:hidden" onClick={() => setShowMobileSidebar(false)}>
-          <aside 
+        <div
+          className="fixed inset-0 bg-black/50 z-50 md:hidden"
+          onClick={() => setShowMobileSidebar(false)}
+        >
+          <aside
             className="mobile-sidebar fixed left-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b border-gray-200 relative z-10">
-              <h2 className="text-lg font-semibold text-gray-900">Tutor Menu</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Tutor Menu
+              </h2>
               <Button
                 variant="ghost"
                 size="icon"
@@ -227,7 +208,7 @@ export function TutorDashboard() {
               </Button>
             </div>
             <div className="overflow-y-auto h-full pb-20 p-4">
-              <DashboardSidebar 
+              <DashboardSidebar
                 activeTab={activeTab}
                 onTabChange={(tab) => {
                   setActiveTab(tab);
@@ -240,11 +221,10 @@ export function TutorDashboard() {
           </aside>
         </div>
       )}
-      
+
       <FloatingTutorChat />
     </div>
   );
 }
 
 export default TutorDashboard;
-

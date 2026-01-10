@@ -11,7 +11,6 @@ import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { DashboardNavbar } from "@/components/layout/DashboardNavbar";
 import { Button } from "@/components/ui/button";
 import { AdminProfile } from "./components/AdminProfile";
-import { FloatingSupportChat } from "./components/FloatingSupportChat";
 import { UserManagementSection } from "./components/UserManagementSection";
 import { TutorManagementSection } from "./components/TutorManagementSection";
 import { ReviewManagementSection } from "./components/ReviewManagementSection";
@@ -22,14 +21,10 @@ import UpgradeApplicationsManagement from "./components/UpgradeApplicationsManag
 import UpgradePackagesManagement from "./components/UpgradePackagesManagement";
 import { TestimonialsManagement } from "./TestimonialsManagement";
 import { VideoTestimonialsManagement } from "./VideoTestimonialsManagement";
-import FeaturedMediaManagement from "./FeaturedMediaManagement";
 import CourseManagement from "./CourseManagement";
-import { DemoClassesSection } from "./sections/DemoClassesSection";
 import PlatformControlSection from "./sections/PlatformControlSection";
-import TaxonomyManagement from "./TaxonomyManagement";
 import { TutoringHistorySection } from "./sections/TutoringHistorySection";
 import { NoticeBoardSection } from "./sections/NoticeBoardSection";
-import AdminNotesSection from "./AdminNotesSection";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePermissionMenu } from "@/hooks/usePermissionMenu";
 import { adminMenuItems, managerMenuItems } from "@/config/adminMenu";
@@ -479,12 +474,6 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
   //   );
   // };
 
-  // Render demo classes section
-  const renderDemoClasses = () => {
-    return (
-      <DemoClassesSection />
-    );
-  };
 
   // Render platform control section
   const renderPlatformControl = () => {
@@ -522,10 +511,7 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
     return <ConfirmationLettersManagement />;
   };
 
-  // Render admin notes section
-  const renderNotes = () => {
-    return <AdminNotesSection />;
-  };
+
   const renderPaymentAccount = () => {
     return <PaymentAccount />;
   };
@@ -600,20 +586,15 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
             {activeTab === "district" && renderDistrictManagement()}
             {activeTab === "reviews" && renderReviewManagement()}
             {activeTab === "payment" && renderPaymentManagement()}
-            {/* {activeTab === "refund-policies" && <RefundPoliciesPage />} */}
             {activeTab === "courses" && renderCourseManagement()}
             {activeTab === "testimonials" && <TestimonialsManagement />}
             {activeTab === "video-testimonials" && <VideoTestimonialsManagement />}
-            {activeTab === "featured-media" && <FeaturedMediaManagement />}
-            {/* {activeTab === "permission-assignment" && renderPermissionAssignment()} */}
-            {activeTab === "demo-classes" && renderDemoClasses()}
             {activeTab === "seo-analytics" && renderPlatformControl()}
             {activeTab === "taxonomy" && renderTaxonomyManagement()}
             {activeTab === "history" && renderHistory()}
             {activeTab === "notice-board" && renderNoticeBoard()}
             {activeTab === "approval-letter" && renderApprovalLetters()}
             {activeTab === "confirmation-letter" && renderConfirmationLetters()}
-            {activeTab === "notes" && renderNotes()}
             {activeTab === "refound" && renderRefoundPolicy()}
             {activeTab === "appointment-letter" && renderAppointmentLetter()}
             {activeTab === "payment-account" && renderPaymentAccount()}

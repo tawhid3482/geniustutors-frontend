@@ -31,7 +31,6 @@ import {
   useGetMYInfoQuery,
   useUpdateUserProfileMutation,
 } from "@/redux/features/auth/authApi";
-import { getUpgradeStatus } from "@/services/upgradeService";
 import { useRouter } from "next/navigation";
 import {
   useCreateDocumentMutation,
@@ -412,10 +411,7 @@ export default function ProfileSection() {
 
       try {
         setIsLoadingUpgradeStatus(true);
-        const upgradeResponse = await getUpgradeStatus();
-        if (upgradeResponse.success && upgradeResponse.data) {
-          setUpgradeStatus(upgradeResponse.data);
-        }
+     
       } catch (error) {
       } finally {
         setIsLoadingUpgradeStatus(false);

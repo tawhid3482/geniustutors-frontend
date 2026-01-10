@@ -499,6 +499,8 @@ function EditModal({
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [availableThanas, setAvailableThanas] = useState<string[]>([]);
   const [availableAreas, setAvailableAreas] = useState<string[]>([]);
+  const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
+  const [manualArea, setManualArea] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedMediums, setSelectedMediums] = useState<string[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
@@ -513,7 +515,7 @@ function EditModal({
         studentGender: selectedRequest.studentGender,
         district: selectedRequest.district,
         thana: selectedRequest.thana,
-        area: selectedRequest.area,
+        area: selectedRequest.area, // This will be single area from backend
         subject: selectedRequest.subject,
         selectedSubjects: selectedRequest.selectedSubjects || [],
         selectedCategories: selectedRequest.selectedCategories || [],
@@ -536,6 +538,15 @@ function EditModal({
       };
       setFormData(data);
       setSelectedDistrict(selectedRequest.district);
+
+      // Parse area from string to array (handle comma separated areas)
+      const areasArray = selectedRequest.area
+        ? selectedRequest.area
+            .split(",")
+            .map((area) => area.trim())
+            .filter(Boolean)
+        : [];
+      setSelectedAreas(areasArray);
 
       // Initialize selected arrays
       setSelectedMediums([selectedRequest.medium].filter(Boolean));
@@ -563,7 +574,6 @@ function EditModal({
           ...prev,
           district: selectedDistrict,
           thana: district.thana?.[0] || "",
-          area: district.area?.[0] || "",
         }));
       }
     }
@@ -572,15 +582,25 @@ function EditModal({
   // Update formData when arrays change
   useEffect(() => {
     if (formData) {
+      // Combine selected areas into a single string
+      const areaString = selectedAreas.join(", ");
+
       setFormData((prev: any) => ({
         ...prev,
         selectedSubjects,
         selectedCategories,
         selectedClasses,
-        medium: selectedMediums[0] || "", // Take first medium as primary
+        medium: selectedMediums[0] || "",
+        area: areaString, // Update area with combined string
       }));
     }
-  }, [selectedSubjects, selectedCategories, selectedClasses, selectedMediums]);
+  }, [
+    selectedSubjects,
+    selectedCategories,
+    selectedClasses,
+    selectedMediums,
+    selectedAreas,
+  ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -595,6 +615,7 @@ function EditModal({
         selectedCategories,
         selectedClasses,
         medium: selectedMediums[0] || "",
+        area: selectedAreas.join(", "), // Send as comma separated string
       });
       onOpenChange(false);
     } catch (error) {
@@ -622,6 +643,27 @@ function EditModal({
     }));
   };
 
+  // Handle area selection
+  const handleAddArea = (area: string) => {
+    const trimmedArea = area.trim();
+    if (trimmedArea && !selectedAreas.includes(trimmedArea)) {
+      setSelectedAreas([...selectedAreas, trimmedArea]);
+    }
+  };
+
+  const handleRemoveArea = (areaToRemove: string) => {
+    setSelectedAreas(selectedAreas.filter((area) => area !== areaToRemove));
+  };
+
+  // Handle manual area input
+  const handleManualAreaSubmit = () => {
+    const trimmedArea = manualArea.trim();
+    if (trimmedArea) {
+      handleAddArea(trimmedArea);
+      setManualArea("");
+    }
+  };
+
   // Helper function to get category names
   const categoryNames = categories.map((cat) => cat.name);
 
@@ -633,7 +675,7 @@ function EditModal({
         className="fixed inset-0 bg-black/50"
         onClick={() => onOpenChange(false)}
       />
-      <div className="fixed  right-40 top-5  h-screen w-full md:w-3/4 bg-white shadow-xl overflow-y-auto">
+      <div className="fixed right-40 top-5  h-screen w-full md:w-3/4 bg-white shadow-xl overflow-y-auto">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -736,22 +778,93 @@ function EditModal({
                     ))}
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Area
-                  </label>
-                  <select
-                    value={formData.area}
-                    onChange={(e) => handleInputChange("area", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  >
-                    {availableAreas.map((area, index) => (
-                      <option key={index} value={area}>
-                        {area}
-                      </option>
-                    ))}
-                  </select>
+              </div>
+
+              {/* Areas - Multiple Select */}
+              <div className="space-y-2 mt-4">
+                <label className="block text-sm font-medium text-gray-700">
+                  Areas (Multiple)
+                </label>
+
+                {/* Selected Areas Chips */}
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {selectedAreas.map((area) => (
+                    <div
+                      key={area}
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                    >
+                      {area}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveArea(area)}
+                        className="ml-1 inline-flex items-center justify-center w-4 h-4 text-blue-800 hover:text-blue-900"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Dropdown for available areas */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Select from available areas
+                    </label>
+                    <div className="relative">
+                      <select
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            handleAddArea(e.target.value);
+                            e.target.value = ""; // Reset select
+                          }
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      >
+                        <option value="">Choose an area...</option>
+                        {availableAreas.map((area, index) => (
+                          <option key={index} value={area}>
+                            {area}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Manual area input */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Add custom area
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={manualArea}
+                        onChange={(e) => setManualArea(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleManualAreaSubmit();
+                          }
+                        }}
+                        placeholder="Type area name"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleManualAreaSubmit}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-500 mt-2">
+                  Selected areas: {selectedAreas.length} | Click on X button to
+                  remove an area
+                </p>
               </div>
             </Section>
 
@@ -776,16 +889,25 @@ function EditModal({
                   placeholder="Select subjects..."
                 />
 
-                {/* Manual Add */}
-                <div className="flex gap-2">
+                {/* Manual Subject Add */}
+                <div className="flex gap-2 mt-2">
                   <input
                     type="text"
                     value={manualSubject}
                     onChange={(e) => setManualSubject(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const value = manualSubject.trim();
+                        if (value && !selectedSubjects.includes(value)) {
+                          setSelectedSubjects([...selectedSubjects, value]);
+                          setManualSubject("");
+                        }
+                      }
+                    }}
                     placeholder="Manually add subject"
-                    className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
                   />
-
                   <button
                     type="button"
                     onClick={() => {
@@ -795,7 +917,7 @@ function EditModal({
                         setManualSubject("");
                       }
                     }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                   >
                     Add
                   </button>
@@ -822,7 +944,7 @@ function EditModal({
                 />
               </div>
 
-              {/* Categories */}
+              {/* Categories/Medium */}
               <div className="space-y-2 mt-4">
                 <MultipleSelect
                   label="Medium"
@@ -1049,7 +1171,6 @@ function EditModal({
     </div>
   );
 }
-
 // AssignTutorModal Component
 function AssignTutorModal({
   open,
@@ -1354,7 +1475,7 @@ function Pagination({
   const generatePageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -1362,16 +1483,16 @@ function Pagination({
     } else {
       let start = Math.max(1, currentPage - 2);
       let end = Math.min(totalPages, start + maxVisiblePages - 1);
-      
+
       if (end - start + 1 < maxVisiblePages) {
         start = end - maxVisiblePages + 1;
       }
-      
+
       for (let i = start; i <= end; i++) {
         pages.push(i);
       }
     }
-    
+
     return pages;
   };
 
@@ -1469,14 +1590,19 @@ function Pagination({
 const TuitionRequestsSection = () => {
   const { data: districtData } = useGetAllDistrictsQuery(undefined);
   const { data: categoryData } = useGetAllCategoryQuery(undefined);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Fetch all data (without pagination from API)
-  const { data: jobsData, refetch, isLoading } = useGetAllTutorRequestsQuery(undefined);
+  const {
+    data: jobsData,
+    refetch,
+    isLoading,
+  } = useGetAllTutorRequestsQuery(undefined);
+
 
   const [updateTuitionRequestStatus] = useUpdateTutorRequestsStatusMutation();
   const [assignTutor] = useCreateassignTutorMutation();
@@ -1634,7 +1760,7 @@ const TuitionRequestsSection = () => {
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 

@@ -1317,7 +1317,7 @@ export default function TuitionJobs() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search  ID, or phone number..."
+              placeholder="Search your job id like: 601,602,603....."
               className="pl-10 h-11 font-bold border-2 border-green-600"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
@@ -1430,9 +1430,9 @@ export default function TuitionJobs() {
                               {job.studentClass}
                             </Badge>
                           )}
-                          <span className="text-xs sm:text-sm font-bold text-black">
+                          {/* <span className="text-xs sm:text-sm font-bold text-black">
                             Phone: {job.phoneNumber}
-                          </span>
+                          </span> */}
                         </div>
                       </CardHeader>
                       <CardContent className="flex flex-col flex-grow p-4 sm:p-6">
