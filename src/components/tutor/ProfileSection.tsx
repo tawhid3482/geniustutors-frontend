@@ -126,17 +126,16 @@ export default function ProfileSection() {
     refetch: refetchUser,
   } = useGetMYInfoQuery(userId);
 
-
   const {
     data: documentData,
     refetch: refetchDocuments,
     isLoading: isLoadingDocuments,
-  } = useGetAllDocumentUserQuery({ id: userId }as any);
+  } = useGetAllDocumentUserQuery({ id: userId } as any);
 
   const { data: districtData } = useGetAllDistrictsQuery(undefined);
   const { data: categoryData } = useGetAllCategoryQuery(undefined);
 
-  const [createNotification]=useCreateNotificationMutation()
+  const [createNotification] = useCreateNotificationMutation();
 
   const [updateUserProfile, { isLoading: isUpdatingProfile }] =
     useUpdateUserProfileMutation();
@@ -204,6 +203,10 @@ export default function ProfileSection() {
     ],
   });
 
+  // New states for custom inputs
+  const [newArea, setNewArea] = useState("");
+  const [newSubject, setNewSubject] = useState("");
+
   const [upgradeStatus, setUpgradeStatus] = useState<UpgradeStatus | null>(
     null
   );
@@ -256,7 +259,6 @@ export default function ProfileSection() {
   useEffect(() => {
     if (userData?.data) {
       const data = userData.data;
-  
 
       setProfile((prev) => ({
         ...prev,
@@ -354,8 +356,6 @@ export default function ProfileSection() {
 
   // Load tuition thanas and areas based on selected district
   useEffect(() => {
-   
-
     if (profile.district && districtData?.data) {
       const selectedDistrict = districtData.data.find(
         (d: any) => d.name === profile.district
@@ -411,8 +411,9 @@ export default function ProfileSection() {
 
       try {
         setIsLoadingUpgradeStatus(true);
-     
+        // Add your upgrade status fetching logic here
       } catch (error) {
+        console.error("Error fetching upgrade status:", error);
       } finally {
         setIsLoadingUpgradeStatus(false);
       }
@@ -445,6 +446,55 @@ export default function ProfileSection() {
       }
       return prev;
     });
+  };
+
+  // New functions for custom area and subject handling
+  const handleAddArea = () => {
+    if (newArea.trim() && !profile.preferred_areas.includes(newArea.trim())) {
+      setProfile((prev) => ({
+        ...prev,
+        preferred_areas: [...prev.preferred_areas, newArea.trim()],
+      }));
+      setNewArea("");
+    }
+  };
+
+  const handleRemoveArea = (area: string) => {
+    setProfile((prev) => ({
+      ...prev,
+      preferred_areas: prev.preferred_areas.filter((a) => a !== area),
+    }));
+  };
+
+  const handleAddSubject = () => {
+    if (newSubject.trim() && !profile.subjects.includes(newSubject.trim())) {
+      setProfile((prev) => ({
+        ...prev,
+        subjects: [...prev.subjects, newSubject.trim()],
+      }));
+      setNewSubject("");
+    }
+  };
+
+  const handleRemoveSubject = (subject: string) => {
+    setProfile((prev) => ({
+      ...prev,
+      subjects: prev.subjects.filter((s) => s !== subject),
+    }));
+  };
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    type: "area" | "subject"
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (type === "area") {
+        handleAddArea();
+      } else {
+        handleAddSubject();
+      }
+    }
   };
 
   // Photo upload handler
@@ -488,13 +538,14 @@ export default function ProfileSection() {
           id: userId,
           data: { avatar: imageUrl },
         }).unwrap();
-         await createNotification({
-            title: "Profile Updated",
-            message: "Your profile has been successfully updated.",
-            type: "success",
-            readStatus: false,
-            userId: user.id,
-          }).unwrap();
+
+        await createNotification({
+          title: "Profile Updated",
+          message: "Your profile has been successfully updated.",
+          type: "success",
+          readStatus: false,
+          userId: user.id,
+        }).unwrap();
 
         if (result.success) {
           setProfile((prev) => ({ ...prev, avatar: imageUrl }));
@@ -788,7 +839,6 @@ export default function ProfileSection() {
     }
 
     try {
-
       // Prepare user profile data according to backend schema
       const userProfileData: any = {
         // Personal Information
@@ -847,8 +897,6 @@ export default function ProfileSection() {
         );
       }
 
-     
-
       const result = await updateUserProfile({
         id: userId,
         data: userProfileData,
@@ -861,13 +909,13 @@ export default function ProfileSection() {
           variant: "default",
         });
 
-         await createNotification({
-            title: "Profile Updated",
-            message: "Your profile has been successfully updated.",
-            type: "success",
-            readStatus: false,
-            userId: user.id,
-          }).unwrap();
+        await createNotification({
+          title: "Profile Updated",
+          message: "Your profile has been successfully updated.",
+          type: "success",
+          readStatus: false,
+          userId: user.id,
+        }).unwrap();
 
         // Refetch user data
         refetchUser();
@@ -1004,7 +1052,7 @@ export default function ProfileSection() {
                   onChange={handleProfileChange}
                   placeholder="Email"
                   disabled
-                   className="border-2 border-green-500"
+                  className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1014,7 +1062,7 @@ export default function ProfileSection() {
                   value={profile.phone}
                   onChange={handleProfileChange}
                   placeholder="Mobile Number"
-                   className="border-2 border-green-500"
+                  className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1024,7 +1072,7 @@ export default function ProfileSection() {
                   value={profile.alternative_number}
                   onChange={handleProfileChange}
                   placeholder="Alternative Phone"
-                   className="border-2 border-green-500"
+                  className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1050,7 +1098,7 @@ export default function ProfileSection() {
                   value={profile.religion}
                   onChange={handleProfileChange}
                   placeholder="Religion"
-                   className="border-2 border-green-500"
+                  className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1102,7 +1150,7 @@ export default function ProfileSection() {
                   value={profile.Institute_name}
                   onChange={handleProfileChange}
                   placeholder="Institute Name"
-                   className="border-2 border-green-500"
+                  className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1112,7 +1160,7 @@ export default function ProfileSection() {
                   value={profile.department_name}
                   onChange={handleProfileChange}
                   placeholder="Department"
-                   className="border-2 border-green-500"
+                  className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1122,7 +1170,7 @@ export default function ProfileSection() {
                   value={profile.year}
                   onChange={handleProfileChange}
                   placeholder="Year/Semester"
-                   className="border-2 border-green-500"
+                  className="border-2 border-green-500"
                 />
               </div>
             </div>
@@ -1139,7 +1187,7 @@ export default function ProfileSection() {
                   value={profile.location}
                   onChange={handleProfileChange}
                   placeholder="Your location (e.g., Road No, House No)"
-                   className="border-2 border-green-500"
+                  className="border-2 border-green-500"
                 />
               </div>
             </div>
@@ -1148,19 +1196,6 @@ export default function ProfileSection() {
           {/* SECTION 5: Tuition Information */}
           <div className="border-b pb-6">
             <h3 className="text-lg font-semibold mb-4">Tuition Information</h3>
-
-            {/* Background (Multi Select) */}
-            {/* <div className="mb-4">
-              <Label>Curriculum/Medium (Select multiple)</Label>
-              <MultiSelect
-                value={profile.background}
-                onValueChange={handleBackgroundChange}
-                placeholder="Select curriculum/medium"
-                options={getBackgroundOptions()}
-                maxSelections={10}
-                 className="border-2 border-green-500"
-              />
-            </div> */}
 
             {/* Class (Multi Select) */}
             <div className="mb-4">
@@ -1171,7 +1206,7 @@ export default function ProfileSection() {
                 placeholder="Select classes you can teach"
                 options={getClassLevels()}
                 maxSelections={10}
-                 className="border-2 border-green-500"
+                className="border-2 border-green-500"
               />
             </div>
 
@@ -1179,26 +1214,85 @@ export default function ProfileSection() {
             <div className="mb-4">
               <Label>Medium (Select multiple)</Label>
               <MultiSelect
-                value={profile.preferred_tutoring_category}
+                value={profile.background}
                 onValueChange={handleCategoryChange}
                 placeholder="Select categories"
                 options={getCategoryOptions()}
                 maxSelections={10}
-                 className="border-2 border-green-500"
+                className="border-2 border-green-500"
               />
             </div>
 
-            {/* Subject (Multi Select) */}
+            {/* Subject (Multi Select with custom input) */}
             <div className="mb-4">
-              <Label>Subjects (Select multiple)</Label>
-              <MultiSelect
-                value={profile.subjects}
-                onValueChange={handleSubjectsChange}
-                placeholder="Select subjects you can teach"
-                options={getSubjectOptions()}
-                maxSelections={10}
-                 className="border-2 border-green-500"
-              />
+              <Label>Subjects (Select multiple or add custom)</Label>
+
+              {/* মাল্টি সিলেক্ট অপশন */}
+              <div className="mb-3">
+                <MultiSelect
+                  value={profile.subjects}
+                  onValueChange={handleSubjectsChange}
+                  placeholder="Select subjects from list"
+                  options={getSubjectOptions()}
+                  className="border-2 border-green-500"
+                  maxSelections={15}
+                />
+              </div>
+
+              {/* সিলেক্টেড বিষয়গুলো দেখানো */}
+              {profile.subjects.length > 0 && (
+                <div className="mb-4">
+                  <div className="text-sm font-medium text-gray-700 mb-2">
+                    Selected Subjects:
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.subjects.map((subject) => (
+                      <Badge
+                        key={subject}
+                        variant="secondary"
+                        className="px-3 py-1.5 bg-purple-100 text-purple-800 hover:bg-purple-200 flex items-center gap-1 transition-colors duration-200"
+                      >
+                        {subject}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSubject(subject)}
+                          className="ml-1 text-red-500 hover:text-red-700 text-sm font-bold"
+                          aria-label={`Remove ${subject}`}
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* নতুন বিষয় যোগ করার জন্য ইনপুট */}
+              <div className="mt-4">
+                <div className="text-sm font-medium text-gray-700 mb-2">
+                  Add Custom Subject:
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={newSubject}
+                    onChange={(e) => setNewSubject(e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, "subject")}
+                    placeholder="Type custom subject and press Enter"
+                    className="flex-1 border-2 border-green-500"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAddSubject}
+                    disabled={!newSubject.trim()}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Add
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Type custom subject name and press Enter or click Add
+                </p>
+              </div>
             </div>
 
             {/* Tutor Method (Single Select) */}
@@ -1254,7 +1348,7 @@ export default function ProfileSection() {
                   placeholder="Select availability days"
                   options={getAvailabilityOptions()}
                   maxSelections={10}
-                   className="border-2 border-green-500"
+                  className="border-2 border-green-500"
                 />
               </div>
             </div>
@@ -1327,18 +1421,81 @@ export default function ProfileSection() {
               </div>
               <div>
                 <Label>Preferred Areas</Label>
-                <MultiSelect
-                  value={profile.preferred_areas}
-                  onValueChange={handlePreferredAreasChange}
-                  placeholder="Select preferred areas"
-                   className="border-2 border-green-500"
-                  options={tuitionAvailableAreas.map((area) => ({
-                    value: area,
-                    label: area,
-                  }))}
-                  maxSelections={10}
-                  disabled={!profile.district}
-                />
+
+                {/* মাল্টি সিলেক্ট অপশন */}
+                {tuitionAvailableAreas.length > 0 && (
+                  <div className="mb-3">
+                    <MultiSelect
+                      value={profile.preferred_areas}
+                      onValueChange={handlePreferredAreasChange}
+                      placeholder="Select preferred areas from list"
+                      className="border-2 border-green-500"
+                      options={tuitionAvailableAreas.map((area) => ({
+                        value: area,
+                        label: area,
+                      }))}
+                      maxSelections={20}
+                      disabled={!profile.district}
+                    />
+                  </div>
+                )}
+
+                {/* সিলেক্টেড এরিয়াগুলো দেখানো */}
+                {profile.preferred_areas.length > 0 && (
+                  <div className="mb-4">
+                    <div className="text-sm font-medium text-gray-700 mb-2">
+                      Selected Areas:
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {profile.preferred_areas.map((area) => (
+                        <Badge
+                          key={area}
+                          variant="secondary"
+                          className="px-3 py-1.5 bg-blue-100 text-blue-800 hover:bg-blue-200 flex items-center gap-1 transition-colors duration-200"
+                        >
+                          {area}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveArea(area)}
+                            className="ml-1 text-red-500 hover:text-red-700 text-sm font-bold"
+                            aria-label={`Remove ${area}`}
+                          >
+                            ×
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* নতুন এরিয়া যোগ করার জন্য ইনপুট */}
+                <div className="mt-4">
+                  <div className="text-sm font-medium text-gray-700 mb-2">
+                    Add Custom Area:
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newArea}
+                      onChange={(e) => setNewArea(e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, "area")}
+                      placeholder="Type custom area and press Enter"
+                      className="flex-1 border-2 border-green-500"
+                      disabled={!profile.district}
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleAddArea}
+                      disabled={!newArea.trim() || !profile.district}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Type custom area name and press Enter or click Add
+                  </p>
+                </div>
+
                 {!profile.district && (
                   <p className="text-xs text-gray-500 mt-1">
                     Please select a district first
@@ -1346,8 +1503,6 @@ export default function ProfileSection() {
                 )}
               </div>
             </div>
-
-      
 
             {/* Expected Salary and Hourly Rate */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -1358,7 +1513,7 @@ export default function ProfileSection() {
                   value={profile.expected_salary}
                   onChange={handleProfileChange}
                   placeholder="Expected Monthly Salary"
-                   className="border-2 border-green-500"
+                  className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1370,7 +1525,7 @@ export default function ProfileSection() {
                   placeholder="Hourly rate in BDT"
                   type="number"
                   min="0"
-                   className="border-2 border-green-500"
+                  className="border-2 border-green-500"
                 />
               </div>
               <div>
@@ -1382,7 +1537,7 @@ export default function ProfileSection() {
                   placeholder="Enter your experience"
                   type="number"
                   min="0"
-                   className="border-2 border-green-500"
+                  className="border-2 border-green-500"
                 />
               </div>
             </div>
@@ -1402,7 +1557,7 @@ export default function ProfileSection() {
                     value: skill,
                     label: skill,
                   }))}
-                   className="border-2 border-green-500"
+                  className="border-2 border-green-500"
                   maxSelections={5}
                 />
               </div>
@@ -1413,7 +1568,7 @@ export default function ProfileSection() {
                   value={profile.social_media_links}
                   onChange={handleProfileChange}
                   placeholder="Facebook, LinkedIn, etc."
-                   className="border-2 border-green-500"
+                  className="border-2 border-green-500"
                 />
               </div>
             </div>
@@ -1425,7 +1580,7 @@ export default function ProfileSection() {
                 onChange={handleProfileChange}
                 placeholder="Tell us about yourself, your teaching style, etc."
                 rows={4}
-                 className="border-2 border-green-500"
+                className="border-2 border-green-500"
               />
             </div>
           </div>

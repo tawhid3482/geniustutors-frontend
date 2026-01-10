@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,7 +26,69 @@ import {
   useGetTutorStatsQuery,
 } from "@/redux/features/auth/authApi";
 import { useGetAllTutorRequestsForPublicQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
-import ProfileSection from "../ProfileSection";
+
+interface ProfileFormData {
+  // Personal Information
+  fullName: string;
+  email: string;
+  phone: string;
+  alternative_number: string;
+  avatar: string;
+  gender: string;
+  religion: string;
+  nationality: string;
+  blood_group: string;
+
+  // Institute Information
+  Institute_name: string;
+  department_name: string;
+  year: string;
+
+  // Location Information
+  location: string;
+  district: string;
+  thana: string;
+  postOffice: string;
+
+  // Tutoring Information
+  background: string[];
+  preferred_class: string[];
+  preferred_tutoring_category: string[];
+  subjects: string[];
+  preferred_tutoring_style: string;
+  days_per_week: number;
+  availability: string[];
+  preferred_time: string[];
+  preferred_areas: string[];
+  expected_salary: string;
+
+  // Skills & Bio
+  other_skills: string[];
+  social_media_links: string;
+  bio: string;
+  experience: string;
+  hourly_rate: string;
+  qualification: string;
+  extra_facilities: string;
+  preferred_medium: string[];
+  preferred_student_gender: string;
+
+  // Educational Qualifications
+  educational_qualifications: Array<{
+    examTitle: string;
+    institute: string;
+    board: string;
+    group: string;
+    year: string;
+    gpa: string;
+  }>;
+}
+
+interface CompletionDetails {
+  percentage: number;
+  message: string;
+  suggestions: string[];
+}
 
 const DashboardSection = () => {
   const { user } = useAuth();
@@ -46,10 +108,16 @@ const DashboardSection = () => {
     appointedJobs: 0,
     confirmedJobs: 0,
     cancelledJobs: 0,
-    nearbyJobs: 0, // Will calculate from jobs data
-    profileCompletion: 0, // Will calculate from user info
-    isVerified: false, // From MyInfo data
-    isGeniusTutor: false, // From MyInfo data
+    nearbyJobs: 0,
+    profileCompletion: 0,
+    isVerified: false,
+    isGeniusTutor: false,
+  });
+
+  const [completionDetails, setCompletionDetails] = useState<CompletionDetails>({
+    percentage: 0,
+    message: "",
+    suggestions: []
   });
 
   const [loading, setLoading] = useState(true);
@@ -72,50 +140,175 @@ const DashboardSection = () => {
 
   const tutorStatusData = tutorStatus?.data
 
-  // Calculate profile completion percentage
-  const calculateProfileCompletion = (userData: any) => {
+  // Calculate profile completion percentage based on ProfileFormData
+  const calculateProfileCompletion = (userData: any): number => {
     if (!userData) return 0;
 
+    // Define required fields from ProfileFormData with their weight
     const requiredFields = [
-      "fullName",
-      "email",
-      "phone",
-      "gender",
-      "avatar",
-      "bio",
-      "location",
-      "district",
-      "nationality",
-      "religion",
-      "education",
-      "qualification",
-      "experience",
-      "hourly_rate",
-      "subjects",
-      "preferred_areas",
-      "availability",
-      "Institute_name",
-      "department_name",
+      // Personal Information (Weight: 20%)
+      { field: "fullName", weight: 2 },
+      { field: "email", weight: 1 },
+      { field: "phone", weight: 2 },
+      { field: "avatar", weight: 2 },
+      { field: "gender", weight: 1 },
+      { field: "religion", weight: 0.5 },
+      { field: "nationality", weight: 0.5 },
+      { field: "blood_group", weight: 0.5 },
+
+      // Institute Information (Weight: 10%)
+      { field: "Institute_name", weight: 3 },
+      { field: "department_name", weight: 3 },
+      { field: "year", weight: 2 },
+
+      // Location Information (Weight: 15%)
+      { field: "location", weight: 3 },
+      { field: "district", weight: 3 },
+      { field: "thana", weight: 2 },
+      { field: "postOffice", weight: 1 },
+
+      // Tutoring Information (Weight: 25%)
+      { field: "preferred_class", weight: 3, isArray: true },
+      { field: "preferred_tutoring_category", weight: 2, isArray: true },
+      { field: "subjects", weight: 4, isArray: true },
+      { field: "preferred_tutoring_style", weight: 2 },
+      { field: "days_per_week", weight: 1 },
+      { field: "availability", weight: 2, isArray: true },
+      { field: "preferred_time", weight: 2, isArray: true },
+      { field: "preferred_areas", weight: 4, isArray: true },
+      { field: "expected_salary", weight: 1 },
+
+      // Skills & Bio (Weight: 20%)
+      { field: "bio", weight: 4 },
+      { field: "experience", weight: 3 },
+      { field: "hourly_rate", weight: 2 },
+      { field: "qualification", weight: 3 },
+      { field: "extra_facilities", weight: 1 },
+      { field: "preferred_medium", weight: 2, isArray: true },
+      { field: "preferred_student_gender", weight: 1 },
+      { field: "other_skills", weight: 2, isArray: true },
+      { field: "social_media_links", weight: 1 },
+
+      // Educational Qualifications (Weight: 10%)
+      { field: "educational_qualifications", weight: 10, isArray: true, checkValidEdu: true }
     ];
 
-    let filledFields = 0;
+    let totalScore = 0;
+    let maxScore = 0;
 
-    requiredFields.forEach((field) => {
-      const value = userData[field];
-      if (value !== null && value !== undefined && value !== "") {
-        if (Array.isArray(value) && value.length > 0) {
-          filledFields++;
-        } else if (typeof value === "number") {
-          filledFields++;
-        } else if (typeof value === "string" && value.trim() !== "") {
-          filledFields++;
-        } else if (typeof value === "boolean") {
-          filledFields++;
+    requiredFields.forEach((fieldInfo) => {
+      maxScore += fieldInfo.weight;
+      
+      const value = userData[fieldInfo.field];
+      
+      if (fieldInfo.checkValidEdu && fieldInfo.field === "educational_qualifications") {
+        // Special check for educational qualifications
+        if (value && Array.isArray(value) && value.length > 0) {
+          // Check if at least one qualification is properly filled
+          const validEduCount = value.filter((edu: any) => 
+            edu.examTitle && edu.examTitle.trim() !== "" &&
+            edu.institute && edu.institute.trim() !== "" &&
+            edu.year && edu.year.trim() !== "" &&
+            edu.gpa && edu.gpa.trim() !== ""
+          ).length;
+          
+          if (validEduCount > 0) {
+            totalScore += fieldInfo.weight;
+          } else if (value.length > 0) {
+            // Partial credit if fields are partially filled
+            totalScore += fieldInfo.weight * 0.5;
+          }
+        }
+      } else if (fieldInfo.isArray) {
+        // For array fields
+        if (value && Array.isArray(value) && value.length > 0) {
+          totalScore += fieldInfo.weight;
+        }
+      } else {
+        // For regular fields
+        if (value !== null && value !== undefined && value !== "") {
+          if (typeof value === "number" && value > 0) {
+            totalScore += fieldInfo.weight;
+          } else if (typeof value === "string" && value.trim() !== "") {
+            totalScore += fieldInfo.weight;
+          } else if (typeof value === "boolean") {
+            totalScore += fieldInfo.weight;
+          }
         }
       }
     });
 
-    return Math.round((filledFields / requiredFields.length) * 100);
+    // Calculate percentage
+    const percentage = Math.round((totalScore / maxScore) * 100);
+    
+    // Ensure it's between 0 and 100
+    return Math.min(100, Math.max(0, percentage));
+  };
+
+  // Helper function to check if a field is valid
+  const isFieldValid = (value: any): boolean => {
+    if (value === null || value === undefined) return false;
+    
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+    
+    if (typeof value === "string") {
+      return value.trim() !== "";
+    }
+    
+    if (typeof value === "number") {
+      return value > 0;
+    }
+    
+    return true;
+  };
+
+  // Get completion details for showing in UI
+  const getProfileCompletionDetails = (userData: any): CompletionDetails => {
+    const completion = calculateProfileCompletion(userData);
+    
+    let message = "";
+    let suggestions: string[] = [];
+    
+    if (completion < 30) {
+      message = "Basic Profile - Add more details to get better opportunities";
+      suggestions = [
+        "Add your profile photo",
+        "Fill in your personal information",
+        "Add at least one subject you can teach",
+        "Select your preferred areas"
+      ];
+    } else if (completion < 60) {
+      message = "Good Profile - Almost there! Complete a few more sections";
+      suggestions = [
+        "Add educational qualifications",
+        "Write a compelling bio",
+        "Set your hourly rate",
+        "Add your teaching experience"
+      ];
+    } else if (completion < 85) {
+      message = "Great Profile - Looking good! Just a few enhancements needed";
+      suggestions = [
+        "Add more subjects",
+        "Complete your availability schedule",
+        "Add your teaching qualifications",
+        "Upload supporting documents"
+      ];
+    } else {
+      message = "Excellent Profile - You're ready to get more students!";
+      suggestions = [
+        "Keep your profile updated",
+        "Add reviews from students",
+        "Respond to job applications promptly"
+      ];
+    }
+    
+    return {
+      percentage: completion,
+      message,
+      suggestions
+    };
   };
 
   // Calculate nearby jobs based on preferred_areas
@@ -162,8 +355,9 @@ const DashboardSection = () => {
         const userInfo = MyInfo?.data;
         const jobsData = AllJobs;
 
-        // Calculate derived values
-        const profileCompletion = calculateProfileCompletion(userInfo);
+        // Calculate profile completion using the new function
+        const completionData = getProfileCompletionDetails(userInfo);
+        
         const nearbyJobs = calculateNearbyJobs(userInfo, jobsData);
         const isVerified = userInfo?.verified || false;
         const isGeniusTutor = userInfo?.genius || false;
@@ -171,11 +365,14 @@ const DashboardSection = () => {
         setDashboardStats((prev) => ({
           ...prev,
           ...stats,
-          profileCompletion,
+          profileCompletion: completionData.percentage,
           nearbyJobs,
           isVerified,
           isGeniusTutor,
         }));
+        
+        // Store completion details in state
+        setCompletionDetails(completionData);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -491,17 +688,23 @@ const DashboardSection = () => {
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                   />
                   <path
-                    className="text-green-600"
+                    className={`${
+                      completionDetails.percentage < 30 
+                        ? "text-red-600" 
+                        : completionDetails.percentage < 60 
+                        ? "text-yellow-600" 
+                        : "text-green-600"
+                    }`}
                     stroke="currentColor"
                     strokeWidth="3"
                     fill="none"
-                    strokeDasharray={`${dashboardStats.profileCompletion}, 100`}
+                    strokeDasharray={`${completionDetails.percentage}, 100`}
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-sm font-bold text-green-600">
-                    {dashboardStats.profileCompletion}%
+                  <span className="text-sm font-bold text-gray-800">
+                    {completionDetails.percentage}%
                   </span>
                 </div>
               </div>
@@ -509,16 +712,25 @@ const DashboardSection = () => {
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   Profile Completed
                 </h3>
-                <p className="text-sm text-gray-600 mb-3">
-                  Complete & organized profile may help to get better response.
+                <p className="text-sm text-gray-600 mb-2">
+                  {completionDetails.message}
                 </p>
-                <div className="flex items-center  cursor-pointer">
-                  <span className="text-sm ">
-                    Go to Profile Section and Update Your Profile
-                  </span>
-                  {/* {activeTab === "profile" && <ProfileSection />} */}
-                  {/* <ArrowRight className="h-4 w-4 ml-1" /> */}
-                </div>
+                {completionDetails.suggestions.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs font-medium text-gray-700 mb-1">
+                      Suggestions to improve:
+                    </p>
+                    <ul className="text-xs text-gray-600 space-y-1">
+                      {completionDetails.suggestions.map((suggestion, index) => (
+                        <li key={index} className="flex items-start">
+                          <span className="text-green-500 mr-1">•</span>
+                          {suggestion}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+             
               </div>
             </div>
           </CardContent>

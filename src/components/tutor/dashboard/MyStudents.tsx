@@ -156,7 +156,7 @@ const MyStudents = () => {
           <Users className="w-8 h-8 text-red-600" />
         </div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">
-          Error loading data
+         NO Data Found
         </h3>
         <p className="text-gray-600">Please try again later</p>
       </div>
