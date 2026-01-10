@@ -32,7 +32,6 @@ interface ProfileFormData {
   fullName: string;
   email: string;
   phone: string;
-  alternative_number: string;
   avatar: string;
   gender: string;
   religion: string;
@@ -48,12 +47,9 @@ interface ProfileFormData {
   location: string;
   district: string;
   thana: string;
-  postOffice: string;
 
   // Tutoring Information
-  background: string[];
   preferred_class: string[];
-  preferred_tutoring_category: string[];
   subjects: string[];
   preferred_tutoring_style: string;
   days_per_week: number;
@@ -68,20 +64,7 @@ interface ProfileFormData {
   bio: string;
   experience: string;
   hourly_rate: string;
-  qualification: string;
-  extra_facilities: string;
-  preferred_medium: string[];
   preferred_student_gender: string;
-
-  // Educational Qualifications
-  educational_qualifications: Array<{
-    examTitle: string;
-    institute: string;
-    board: string;
-    group: string;
-    year: string;
-    gpa: string;
-  }>;
 }
 
 interface CompletionDetails {
@@ -114,11 +97,13 @@ const DashboardSection = () => {
     isGeniusTutor: false,
   });
 
-  const [completionDetails, setCompletionDetails] = useState<CompletionDetails>({
-    percentage: 0,
-    message: "",
-    suggestions: []
-  });
+  const [completionDetails, setCompletionDetails] = useState<CompletionDetails>(
+    {
+      percentage: 0,
+      message: "",
+      suggestions: [],
+    }
+  );
 
   const [loading, setLoading] = useState(true);
 
@@ -138,7 +123,7 @@ const DashboardSection = () => {
 
   const { data: tutorStatus } = useGetTutorStatsQuery(userId);
 
-  const tutorStatusData = tutorStatus?.data
+  const tutorStatusData = tutorStatus?.data;
 
   // Calculate profile completion percentage based on ProfileFormData
   const calculateProfileCompletion = (userData: any): number => {
@@ -165,11 +150,9 @@ const DashboardSection = () => {
       { field: "location", weight: 3 },
       { field: "district", weight: 3 },
       { field: "thana", weight: 2 },
-      { field: "postOffice", weight: 1 },
 
       // Tutoring Information (Weight: 25%)
       { field: "preferred_class", weight: 3, isArray: true },
-      { field: "preferred_tutoring_category", weight: 2, isArray: true },
       { field: "subjects", weight: 4, isArray: true },
       { field: "preferred_tutoring_style", weight: 2 },
       { field: "days_per_week", weight: 1 },
@@ -182,15 +165,9 @@ const DashboardSection = () => {
       { field: "bio", weight: 4 },
       { field: "experience", weight: 3 },
       { field: "hourly_rate", weight: 2 },
-      { field: "qualification", weight: 3 },
-      { field: "extra_facilities", weight: 1 },
-      { field: "preferred_medium", weight: 2, isArray: true },
       { field: "preferred_student_gender", weight: 1 },
       { field: "other_skills", weight: 2, isArray: true },
       { field: "social_media_links", weight: 1 },
-
-      // Educational Qualifications (Weight: 10%)
-      { field: "educational_qualifications", weight: 10, isArray: true, checkValidEdu: true }
     ];
 
     let totalScore = 0;
@@ -198,28 +175,10 @@ const DashboardSection = () => {
 
     requiredFields.forEach((fieldInfo) => {
       maxScore += fieldInfo.weight;
-      
+
       const value = userData[fieldInfo.field];
-      
-      if (fieldInfo.checkValidEdu && fieldInfo.field === "educational_qualifications") {
-        // Special check for educational qualifications
-        if (value && Array.isArray(value) && value.length > 0) {
-          // Check if at least one qualification is properly filled
-          const validEduCount = value.filter((edu: any) => 
-            edu.examTitle && edu.examTitle.trim() !== "" &&
-            edu.institute && edu.institute.trim() !== "" &&
-            edu.year && edu.year.trim() !== "" &&
-            edu.gpa && edu.gpa.trim() !== ""
-          ).length;
-          
-          if (validEduCount > 0) {
-            totalScore += fieldInfo.weight;
-          } else if (value.length > 0) {
-            // Partial credit if fields are partially filled
-            totalScore += fieldInfo.weight * 0.5;
-          }
-        }
-      } else if (fieldInfo.isArray) {
+
+      if (fieldInfo.isArray) {
         // For array fields
         if (value && Array.isArray(value) && value.length > 0) {
           totalScore += fieldInfo.weight;
@@ -240,74 +199,117 @@ const DashboardSection = () => {
 
     // Calculate percentage
     const percentage = Math.round((totalScore / maxScore) * 100);
-    
+
     // Ensure it's between 0 and 100
     return Math.min(100, Math.max(0, percentage));
-  };
-
-  // Helper function to check if a field is valid
-  const isFieldValid = (value: any): boolean => {
-    if (value === null || value === undefined) return false;
-    
-    if (Array.isArray(value)) {
-      return value.length > 0;
-    }
-    
-    if (typeof value === "string") {
-      return value.trim() !== "";
-    }
-    
-    if (typeof value === "number") {
-      return value > 0;
-    }
-    
-    return true;
   };
 
   // Get completion details for showing in UI
   const getProfileCompletionDetails = (userData: any): CompletionDetails => {
     const completion = calculateProfileCompletion(userData);
-    
+
     let message = "";
     let suggestions: string[] = [];
-    
+
+    // Check which fields are missing and give specific suggestions
+    const missingFields: string[] = [];
+    const userFields = userData || {};
+
+    // Check each field
+    const fieldLabels: Record<string, string> = {
+      fullName: "Full Name",
+      email: "Email",
+      phone: "Phone Number",
+      avatar: "Profile Photo",
+      gender: "Gender",
+      religion: "Religion",
+      nationality: "Nationality",
+      blood_group: "Blood Group",
+      Institute_name: "Institute Name",
+      department_name: "Department",
+      year: "Year/Semester",
+      location: "Location",
+      district: "District",
+      thana: "Thana",
+      preferred_class: "Preferred Classes",
+      subjects: "Subjects",
+      preferred_tutoring_style: "Tutoring Style",
+      days_per_week: "Days Per Week",
+      availability: "Availability Days",
+      preferred_time: "Preferred Time",
+      preferred_areas: "Preferred Areas",
+      expected_salary: "Expected Salary",
+      bio: "Bio/About",
+      experience: "Experience",
+      hourly_rate: "Hourly Rate",
+      preferred_student_gender: "Preferred Student Gender",
+      other_skills: "Other Skills",
+      social_media_links: "Social Media Links",
+    };
+
+    const requiredFields = [
+      "fullName",
+      "email",
+      "phone",
+      "avatar",
+      "gender",
+      "Institute_name",
+      "department_name",
+      "year",
+      "location",
+      "district",
+      "thana",
+      "preferred_class",
+      "subjects",
+      "preferred_tutoring_style",
+      "days_per_week",
+      "availability",
+      "preferred_time",
+      "preferred_areas",
+      "expected_salary",
+      "bio",
+      "experience",
+      "hourly_rate",
+      "preferred_student_gender",
+    ];
+
+    requiredFields.forEach((field) => {
+      const value = userFields[field];
+      let isValid = false;
+
+      if (Array.isArray(value)) {
+        isValid = value.length > 0;
+      } else if (typeof value === "string") {
+        isValid = value.trim() !== "";
+      } else if (typeof value === "number") {
+        isValid = value > 0;
+      } else {
+        isValid = !!value;
+      }
+
+      if (!isValid && fieldLabels[field]) {
+        missingFields.push(fieldLabels[field]);
+      }
+    });
+
     if (completion < 30) {
       message = "Basic Profile - Add more details to get better opportunities";
-      suggestions = [
-        "Add your profile photo",
-        "Fill in your personal information",
-        "Add at least one subject you can teach",
-        "Select your preferred areas"
-      ];
+      suggestions = missingFields.slice(0, 4); // Show first 4 missing fields
     } else if (completion < 60) {
       message = "Good Profile - Almost there! Complete a few more sections";
-      suggestions = [
-        "Add educational qualifications",
-        "Write a compelling bio",
-        "Set your hourly rate",
-        "Add your teaching experience"
-      ];
+      suggestions = missingFields.slice(0, 3);
     } else if (completion < 85) {
       message = "Great Profile - Looking good! Just a few enhancements needed";
-      suggestions = [
-        "Add more subjects",
-        "Complete your availability schedule",
-        "Add your teaching qualifications",
-        "Upload supporting documents"
-      ];
+      suggestions = missingFields.slice(0, 2);
     } else {
       message = "Excellent Profile - You're ready to get more students!";
-      suggestions = [
-        "Keep your profile updated",
-        "Add reviews from students",
-        "Respond to job applications promptly"
-      ];
+      suggestions = ["Keep your profile updated", "Add reviews from students"];
     }
-    
+
     return {
       percentage: completion,
       message,
-      suggestions
+      suggestions,
     };
   };
 
@@ -357,7 +359,7 @@ const DashboardSection = () => {
 
         // Calculate profile completion using the new function
         const completionData = getProfileCompletionDetails(userInfo);
-        
+
         const nearbyJobs = calculateNearbyJobs(userInfo, jobsData);
         const isVerified = userInfo?.verified || false;
         const isGeniusTutor = userInfo?.genius || false;
@@ -370,7 +372,7 @@ const DashboardSection = () => {
           isVerified,
           isGeniusTutor,
         }));
-        
+
         // Store completion details in state
         setCompletionDetails(completionData);
       } catch (error) {
@@ -594,7 +596,7 @@ const DashboardSection = () => {
           <CardContent className="p-4 text-center">
             <Briefcase className="h-8 w-8 text-green-600 mx-auto mb-2" />
             <div className="text-2xl font-bold text-gray-800 mb-1">
-              {tutorStatusData.total}
+              {tutorStatusData?.total || 0}
             </div>
             <div className="text-sm text-gray-600">Applied Jobs</div>
           </CardContent>
@@ -604,7 +606,7 @@ const DashboardSection = () => {
           <CardContent className="p-4 text-center">
             <FileText className="h-8 w-8 text-green-500 mx-auto mb-2" />
             <div className="text-2xl font-bold text-gray-800 mb-1">
-              {tutorStatusData.pending}
+              {tutorStatusData?.pending || 0}
             </div>
             <div className="text-sm text-gray-600">Pending </div>
           </CardContent>
@@ -614,7 +616,7 @@ const DashboardSection = () => {
           <CardContent className="p-4 text-center">
             <UserCheck className="h-8 w-8 text-green-700 mx-auto mb-2" />
             <div className="text-2xl font-bold text-gray-800 mb-1">
-              {tutorStatusData.accepted}
+              {tutorStatusData?.accepted || 0}
             </div>
             <div className="text-sm text-gray-600">Accepted </div>
           </CardContent>
@@ -624,7 +626,7 @@ const DashboardSection = () => {
           <CardContent className="p-4 text-center">
             <HeartHandshake className="h-8 w-8 text-green-600 mx-auto mb-2" />
             <div className="text-2xl font-bold text-gray-800 mb-1">
-              {tutorStatusData.under_review}
+              {tutorStatusData?.under_review || 0}
             </div>
             <div className="text-sm text-gray-600">Under Reviews </div>
           </CardContent>
@@ -634,7 +636,7 @@ const DashboardSection = () => {
           <CardContent className="p-4 text-center">
             <XCircle className="h-8 w-8 text-red-600 mx-auto mb-2" />
             <div className="text-2xl font-bold text-gray-800 mb-1">
-              {tutorStatusData.rejected}
+              {tutorStatusData?.rejected || 0}
             </div>
             <div className="text-sm text-gray-600">Rejected </div>
           </CardContent>
@@ -689,10 +691,10 @@ const DashboardSection = () => {
                   />
                   <path
                     className={`${
-                      completionDetails.percentage < 30 
-                        ? "text-red-600" 
-                        : completionDetails.percentage < 60 
-                        ? "text-yellow-600" 
+                      completionDetails.percentage < 30
+                        ? "text-red-600"
+                        : completionDetails.percentage < 60
+                        ? "text-yellow-600"
                         : "text-green-600"
                     }`}
                     stroke="currentColor"
@@ -721,22 +723,32 @@ const DashboardSection = () => {
                       Suggestions to improve:
                     </p>
                     <ul className="text-xs text-gray-600 space-y-1">
-                      {completionDetails.suggestions.map((suggestion, index) => (
-                        <li key={index} className="flex items-start">
-                          <span className="text-green-500 mr-1">•</span>
-                          {suggestion}
-                        </li>
-                      ))}
+                      {completionDetails.suggestions.map(
+                        (suggestion, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="text-green-500 mr-1">•</span>
+                            {suggestion}
+                          </li>
+                        )
+                      )}
                     </ul>
                   </div>
                 )}
-             
+                <div className="mt-4">
+                  <a
+                    href="/tutor/profile"
+                    className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center"
+                  >
+                    <span>Go to Profile Section</span>
+                    <ArrowRight className="h-4 w-4 ml-1" />
+                  </a>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Additional Info Card (Optional) */}
+        {/* Additional Info Card */}
         <Card className="bg-white rounded-xl shadow-sm">
           <CardContent className="p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -768,6 +780,12 @@ const DashboardSection = () => {
                 >
                   {MyInfo?.data?.tutorStatus || "pending"}
                 </Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Hourly Rate</span>
+                <span className="font-semibold text-gray-800">
+                  ৳{MyInfo?.data?.hourly_rate || 0}
+                </span>
               </div>
             </div>
           </CardContent>
