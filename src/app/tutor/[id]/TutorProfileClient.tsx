@@ -393,23 +393,6 @@ export default function TutorProfileClient({
 
   // Handle application form submission - Prisma schema অনুযায়ী
   const handleSubmitApplication = async () => {
-    if (!applicationForm.phone.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter your phone number",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!applicationForm.name.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter your name",
-        variant: "destructive",
-      });
-      return;
-    }
 
     if (!applicationForm.location.trim()) {
       toast({
@@ -423,11 +406,10 @@ export default function TutorProfileClient({
     try {
       await createApplyForTutor({
         tutor_id: tutorId,
-        phone: applicationForm.phone,
+        phone: user.phone,
         name: applicationForm.name,
         userId: user?.id || "",
         Status: "pending",
-        // Prisma schema অনুযায়ী fields
         location: applicationForm.location,
         class: applicationForm.class,
         gender: applicationForm.gender,
@@ -446,7 +428,7 @@ export default function TutorProfileClient({
       // Reset form
       setApplicationForm({
         name: user?.fullName || "",
-        phone: "",
+        phone:user?.phone || "",
         message: "",
         location: "",
         subject: "",

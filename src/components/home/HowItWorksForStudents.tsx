@@ -89,7 +89,7 @@ export const HowItWorksForStudents = () => {
           <Button 
             size="lg" 
             className="bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white px-5 xs:px-6 sm:px-8 py-4 xs:py-5 sm:py-6 text-sm xs:text-base sm:text-lg rounded-full shadow-md xs:shadow-lg hover:shadow-xl transition-all duration-300"
-            onClick={() => window.location.href = '/premium-tutors'}
+            onClick={() => window.location.href = '/tutor-hub'}
           >
             Find a Tutor Now
           </Button>
