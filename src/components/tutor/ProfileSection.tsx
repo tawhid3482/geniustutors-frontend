@@ -819,7 +819,7 @@ export default function ProfileSection() {
         preferred_tutoring_category: profile.preferred_tutoring_category || [],
         subjects: profile.subjects || [],
         preferred_tutoring_style: profile.preferred_tutoring_style || "",
-        days_per_week: profile.days_per_week || 0,
+        days_per_week: Number(profile.days_per_week || 0),
         availability: profile.availability || [],
         preferred_time: profile.preferred_time || [],
         preferred_areas: profile.preferred_areas || [], // FIXED
@@ -1150,7 +1150,7 @@ export default function ProfileSection() {
             <h3 className="text-lg font-semibold mb-4">Tuition Information</h3>
 
             {/* Background (Multi Select) */}
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <Label>Curriculum/Medium (Select multiple)</Label>
               <MultiSelect
                 value={profile.background}
@@ -1160,7 +1160,7 @@ export default function ProfileSection() {
                 maxSelections={10}
                  className="border-2 border-green-500"
               />
-            </div>
+            </div> */}
 
             {/* Class (Multi Select) */}
             <div className="mb-4">
@@ -1177,7 +1177,7 @@ export default function ProfileSection() {
 
             {/* Category (Multi Select) */}
             <div className="mb-4">
-              <Label>Categories (Select multiple)</Label>
+              <Label>Medium (Select multiple)</Label>
               <MultiSelect
                 value={profile.preferred_tutoring_category}
                 onValueChange={handleCategoryChange}

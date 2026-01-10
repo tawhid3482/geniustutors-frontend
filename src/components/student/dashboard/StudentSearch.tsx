@@ -511,6 +511,7 @@ export function StudentSearch() {
                   <SelectItem value="1">1+ Years</SelectItem>
                   <SelectItem value="2">2+ Years</SelectItem>
                   <SelectItem value="3">3+ Years</SelectItem>
+                  <SelectItem value="4">4+ Years</SelectItem>
                   <SelectItem value="5">5+ Years</SelectItem>
                   <SelectItem value="10">10+ Years</SelectItem>
                 </SelectContent>
@@ -640,7 +641,7 @@ export function StudentSearch() {
                         </div>
                       )}
                       {/* Status Badge */}
-                      {tutor.tutorStatus && (
+                      {/* {tutor.tutorStatus && (
                         <Badge
                           className={`text-xs px-2 py-1 mb-3 ${
                             tutor.tutorStatus === "approved"
@@ -652,7 +653,7 @@ export function StudentSearch() {
                         >
                           {tutor.tutorStatus}
                         </Badge>
-                      )}
+                      )} */}
 
                       {/* Institute */}
                       {tutor.Institute_name && (
