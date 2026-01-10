@@ -165,7 +165,6 @@ class TutorRequestService {
   // Get all tutor requests for the current student
   async getStudentTutorRequests(): Promise<{ success: boolean; data: TutorRequest[] }> {
  
-    
     try {
       const result = await this.request('/student') as { success: boolean; data: TutorRequest[] };
       return result;

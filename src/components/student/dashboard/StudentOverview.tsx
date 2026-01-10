@@ -26,26 +26,14 @@ import { useAuth } from "@/contexts/AuthContext.next";
 import { useRouter } from "next/navigation";
 import { useGetStudentStatsQuery } from "@/redux/features/auth/authApi";
 
-interface StudentOverviewProps {
-  profile: any;
-  requestsPostedCount: number;
-  tutorRequestedCount: number;
-  tutorAssignedCount: number;
-  paymentsProcessedCount: number;
-  postedRequests: any[];
-  recentPlatformJobs: any[];
-  topRatedTutors: any[];
-  setActiveTab: (tab: string) => void;
-  inviteDemo: (tutor: any) => void;
-}
+
 
 export function StudentOverview({
   profile,
   recentPlatformJobs,
   topRatedTutors,
   setActiveTab,
-  inviteDemo,
-}: StudentOverviewProps) {
+}: any) {
   const user = useAuth();
   const userId = user.user.id;
 
@@ -447,7 +435,7 @@ export function StudentOverview({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {recentPlatformJobs.slice(0, 5).map((job) => (
+              {recentPlatformJobs.slice(0, 5).map((job:any) => (
                 <div
                   key={job.id}
                   className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-2"
@@ -517,7 +505,7 @@ export function StudentOverview({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {topRatedTutors.slice(0, 5).map((tutor) => (
+              {topRatedTutors.slice(0, 5).map((tutor:any) => (
                 <div
                   key={tutor.id}
                   className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-2"

@@ -94,12 +94,15 @@ export default function TuitionJobDetailsClient({
 
   // Use the RTK Query hook with the jobId
 
+  console.log(jobId)
+
 
   const {
     data: singleJobResponse,
     isLoading: rtkLoading,
     error: rtkError,
   } = useGetSingleTutorRequestQuery(jobId);
+
 
 const [applyForTutorRequest, { isLoading: applyingForJob }] =useApplyForTutorRequestsMutation()
 

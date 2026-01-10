@@ -2,69 +2,18 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Toggle } from "@/components/ui/toggle";
+
+
 import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
 import { DashboardNavbar } from "@/components/layout/DashboardNavbar";
 import { toast } from "@/components/ui/use-toast";
-import { userService } from "@/services/userService";
 import { profileService } from "@/services/profileService";
-import { api, API_ENDPOINTS } from "@/config/api";
 import {
-  BookOpen,
-  Calendar,
-  Clock,
-  DollarSign,
-  Edit,
-  Eye,
-  FileText,
-  Filter,
-  Heart,
-  Home,
-  LogOut,
-  MapPin,
-  MessageCircle,
-  MoreHorizontal,
-  Plus,
-  Search,
-  Settings,
-  Star,
-  User,
-  Users,
+
   X,
-  RefreshCw,
-  LayoutGrid,
-  List,
-  CheckCircle,
-  Check,
+
 } from "lucide-react";
 
 // Import the modular components
@@ -91,15 +40,10 @@ import { FilterGender } from "@/types/student";
 // Import context
 import { useAuth } from "@/contexts/AuthContext.next";
 
-// Import additional components
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Pagination } from "@/components/ui/pagination";
-import { Label } from "@/components/ui/label";
+
 import { BANGLADESH_DISTRICTS_WITH_POST_OFFICES } from "@/data/bangladeshDistricts";
 
 // Import chat components
-import { useStudentChat } from "@/hooks/useStudentChat";
 import { useGetAllTutorRequestsQuery } from "@/redux/features/tutorRequest/tutorRequestApi";
 import { useGetAllTutorsQuery } from "@/redux/features/tutorHub/tutorHubApi";
 import StudentReviews from "./StudentReviews";
@@ -113,23 +57,6 @@ export function StudentDashboardMain() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
-  // Initialize chat functionality
-  const {
-    chatContacts,
-    chatMessages,
-    selectedChat,
-    newMessage,
-    setSelectedChat,
-    setNewMessage,
-    sendMessage,
-  } = useStudentChat();
-
-  // Dashboard state
-  const [dashboard, setDashboard] = useState<any | null>(null);
-  const [dataLoading, setDataLoading] = useState(true);
-
-  // Posted Jobs State
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Tutor Search State
@@ -149,59 +76,19 @@ export function StudentDashboardMain() {
   const [geniusTutorOnly, setGeniusTutorOnly] = useState(false);
   const [verifiedTutorOnly, setVerifiedTutorOnly] = useState(false);
   const [tutors, setTutors] = useState<Tutor[]>([]);
-  const [tutorLoading, setTutorLoading] = useState<boolean>(true);
-  const [tutorError, setTutorError] = useState<string | null>(null);
+
   const [availableAreas, setAvailableAreas] = useState<string[]>([]);
   const [availablePostOffices, setAvailablePostOffices] = useState<
     Array<{ name: string; postcode: string }>
   >([]);
   const [tutorCurrentPage, setTutorCurrentPage] = useState<number>(1);
-  const [tutorTotalPages, setTutorTotalPages] = useState<number>(1);
-  const [tutorTotalCount, setTutorTotalCount] = useState<number>(0);
+
   const [postedJobs, setPostedJobs] = useState<TutorRequest[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
   const [totalCount, setTotalCount] = useState<number>(0);
 
-  // Taxonomy state for tutor request form
-  const [categories, setCategories] = useState<
-    Array<{ id: number; name: string }>
-  >([]);
-  const [subjects, setSubjects] = useState<Array<{ id: number; name: string }>>(
-    []
-  );
-  const [locations, setLocations] = useState<
-    Array<{ id: number; name: string }>
-  >([]);
-
-  // Tutor request form state
-  const [requestFormData, setRequestFormData] = useState({
-    title: "",
-    description: "",
-    category: "",
-    subject: "",
-    location: "",
-    budget: "",
-    schedule: "",
-    requirements: "",
-  });
-
-  // Bookings state
-  const [bookings, setBookings] = useState<
-    Array<{
-      id: string;
-      tutorName: string;
-      subject: string;
-      date: string;
-      time: string;
-      status: string;
-      amount: number;
-    }>
-  >([]);
-
-  // Profile state
   const [profileData, setProfileData] = useState({
     name: "",
     email: "",
@@ -217,15 +104,12 @@ export function StudentDashboardMain() {
   });
 
 
-  // Search state
-  const [filterSubject, setFilterSubject] = useState("");
-  const [filterArea, setFilterArea] = useState("");
-  const [filterGender, setFilterGender] = useState<FilterGender>("any");
-  const [filterRating, setFilterRating] = useState(0);
+
 
   // RTK Query hooks
   const { data: AllJobs, isLoading: jobsLoading } =
     useGetAllTutorRequestsQuery(undefined);
+    
   const { data: allTutor, isLoading: tutorsLoading } =
     useGetAllTutorsQuery(undefined);
 
@@ -336,23 +220,6 @@ export function StudentDashboardMain() {
     }
   };
 
-  // Dashboard functions
-  // const fetchDashboard = async () => {
-  //   try {
-  //     setDataLoading(true);
-  //     const data = await getLearningDashboard();
-  //     setDashboard(data);
-  //   } catch (error) {
-  //     console.error("Error fetching dashboard:", error);
-  //     toast({
-  //       title: "Error",
-  //       description: "Failed to load learning dashboard",
-  //       variant: "destructive",
-  //     });
-  //   } finally {
-  //     setDataLoading(false);
-  //   }
-  // };
 
   // Fetch posted jobs
   const fetchPostedJobs = useCallback(async () => {
@@ -375,11 +242,7 @@ export function StudentDashboardMain() {
       setPostedJobs([]);
       setTotalCount(0);
 
-      toast({
-        title: "Error",
-        description: "Failed to load posted jobs",
-        variant: "destructive",
-      });
+   
     } finally {
       setIsLoading(false);
     }
@@ -430,10 +293,7 @@ export function StudentDashboardMain() {
           return;
         }
       } catch (apiError) {
-        // console.warn(
-        //   "Failed to load profile from API, falling back to user context:",
-        //   apiError
-        // );
+    
       }
 
       // Fallback to user context data
@@ -455,114 +315,6 @@ export function StudentDashboardMain() {
     }
   };
 
-  // Profile update function
-  const handleProfileUpdate = async (updatedProfile: any) => {
-    if (!user) return;
-
-    try {
-      const profileData = {
-        full_name: updatedProfile.name,
-        email: updatedProfile.email,
-        phone: updatedProfile.phone,
-        district: updatedProfile.district,
-        location: updatedProfile.location,
-        avatar_url: updatedProfile.avatar,
-      };
-
-      const response = await profileService.updateProfile(user.id, profileData);
-
-      if (response.success) {
-        // Reload profile data to ensure we have the latest from the database
-        await loadProfileData();
-
-        // Update user context
-        if (updateUserProfile) {
-          updateUserProfile({
-            ...user,
-            full_name: updatedProfile.name,
-            email: updatedProfile.email,
-            phone: updatedProfile.phone,
-            district: updatedProfile.district,
-            location: updatedProfile.location,
-            avatar_url: updatedProfile.avatar,
-          });
-        }
-
-        toast({
-          title: "Profile Updated",
-          description: "Your profile has been updated successfully.",
-        });
-      } else {
-        throw new Error(response.message || "Failed to update profile");
-      }
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast({
-        title: "Update Failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to update profile. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Password change function
-  const handlePasswordChange = async (
-    currentPassword: string,
-    newPassword: string,
-    confirmPassword: string
-  ): Promise<boolean> => {
-    if (!user) return false;
-
-    try {
-      // Validate passwords
-      if (newPassword !== confirmPassword) {
-        toast({
-          title: "Password Mismatch",
-          description: "New password and confirm password do not match.",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      if (newPassword.length < 6) {
-        toast({
-          title: "Password Too Short",
-          description: "Password must be at least 6 characters long.",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      const response = await profileService.changePassword(user.id, {
-        currentPassword,
-        newPassword,
-      });
-
-      if (response.success) {
-        toast({
-          title: "Password Changed",
-          description: "Your password has been changed successfully.",
-        });
-        return true;
-      } else {
-        throw new Error(response.message || "Failed to change password");
-      }
-    } catch (error) {
-      console.error("Error changing password:", error);
-      toast({
-        title: "Password Change Failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to change password. Please try again.",
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
 
 
 
@@ -660,14 +412,7 @@ export function StudentDashboardMain() {
     verifiedTutorOnly,
   ]);
 
-  // Helper functions
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
-    // Reset to first page when searching
-    if (currentPage !== 1) {
-      setCurrentPage(1);
-    }
-  };
+
 
   // Filter jobs based on search query
   const filteredJobs = postedJobs.filter((job) => {
@@ -692,21 +437,6 @@ export function StudentDashboardMain() {
   const endIndex = startIndex + jobsPerPage;
   const paginatedJobs = filteredJobs.slice(startIndex, endIndex);
 
-  // Filter tutors based on search query
-  const filteredTutors =
-    tutors?.filter((tutor) => {
-      if (!searchQuery) return true;
-      const query = searchQuery.toLowerCase();
-      return (
-        tutor.full_name?.toLowerCase().includes(query) ||
-        (typeof tutor.subjects === "string"
-          ? tutor.subjects.toLowerCase().includes(query)
-          : Array.isArray(tutor.subjects) &&
-            (tutor.subjects as string[]).some((subject) =>
-              subject.toLowerCase().includes(query)
-            ))
-      );
-    }) || [];
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 w-full student-dashboard">
@@ -758,15 +488,10 @@ export function StudentDashboardMain() {
             {activeTab === "dashboard" && (
               <StudentOverview
                 profile={{ name: user?.fullName || "Student" }}
-                requestsPostedCount={postedJobs.length}
-                tutorRequestedCount={0}
-                tutorAssignedCount={0}
-                paymentsProcessedCount={0}
-                postedRequests={postedJobs}
+    
                 recentPlatformJobs={recentPlatformJobs}
                 topRatedTutors={topRatedTutors}
-                setActiveTab={setActiveTab}
-                inviteDemo={() => {}}
+            
               />
             )}
             {activeTab === "request" && (
@@ -781,34 +506,12 @@ export function StudentDashboardMain() {
             )}
             {activeTab === "search" && (
               <StudentSearch
-              // searchQuery={searchQuery}
-              // setSearchQuery={setSearchQuery}
-              // filterSubject={selectedSubject}
-              // setFilterSubject={setSelectedSubject}
-              // filterArea={selectedDistrict}
-              // setFilterArea={setSelectedDistrict}
-              // filterGender={selectedGender as FilterGender}
-              // setFilterGender={setSelectedGender}
-              // filterRating={ratingFilter}
-              // setFilterRating={setRatingFilter}
-              // viewMode={viewMode}
-              // setViewMode={(mode: string) =>
-              //   setViewMode(mode as "grid" | "list")
-              // }
-              // filteredTutors={tutors}
-              // inviteDemo={() => {}}
+             
               />
             )}
             {activeTab === "profile" && (
               <StudentProfile
-              // paymentMethods={[]}
-              // isLoadingPaymentMethods={false}
-              // handleProfileUpdate={handleProfileUpdate}
-              // handlePasswordChange={handlePasswordChange}
-              // handleAddPaymentMethod={async () => false}
-              // handleUpdatePaymentMethod={async () => false}
-              // handleDeletePaymentMethod={async () => false}
-              // handleSetDefaultPaymentMethod={async () => false}
+        
               />
             )}
             {activeTab === "courses" && <StudentCourses />}
