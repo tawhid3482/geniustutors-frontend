@@ -30,6 +30,7 @@ export enum tagTypes {
   Enrollment = "Enrollment",
   Contact = "Contact",
   Chat = "Chat",
+  SetPlatformFee = "SetPlatformFee",
 }
 
 export const tagTypesList = [
@@ -63,4 +64,5 @@ export const tagTypesList = [
   tagTypes.Enrollment,
   tagTypes.Contact,
   tagTypes.Chat,
+  tagTypes.SetPlatformFee,
 ];

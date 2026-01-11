@@ -45,7 +45,7 @@ export default function Home() {
   };
 
   // Only show loading spinner for student and tutor users, not admin users
-  if (user && (user.role === "student" || user.role === "tutor")) {
+  if (user && (user.role === "STUDENT_GUARDIAN" || user.role === "TUTOR")) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>

@@ -123,7 +123,7 @@ export const TutorCategorySection = ({ title, category, limit }: TutorCategorySe
           category === 'all' ? '/all-tutors' :
           category === 'verified' ? '/verified-tutors' :
           category === 'genius' ? '/genius-tutors' :
-          category === 'new' ? '/new-tutors' :
+          category === 'new' ? '/all-tutors' :
           '/all-tutors'
         }>
           <Button 

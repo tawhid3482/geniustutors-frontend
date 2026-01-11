@@ -43,6 +43,7 @@ import TutorDocument from "./sections/TutorDocument";
 import AdminCreateTuitionRequest from "./components/AdminCreateTuitionRequest";
 import { FloatingTutorChat } from "../tutor/components/FloatingTutorChat";
 import TutorDue from "./components/TutorDue";
+import SetPlatformFee from "./components/SetPlatformFee";
 // import RefundPoliciesPage from "@/app/admin/refund-policies/page";
 
 // Icon mapping for string to component conversion
@@ -603,6 +604,7 @@ export function AdminDashboard({ user: pageUser }: { user: any }) {
             {activeTab === "document" && renderTutorDocument()}
             {activeTab === "admin-tuition-request" && <AdminCreateTuitionRequest />}
             {activeTab === "due" && <TutorDue />}
+            {activeTab === "fee" && <SetPlatformFee />}
           </div>
         </main>
       </div>

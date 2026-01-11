@@ -74,6 +74,8 @@ import {
 } from "@/redux/features/AssignTutor/AssignTutorApi";
 import { useGetAllPaymentAccountQuery } from "@/redux/features/PaymentAccount/PaymentAccountApi";
 import { Alert, AlertDescription } from "../ui/alert";
+import { useGetAllSetPlatformFeeQuery } from "@/redux/features/SetPlatformFee/SetPlatformFeeApi";
+// import { useGetAllSetPlatformFeeQuery } from "@/redux/features/SetPlatformFee/SetPlatformFeeApi";
 
 // Type definitions
 interface Transaction {
@@ -188,7 +190,8 @@ export function PaymentSection() {
   const { user } = useAuth();
   const { toast } = useToast();
   const userId = user.id;
-
+  const { data: feeData, isLoading: isFetching } =
+    useGetAllSetPlatformFeeQuery(undefined);
   // API Calls
   const { data: paymentData, refetch } = useGetAllPaymentByRoleQuery(
     userId
@@ -202,6 +205,9 @@ export function PaymentSection() {
       data: RefundPolicyApiResponse;
       isLoading: boolean;
     };
+
+  const Fee = feeData?.data;
+  const amountFee = Fee?.map((e: any) => e?.amount);
 
   const { data: PlatformFeeData } = useGetAllAssignPlatformFeeQuery(
     user.tutor_id
@@ -381,7 +387,7 @@ export function PaymentSection() {
   const getPageNumbers = () => {
     const pageNumbers = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(i);
@@ -409,7 +415,7 @@ export function PaymentSection() {
         pageNumbers.push(totalPages);
       }
     }
-    
+
     return pageNumbers;
   };
 
@@ -660,6 +666,10 @@ export function PaymentSection() {
     setShowPaymentModal(true);
   };
 
+  const jobValue = 10000;
+  const platformFeeAmount = (jobValue * amountFee) / 100;
+  const tutorReceives = jobValue - platformFeeAmount;
+
   // Get selected account details
   const selectedAccount = paymentAccount?.data?.find(
     (acc) => acc.accountName === paymentFormData.payment_method
@@ -668,11 +678,10 @@ export function PaymentSection() {
   // Get platform charge policy
   const platformChargePolicy = {
     title: "Platform Charge Policy",
-    description:
-      "Once a tuition job is confirmed successfully, tutors must pay a one-time platform fee for each job. The charge is 55% for both Home Tutoring and Online Tutoring.",
+    description: `Once a tuition job is confirmed successfully, tutors must pay a one-time platform fee for each job. The charge is ${amountFee}% for both Home Tutoring and Online Tutoring.`,
     keyPoints: [
       "One-time fee per confirmed tuition job",
-      "55% fee applies to both Home and Online Tutoring",
+      `${amountFee}% fee applies to both Home and Online Tutoring`,
       "Fee is calculated based on the total job value",
       "Fee is charged only once per job confirmation",
       "No additional platform fees for extended job durations",
@@ -840,12 +849,16 @@ export function PaymentSection() {
               </span>
             </div>
             <p className="text-green-800 text-sm">
-              For a tuition job valued at 10,000 BDT:
+              For a tuition job valued at {jobValue.toLocaleString()} BDT:
               <br />
-              <strong>Platform Fee (55%):</strong> 5,500 BDT
+              <strong>Platform Fee {amountFee}%:</strong>{" "}
+              {platformFeeAmount.toLocaleString()} BDT
               <br />
-              <strong>Tutor Receives:</strong> 4,500 BDT
+              <strong>
+                Tutor Receives:
+              </strong> {tutorReceives.toLocaleString()} BDT
             </p>
+
             <p className="text-green-800 text-sm mt-2">
               Note: This is a one-time fee charged when the job is confirmed. No
               additional platform fees for the duration of the job.
@@ -882,9 +895,10 @@ export function PaymentSection() {
           </Select>
           <span>entries per page</span>
         </div>
-        
+
         <div className="text-sm text-gray-600">
-          Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} entries
+          Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of{" "}
+          {totalItems} entries
         </div>
 
         <div className="flex items-center gap-2">
@@ -914,7 +928,11 @@ export function PaymentSection() {
                   variant={currentPage === pageNumber ? "default" : "outline"}
                   size="sm"
                   onClick={() => handlePageChange(pageNumber as number)}
-                  className={currentPage === pageNumber ? "bg-green-600 hover:bg-green-700" : ""}
+                  className={
+                    currentPage === pageNumber
+                      ? "bg-green-600 hover:bg-green-700"
+                      : ""
+                  }
                 >
                   {pageNumber}
                 </Button>
@@ -987,7 +1005,7 @@ export function PaymentSection() {
                 <p className="text-sm font-medium text-muted-foreground">
                   Platform Fee Rate
                 </p>
-                <p className="text-2xl font-bold text-blue-600">55%</p>
+                <p className="text-2xl font-bold text-blue-600">{amountFee}</p>
               </div>
               <Percent className="h-8 w-8 text-blue-600" />
             </div>
@@ -1258,7 +1276,9 @@ export function PaymentSection() {
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                {getPaymentMethodIcon(transaction.payment_method)}
+                                {getPaymentMethodIcon(
+                                  transaction.payment_method
+                                )}
                                 <div>
                                   <p>{transaction.payment_method}</p>
                                   {transaction.payment_number && (
@@ -1283,7 +1303,7 @@ export function PaymentSection() {
                       </TableBody>
                     </Table>
                   </div>
-                  
+
                   {/* Pagination */}
                   {renderPagination()}
                 </>
@@ -1571,7 +1591,7 @@ export function PaymentSection() {
                         e.target.value === "" ? 0 : Number(e.target.value),
                     }))
                   }
-                    onWheel={(e) => e.currentTarget.blur()}
+                  onWheel={(e) => e.currentTarget.blur()}
                   className="border-green-200"
                   required
                 />
