@@ -39,7 +39,6 @@ import {
 } from "@/redux/features/document/documentApi";
 import { useGetAllDistrictsQuery } from "@/redux/features/district/districtApi";
 import { useGetAllCategoryQuery } from "@/redux/features/category/categoryApi";
-import mediumOptions from "@/data/mediumOptions.json";
 import { useCreateNotificationMutation } from "@/redux/features/notification/notificationApi";
 
 interface ProfileFormData {
@@ -113,11 +112,42 @@ interface UpgradeStatus {
   hasVerified: boolean;
 }
 
+// Helper function to parse array from string
+const parseArrayFromString = (str: any): string[] => {
+  if (!str) return [];
+
+  if (Array.isArray(str)) {
+    return str;
+  }
+
+  if (typeof str === "string") {
+    try {
+      // Try to parse as JSON
+      const parsed = JSON.parse(str);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch (error) {
+      // If not valid JSON, try comma-separated
+      if (str.includes(",")) {
+        return str
+          .split(",")
+          .map((item: string) => item.trim())
+          .filter(Boolean);
+      }
+      // Single value
+      return [str];
+    }
+  }
+
+  return [];
+};
+
 export default function ProfileSection() {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const userId = user?.id ;
+  const userId = user?.id;
 
   // RTK Query Hooks
   const {
@@ -223,6 +253,8 @@ export default function ProfileSection() {
   const [tuitionAvailableAreas, setTuitionAvailableAreas] = useState<string[]>(
     []
   );
+  const [parsedPreferredAreas, setParsedPreferredAreas] = useState<string[]>([]);
+
 
   // File upload function
   const uploadImage = async (file: File): Promise<string> => {
@@ -260,6 +292,18 @@ export default function ProfileSection() {
     if (userData?.data) {
       const data = userData.data;
 
+
+      // Parse arrays properly
+      const parsedPreferredAreas = parseArrayFromString(data.preferred_areas);
+      setParsedPreferredAreas(parsedPreferredAreas);
+      const parsedBackground = parseArrayFromString(data.background);
+      const parsedSubjects = parseArrayFromString(data.subjects);
+      const parsedPreferredClass = parseArrayFromString(data.preferred_class);
+      const parsedAvailability = parseArrayFromString(data.availability);
+      const parsedPreferredTime = parseArrayFromString(data.preferred_time);
+      const parsedOtherSkills = parseArrayFromString(data.other_skills);
+      const parsedPreferredMedium = parseArrayFromString(data.preferred_medium);
+
       setProfile((prev) => ({
         ...prev,
         // Personal Information
@@ -278,45 +322,37 @@ export default function ProfileSection() {
         department_name: data.department_name || "",
         year: data.year || "",
 
-        // Location Information - FIXED
+        // Location Information
         location: data.location || "",
         district: data.district || "",
-        thana: data.thana || "", // Fix: thana directly from API
+        thana: data.thana || "",
         postOffice: data.postOffice || "",
 
         // Tutoring Information
-        background: Array.isArray(data.background) ? data.background : [],
-        preferred_class: Array.isArray(data.preferred_class)
-          ? data.preferred_class
-          : [],
+        background: parsedBackground,
+        preferred_class: parsedPreferredClass,
         preferred_tutoring_category: Array.isArray(
           data.preferred_tutoring_category
         )
           ? data.preferred_tutoring_category
           : [],
-        subjects: Array.isArray(data.subjects) ? data.subjects : [],
+        subjects: parsedSubjects,
         preferred_tutoring_style: data.preferred_tutoring_style || "",
         days_per_week: data.days_per_week || 0,
-        availability: Array.isArray(data.availability) ? data.availability : [],
-        preferred_time: Array.isArray(data.preferred_time)
-          ? data.preferred_time
-          : [],
-        preferred_areas: Array.isArray(data.preferred_areas)
-          ? data.preferred_areas
-          : [],
+        availability: parsedAvailability,
+        preferred_time: parsedPreferredTime,
+        preferred_areas: parsedPreferredAreas, // This should now work
         expected_salary: data.expected_salary || "",
 
         // Skills & Bio
-        other_skills: Array.isArray(data.other_skills) ? data.other_skills : [],
+        other_skills: parsedOtherSkills,
         social_media_links: data.social_media_links || "",
         bio: data.bio || "",
         experience: data.experience?.toString() || "",
         hourly_rate: data.hourly_rate?.toString() || "0",
         qualification: data.qualification || "",
         extra_facilities: data.extra_facilities || "",
-        preferred_medium: Array.isArray(data.preferred_medium)
-          ? data.preferred_medium
-          : [],
+        preferred_medium: parsedPreferredMedium,
         preferred_student_gender: data.preferred_student_gender || "any",
 
         // Educational Qualifications
@@ -351,6 +387,9 @@ export default function ProfileSection() {
               },
             ],
       }));
+
+      // Debug: Check parsed data
+      console.log("Parsed preferred_areas:", parsedPreferredAreas);
     }
   }, [userData, toast]);
 
@@ -446,6 +485,11 @@ export default function ProfileSection() {
       }
       return prev;
     });
+  };
+
+  // Medium selection handler
+  const handleBackgroundChange = (mediums: string[]) => {
+    setProfile((prev) => ({ ...prev, background: mediums }));
   };
 
   // New functions for custom area and subject handling
@@ -669,10 +713,6 @@ export default function ProfileSection() {
     setProfile((prev) => ({ ...prev, subjects }));
   };
 
-  const handleBackgroundChange = (background: string[]) => {
-    setProfile((prev) => ({ ...prev, background }));
-  };
-
   const handlePreferredClassChange = (classes: string[]) => {
     setProfile((prev) => ({ ...prev, preferred_class: classes }));
   };
@@ -731,6 +771,16 @@ export default function ProfileSection() {
     }));
   };
 
+  // Get medium options from categoryData
+  const getMediumOptions = () => {
+    if (!categoryData?.data) return [];
+
+    return categoryData.data.map((category: any) => ({
+      value: category.name,
+      label: category.name,
+    }));
+  };
+
   // Get all districts for dropdown
   const getAllDistricts = () => {
     if (!districtData?.data) return [];
@@ -772,14 +822,6 @@ export default function ProfileSection() {
       { value: "Online Tutoring", label: "Online Tutoring" },
       { value: "Both", label: "Both (Home & Online)" },
     ];
-  };
-
-  // Get curriculum options from mediumOptions.json
-  const getBackgroundOptions = () => {
-    return mediumOptions.mediums.map((medium) => ({
-      value: medium.value,
-      label: medium.label,
-    }));
   };
 
   // Get class levels
@@ -857,10 +899,10 @@ export default function ProfileSection() {
         department_name: profile.department_name || "",
         year: profile.year || "",
 
-        // Location Information - FIXED
+        // Location Information
         location: profile.location || "",
         district: profile.district || "",
-        thana: profile.thana || "", // Use thana directly
+        thana: profile.thana || "",
         postOffice: profile.postOffice || "",
 
         // Tutoring Information
@@ -872,7 +914,7 @@ export default function ProfileSection() {
         days_per_week: Number(profile.days_per_week || 0),
         availability: profile.availability || [],
         preferred_time: profile.preferred_time || [],
-        preferred_areas: profile.preferred_areas || [], // FIXED
+        preferred_areas: profile.preferred_areas || [],
         expected_salary: profile.expected_salary || "",
 
         // Skills & Bio
@@ -1210,17 +1252,22 @@ export default function ProfileSection() {
               />
             </div>
 
-            {/* Category (Multi Select) */}
+            {/* Medium (Multi Select) - FIXED */}
             <div className="mb-4">
               <Label>Medium (Select multiple)</Label>
               <MultiSelect
                 value={profile.background}
-                onValueChange={handleCategoryChange}
-                placeholder="Select categories"
-                options={getCategoryOptions()}
+                onValueChange={handleBackgroundChange}
+                placeholder="Select teaching mediums"
+                options={getMediumOptions()}
                 maxSelections={10}
                 className="border-2 border-green-500"
               />
+              {getMediumOptions().length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Loading medium options...
+                </p>
+              )}
             </div>
 
             {/* Subject (Multi Select with custom input) */}
@@ -1422,7 +1469,8 @@ export default function ProfileSection() {
               <div>
                 <Label>Preferred Areas</Label>
 
-                {/* মাল্টি সিলেক্ট অপশন */}
+         
+
                 {tuitionAvailableAreas.length > 0 && (
                   <div className="mb-3">
                     <MultiSelect
@@ -1439,12 +1487,21 @@ export default function ProfileSection() {
                     />
                   </div>
                 )}
+                       <div className="text-sm text-green-500 mb-1">
+                  Your selected areas:
+                  <ul className="list-disc ml-4 mt-1">
+                    {parsedPreferredAreas?.map(
+                      (area: string, index: number) => (
+                        <li key={index}>{area}</li>
+                      )
+                    )}
+                  </ul>
+                </div>
 
-                {/* সিলেক্টেড এরিয়াগুলো দেখানো */}
                 {profile.preferred_areas.length > 0 && (
                   <div className="mb-4">
                     <div className="text-sm font-medium text-gray-700 mb-2">
-                      Selected Areas:
+                      Selected Areas ({profile.preferred_areas.length}):
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {profile.preferred_areas.map((area) => (
